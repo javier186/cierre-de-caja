@@ -6,6 +6,7 @@
     <title>Sistema de Cierre de Caja - Multi-Tienda</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tesseract.js/4.1.1/tesseract.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
         * {
             margin: 0;
@@ -455,7 +456,8 @@
             <div class="section">
                 <div class="section-title">📊 Cargar Datos de Simplit</div>
                 <div class="alert alert-info">
-                    💡 Carga el archivo Excel/CSV con los datos de Simplit (Tienda, Fecha, Total_Ventas)
+                    💡 Carga el archivo Excel (.xlsx) o CSV con los datos de Simplit<br>
+                    <strong>Columnas requeridas:</strong> Tienda, Fecha, Total_Ventas
                 </div>
                 <input type="file" id="simplitFile" accept=".csv,.xlsx,.xls">
                 <div class="upload-area-simplit" onclick="document.getElementById('simplitFile').click()">
@@ -494,7 +496,8 @@
         const tiendas = [
             '4 IBM', '17 Leti Guarenas', '172 Leti Guarenas p.2', '172 Leti Guarenas p.4', '44 Parmalat', '045 Dronena',
             '046 Provincial', '047 Simple tv', '048 Leti Caracas piso 13', '049 Cocacola', '050 Dronena BQTO',
-            '051 Latin Pagos', '052 Bnci', '053 Leti Caracas piso 2', '054 Simple cdt', '056 PWC', '057 Plumrose', '058 Seguro Venezuela', '059 Rontarca', '062 BNC Rosal'
+            '051 Latin Pagos', '052 Bnci', '053 Leti Caracas piso 2', '054 Simple cdt', '056 PWC', '057 Plumrose', 
+            '058 Seguro Venezuela', '059 Rontarca', '062 BNC Rosal'
         ];
 
         const tiendaSelect = document.getElementById('tiendaSelect');
@@ -712,26 +715,53 @@
             const file = e.target.files[0];
             if (!file) return;
 
-            const reader = new FileReader();
-            reader.onload = function(event) {
-                const text = event.target.result;
-                
-                Papa.parse(text, {
-                    header: true,
-                    skipEmptyLines: true,
-                    complete: function(results) {
-                        simplitData = results.data;
-                        const status = document.getElementById('simplitStatus');
-                        status.className = 'alert alert-success';
-                        status.textContent = `✅ ${simplitData.length} registros cargados de Simplit`;
-                        status.classList.remove('hidden');
-                        
-                        actualizarTablaConsolidado();
-                        document.getElementById('exportBtn').disabled = false;
-                    }
-                });
-            };
-            reader.readAsText(file);
+            const extension = file.name.split('.').pop().toLowerCase();
+
+            if (extension === 'csv') {
+                // Leer archivo CSV
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    const text = event.target.result;
+                    
+                    Papa.parse(text, {
+                        header: true,
+                        skipEmptyLines: true,
+                        complete: function(results) {
+                            simplitData = results.data;
+                            mostrarStatusSimplit(simplitData.length);
+                        }
+                    });
+                };
+                reader.readAsText(file);
+            } else if (extension === 'xlsx' || extension === 'xls') {
+                // Leer archivo Excel
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    const data = new Uint8Array(event.target.result);
+                    const workbook = XLSX.read(data, { type: 'array' });
+                    
+                    // Leer la primera hoja
+                    const firstSheetName = workbook.SheetNames[0];
+                    const worksheet = workbook.Sheets[firstSheetName];
+                    
+                    // Convertir a JSON
+                    simplitData = XLSX.utils.sheet_to_json(worksheet);
+                    mostrarStatusSimplit(simplitData.length);
+                };
+                reader.readAsArrayBuffer(file);
+            } else {
+                alert('Formato no soportado. Por favor usa archivos .csv, .xlsx o .xls');
+            }
+        }
+
+        function mostrarStatusSimplit(cantidad) {
+            const status = document.getElementById('simplitStatus');
+            status.className = 'alert alert-success';
+            status.textContent = `✅ ${cantidad} registros cargados de Simplit`;
+            status.classList.remove('hidden');
+            
+            actualizarTablaConsolidado();
+            document.getElementById('exportBtn').disabled = false;
         }
 
         // ===== ACTUALIZAR TABLA CONSOLIDADO =====
@@ -783,10 +813,30 @@
             html += '</tr></thead><tbody>';
 
             cierresGuardados.forEach(cierre => {
-                const simplitRecord = simplitData.find(s => 
-                    (s.Tienda || s.tienda || '').toLowerCase() === cierre.tienda.toLowerCase() &&
-                    (s.Fecha || s.fecha || '').includes(cierre.fecha)
-                );
+                // Función mejorada de búsqueda que maneja diferentes formatos
+                const simplitRecord = simplitData.find(s => {
+                    const tiendaSimplit = (s.Tienda || s.tienda || '').trim();
+                    const tiendaCierre = cierre.tienda.trim();
+                    const fechaSimplit = (s.Fecha || s.fecha || '').trim();
+                    const fechaCierre = cierre.fecha.trim();
+                    
+                    // Comparación de fechas
+                    const fechaCoincide = fechaSimplit.includes(fechaCierre) || 
+                                         fechaCierre.includes(fechaSimplit) ||
+                                         fechaSimplit === fechaCierre;
+                    
+                    // Comparación de tiendas (exacta, sin importar mayúsculas/minúsculas)
+                    const tiendaCoincideExacta = tiendaSimplit.toLowerCase() === tiendaCierre.toLowerCase();
+                    
+                    // Comparación parcial (para casos donde el nombre puede variar ligeramente)
+                    // Extrae el código/número de la tienda si existe
+                    const codigoTiendaCierre = tiendaCierre.match(/^\d+/);
+                    const codigoTiendaSimplit = tiendaSimplit.match(/^\d+/);
+                    const tiendaCoincideCodigo = codigoTiendaCierre && codigoTiendaSimplit && 
+                                                  codigoTiendaCierre[0] === codigoTiendaSimplit[0];
+                    
+                    return fechaCoincide && (tiendaCoincideExacta || tiendaCoincideCodigo);
+                });
 
                 const totalSimplit = simplitRecord ? parseFloat(simplitRecord.Total_Ventas || simplitRecord.total_ventas || 0) : 0;
                 const diferencia = cierre.total - totalSimplit;
@@ -812,31 +862,99 @@
             return html;
         }
 
-        // ===== EXPORTAR A CSV =====
+        // ===== EXPORTAR A EXCEL =====
         document.getElementById('exportBtn').addEventListener('click', () => {
-            let csv = 'Tienda;Fecha;Credito;Debito;Pago_Movil;Total_Cierre;Total_Simplit;Diferencia;Estado\n';
+            // Crear array de datos para Excel
+            const datos = [];
+            
+            // Encabezados
+            datos.push([
+                'Tienda', 
+                'Fecha', 
+                'Crédito', 
+                'Débito', 
+                'Pago Móvil', 
+                'Total Cierre', 
+                'Total Simplit', 
+                'Diferencia', 
+                'Estado'
+            ]);
 
-
+            // Datos
             cierresGuardados.forEach(cierre => {
-                const simplitRecord = simplitData.find(s => 
-                    (s.Tienda || s.tienda || '').toLowerCase() === cierre.tienda.toLowerCase() &&
-                    (s.Fecha || s.fecha || '').includes(cierre.fecha)
-                );
+                // Usar la misma lógica mejorada de búsqueda
+                const simplitRecord = simplitData.find(s => {
+                    const tiendaSimplit = (s.Tienda || s.tienda || '').trim();
+                    const tiendaCierre = cierre.tienda.trim();
+                    const fechaSimplit = (s.Fecha || s.fecha || '').trim();
+                    const fechaCierre = cierre.fecha.trim();
+                    
+                    const fechaCoincide = fechaSimplit.includes(fechaCierre) || 
+                                         fechaCierre.includes(fechaSimplit) ||
+                                         fechaSimplit === fechaCierre;
+                    
+                    const tiendaCoincideExacta = tiendaSimplit.toLowerCase() === tiendaCierre.toLowerCase();
+                    
+                    const codigoTiendaCierre = tiendaCierre.match(/^\d+/);
+                    const codigoTiendaSimplit = tiendaSimplit.match(/^\d+/);
+                    const tiendaCoincideCodigo = codigoTiendaCierre && codigoTiendaSimplit && 
+                                                  codigoTiendaCierre[0] === codigoTiendaSimplit[0];
+                    
+                    return fechaCoincide && (tiendaCoincideExacta || tiendaCoincideCodigo);
+                });
 
                 const totalSimplit = simplitRecord ? parseFloat(simplitRecord.Total_Ventas || simplitRecord.total_ventas || 0) : 0;
                 const diferencia = cierre.total - totalSimplit;
                 const estado = Math.abs(diferencia) <= 1 ? 'CUADRA' : (Math.abs(diferencia) <= 10 ? 'DIF_MENOR' : 'NO_CUADRA');
 
-                csv += `${cierre.tienda};${cierre.fecha};${cierre.credito};${cierre.debito};${cierre.pagoMovil};${cierre.total};${totalSimplit};${diferencia};${estado}\n`;
-
+                // Agregar fila con valores numéricos separados
+                datos.push([
+                    cierre.tienda,
+                    cierre.fecha,
+                    cierre.credito,      // Número, no texto
+                    cierre.debito,       // Número, no texto
+                    cierre.pagoMovil,    // Número, no texto
+                    cierre.total,        // Número, no texto
+                    totalSimplit,        // Número, no texto
+                    diferencia,          // Número, no texto
+                    estado
+                ]);
             });
 
-            const blob = new Blob([csv], { type: 'text/csv' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `consolidado_cierres_${new Date().toISOString().split('T')[0]}.csv`;
-            a.click();
+            // Crear libro de Excel
+            const wb = XLSX.utils.book_new();
+            const ws = XLSX.utils.aoa_to_sheet(datos);
+
+            // Configurar ancho de columnas
+            ws['!cols'] = [
+                { wch: 25 },  // Tienda
+                { wch: 12 },  // Fecha
+                { wch: 12 },  // Crédito
+                { wch: 12 },  // Débito
+                { wch: 12 },  // Pago Móvil
+                { wch: 14 },  // Total Cierre
+                { wch: 14 },  // Total Simplit
+                { wch: 12 },  // Diferencia
+                { wch: 12 }   // Estado
+            ];
+
+            // Aplicar formato de número a las columnas de montos
+            const range = XLSX.utils.decode_range(ws['!ref']);
+            for (let R = 1; R <= range.e.r; ++R) {
+                for (let C = 2; C <= 7; ++C) { // Columnas C a H (Crédito a Diferencia)
+                    const cellAddress = XLSX.utils.encode_cell({ r: R, c: C });
+                    if (ws[cellAddress]) {
+                        ws[cellAddress].z = '#,##0.00'; // Formato de número con 2 decimales
+                    }
+                }
+            }
+
+            // Agregar hoja al libro
+            XLSX.utils.book_append_sheet(wb, ws, 'Consolidado Cierres');
+
+            // Generar archivo Excel
+            const fecha = new Date().toISOString().split('T')[0];
+            XLSX.writeFile(wb, `Consolidado_Cierres_${fecha}.xlsx`);
         });
 
         // ===== LIMPIAR DATOS =====
