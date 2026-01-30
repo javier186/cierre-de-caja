@@ -684,7 +684,24 @@
                     cierresGuardados.push(cierre);
                 }
 
-                localStorage.setItem('cierres', JSON.stringify(cierresGuardados));
+                fetch("https://script.google.com/macros/s/AKfycbzTeYnwUuLYPoBOWx_iob3nMGNSyMCneOMhvjjVz9g63dRktpuPA0edh-sPEUX_JErbTA/exec", {
+                  method: "POST",
+                  body: JSON.stringify(cierre),
+                  headers: {
+                    "Content-Type": "application/json"
+                }
+            })
+            .then(res => res.json())
+            .then(data => {
+              const successMsg = document.getElementById('successMsg');
+              successMsg.classList.remove('hidden');
+              setTimeout(() => successMsg.classList.add('hidden'), 3000);
+              limpiarFormulario();
+            })
+            .catch(err => {
+              alert("❌ Error al guardar el cierre");
+              console.error(err);
+            });
 
                 // Mostrar mensaje de éxito
                 const successMsg = document.getElementById('successMsg');
