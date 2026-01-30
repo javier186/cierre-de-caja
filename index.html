@@ -1,57 +1,178 @@
-// Verificar si ya existe un cierre para esta tienda y fecha
-                
-                fetch("https://script.google.com/macros/s/AKfycbzTeYnwUuLYPoBOWx_iob3nMGNSyMCneOMhvjjVz9g63dRktpuPA0edh-sPEUX_JErbTA/exec", {
-                  method: "POST",
-                  body: JSON.stringify(cierre),
-                  headers: {
-                    "Content-Type": "application/json"
-                }
-            })
-                    
-            .then(res => res.json())
-            .then(data => {
-              if (data.status === "ok") {
-                const successMsg = document.getElementById('successMsg');
-                successMsg.classList.remove('hidden');
-                setTimeout(() => successMsg.classList.add('hidden'), 3000);
-                limpiarFormulario();
-              } else {
-                alert("❌ Error al guardar en Google Sheets");
-              }
-            })
-            .catch(err => {
-              alert("❌ Error al guardar el cierre");
-              console.error(err);
-            });
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Cierre de Caja</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-                fetch("https://script.google.com/macros/s/AKfycbzTeYnwUuLYPoBOWx_iob3nMGNSyMCneOMhvjjVz9g63dRktpuPA0edh-sPEUX_JErbTA/exec", {
-  method: "POST",
-  body: JSON.stringify(cierre),
-  headers: {
-    "Content-Type": "application/json"
-  }
-})
-.then(res => res.json())
-.then(data => {
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f4f6f8;
+      padding: 20px;
+    }
 
-  // 👇 AQUÍ MISMO
-  if (data.status === "ok") {
+    .card {
+      background: #fff;
+      padding: 20px;
+      border-radius: 8px;
+      max-width: 500px;
+      margin: auto;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    }
 
-    // Mostrar mensaje de éxito
-    const successMsg = document.getElementById('successMsg');
-    successMsg.classList.remove('hidden');
-    setTimeout(() => successMsg.classList.add('hidden'), 3000);
+    h2 {
+      text-align: center;
+    }
 
-    // Limpiar formulario
-    limpiarFormulario();
+    label {
+      display: block;
+      margin-top: 10px;
+    }
 
-  } else {
-    alert("❌ Error al guardar en Google Sheets");
-  }
+    input, select, button {
+      width: 100%;
+      padding: 8px;
+      margin-top: 5px;
+    }
 
-})
-.catch(err => {
-  alert("❌ Error de conexión");
-  console.error(err);
+    button {
+      background: #0d6efd;
+      color: #fff;
+      border: none;
+      border-radius: 4px;
+      margin-top: 15px;
+      cursor: pointer;
+    }
+
+    .success {
+      background: #d1e7dd;
+      color: #0f5132;
+      padding: 10px;
+      margin-top: 10px;
+      border-radius: 4px;
+      text-align: center;
+    }
+
+    .hidden {
+      display: none;
+    }
+  </style>
+</head>
+
+<body>
+
+<div class="card">
+  <h2>Cierre de Caja</h2>
+
+  <label>Tienda</label>
+  <select id="tiendaSelect">
+    <option value="">Seleccione</option>
+    <option value="Tienda 1">Tienda 1</option>
+    <option value="Tienda 2">Tienda 2</option>
+    <option value="Tienda 3">Tienda 3</option>
+  </select>
+
+  <label>Fecha</label>
+  <input type="date" id="fechaCierre">
+
+  <label>Crédito</label>
+  <input type="number" id="montoCredito" step="0.01">
+
+  <label>Débito</label>
+  <input type="number" id="montoDebito" step="0.01">
+
+  <label>Pago Móvil</label>
+  <input type="number" id="pagoMovil" step="0.01">
+
+  <label>Foto del cierre</label>
+  <input type="file" id="fotoInput" accept="image/*">
+
+  <button id="guardarBtn">Guardar cierre</button>
+
+  <div id="successMsg" class="success hidden">
+    ✅ Cierre guardado correctamente
+  </div>
+</div>
+
+<script>
+let uploadedImage = null;
+
+document.getElementById('fotoInput').addEventListener('change', e => {
+  uploadedImage = e.target.files[0];
 });
-            };
+
+function limpiarFormulario() {
+  document.getElementById('tiendaSelect').value = "";
+  document.getElementById('fechaCierre').value = "";
+  document.getElementById('montoCredito').value = "";
+  document.getElementById('montoDebito').value = "";
+  document.getElementById('pagoMovil').value = "";
+  document.getElementById('fotoInput').value = "";
+  uploadedImage = null;
+}
+
+document.getElementById('guardarBtn').addEventListener('click', () => {
+
+  const tienda = document.getElementById('tiendaSelect').value;
+  const fecha = document.getElementById('fechaCierre').value;
+  const credito = parseFloat(document.getElementById('montoCredito').value) || 0;
+  const debito = parseFloat(document.getElementById('montoDebito').value) || 0;
+  const pagoMovil = parseFloat(document.getElementById('pagoMovil').value) || 0;
+  const total = credito + debito + pagoMovil;
+
+  if (!tienda || !fecha || !uploadedImage) {
+    alert("⚠️ Completa todos los campos y la foto");
+    return;
+  }
+
+  const reader = new FileReader();
+
+  reader.onload = function (e) {
+
+    const cierre = {
+      id: Date.now(),
+      tienda: tienda,
+      fecha: fecha,
+      credito: credito,
+      debito: debito,
+      pagoMovil: pagoMovil,
+      total: total,
+      imagen: e.target.result,
+      timestamp: new Date().toISOString()
+    };
+
+    fetch("https://script.google.com/macros/s/AKfycbzTeYnwUuLYPoBOWx_iob3nMGNSyMCneOMhvjjVz9g63dRktpuPA0edh-sPEUX_JErbTA/exec", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(cierre)
+    })
+    .then(response => response.json())
+    .then(data => {
+
+      if (data.status === "ok") {
+        const successMsg = document.getElementById('successMsg');
+        successMsg.classList.remove('hidden');
+        setTimeout(() => successMsg.classList.add('hidden'), 3000);
+        limpiarFormulario();
+      } else {
+        alert("❌ Error al guardar en Google Sheets");
+      }
+
+    })
+    .catch(error => {
+      alert("❌ Error de conexión con el servidor");
+      console.error(error);
+    });
+
+  };
+
+  reader.readAsDataURL(uploadedImage);
+});
+</script>
+
+</body>
+</html>
+
