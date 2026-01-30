@@ -815,7 +815,7 @@
 
         // ===== EXPORTAR A CSV =====
         document.getElementById('exportBtn').addEventListener('click', () => {
-            let csv = 'Tienda,Fecha,Credito,Debito,Pago_Movil,Total_Cierre,Total_Simplit,Diferencia,Estado\n';
+            let csv = 'Tienda;Fecha;Credito;Debito;Pago_Movil;Total_Cierre;Total_Simplit;Diferencia;Estado\n';
 
             cierresGuardados.forEach(cierre => {
                 const simplitRecord = simplitData.find(s => 
@@ -827,8 +827,8 @@
                 const diferencia = cierre.total - totalSimplit;
                 const estado = Math.abs(diferencia) <= 1 ? 'CUADRA' : (Math.abs(diferencia) <= 10 ? 'DIF_MENOR' : 'NO_CUADRA');
 
-                csv += `${cierre.tienda},${cierre.fecha},${cierre.credito},${cierre.debito},${cierre.pagoMovil},${cierre.total},${totalSimplit},${diferencia},${estado}\n`;
-            });
+                csv += `${cierre.tienda};${cierre.fecha};${cierre.credito};${cierre.debito};${cierre.pagoMovil};${cierre.total};${totalSimplit};${diferencia};${estado}\n`;
+
 
             const blob = new Blob([csv], { type: 'text/csv' });
             const url = URL.createObjectURL(blob);
