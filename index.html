@@ -817,6 +817,7 @@
         document.getElementById('exportBtn').addEventListener('click', () => {
             let csv = 'Tienda;Fecha;Credito;Debito;Pago_Movil;Total_Cierre;Total_Simplit;Diferencia;Estado\n';
 
+
             cierresGuardados.forEach(cierre => {
                 const simplitRecord = simplitData.find(s => 
                     (s.Tienda || s.tienda || '').toLowerCase() === cierre.tienda.toLowerCase() &&
@@ -829,6 +830,7 @@
 
                 csv += `${cierre.tienda};${cierre.fecha};${cierre.credito};${cierre.debito};${cierre.pagoMovil};${cierre.total};${totalSimplit};${diferencia};${estado}\n`;
 
+            });
 
             const blob = new Blob([csv], { type: 'text/csv' });
             const url = URL.createObjectURL(blob);
