@@ -1,15 +1,5 @@
 // Verificar si ya existe un cierre para esta tienda y fecha
-                const existente = cierresGuardados.findIndex(c => c.tienda === tienda && c.fecha === fecha);
-                if (existente !== -1) {
-                    if (confirm('Ya existe un cierre para esta tienda y fecha. ¿Deseas reemplazarlo?')) {
-                        cierresGuardados[existente] = cierre;
-                    } else {
-                        return;
-                    }
-                } else {
-                    cierresGuardados.push(cierre);
-                }
-
+                
                 fetch("https://script.google.com/macros/s/AKfycbzTeYnwUuLYPoBOWx_iob3nMGNSyMCneOMhvjjVz9g63dRktpuPA0edh-sPEUX_JErbTA/exec", {
                   method: "POST",
                   body: JSON.stringify(cierre),
@@ -34,11 +24,34 @@
               console.error(err);
             });
 
-                // Mostrar mensaje de éxito
-                const successMsg = document.getElementById('successMsg');
-                successMsg.classList.remove('hidden');
-                setTimeout(() => successMsg.classList.add('hidden'), 3000);
+                fetch("https://script.google.com/macros/s/AKfycbzTeYnwUuLYPoBOWx_iob3nMGNSyMCneOMhvjjVz9g63dRktpuPA0edh-sPEUX_JErbTA/exec", {
+  method: "POST",
+  body: JSON.stringify(cierre),
+  headers: {
+    "Content-Type": "application/json"
+  }
+})
+.then(res => res.json())
+.then(data => {
 
-                // Limpiar formulario
-                limpiarFormulario();
+  // 👇 AQUÍ MISMO
+  if (data.status === "ok") {
+
+    // Mostrar mensaje de éxito
+    const successMsg = document.getElementById('successMsg');
+    successMsg.classList.remove('hidden');
+    setTimeout(() => successMsg.classList.add('hidden'), 3000);
+
+    // Limpiar formulario
+    limpiarFormulario();
+
+  } else {
+    alert("❌ Error al guardar en Google Sheets");
+  }
+
+})
+.catch(err => {
+  alert("❌ Error de conexión");
+  console.error(err);
+});
             };
