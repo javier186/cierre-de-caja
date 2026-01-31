@@ -536,12 +536,12 @@
         // ===== CONFIGURACIÓN DE FIREBASE =====
         // 🔴 REEMPLAZA CON TUS DATOS DE FIREBASE
         const firebaseConfig = {
-            apiKey: "TU_API_KEY_AQUI",
-            authDomain: "TU_AUTH_DOMAIN_AQUI",
-            projectId: "TU_PROJECT_ID_AQUI",
-            storageBucket: "TU_STORAGE_BUCKET_AQUI",
-            messagingSenderId: "TU_MESSAGING_SENDER_ID_AQUI",
-            appId: "TU_APP_ID_AQUI"
+          apiKey: "AIzaSyCyEw28OeV_ddZDWU6R0MOzgM5yffD94EU",
+          authDomain: "sistema-cierres-caja.firebaseapp.com",
+          projectId: "sistema-cierres-caja",
+          storageBucket: "sistema-cierres-caja.firebasestorage.app",
+          messagingSenderId: "12629027824",
+          appId: "1:12629027824:web:07a5c3afe13c416bc40b35"
         };
 
         // Inicializar Firebase
@@ -842,9 +842,6 @@
                         skipEmptyLines: true,
                         complete: function(results) {
                             simplitData = results.data;
-                            console.log('📊 Datos Simplit cargados:', simplitData.length, 'registros');
-                            console.log('📋 Primer registro:', simplitData[0]);
-                            console.log('📋 Columnas detectadas:', Object.keys(simplitData[0] || {}));
                             mostrarStatusSimplit(simplitData.length);
                         }
                     });
@@ -860,25 +857,19 @@
                     const worksheet = workbook.Sheets[firstSheetName];
                     
                     simplitData = XLSX.utils.sheet_to_json(worksheet);
-                    console.log('📊 Datos Simplit cargados (Excel):', simplitData.length, 'registros');
-                    console.log('📋 Primer registro:', simplitData[0]);
-                    console.log('📋 Columnas detectadas:', Object.keys(simplitData[0] || {}));
                     mostrarStatusSimplit(simplitData.length);
                 };
                 reader.readAsArrayBuffer(file);
             }
         }
 
-        async function mostrarStatusSimplit(cantidad) {
+        function mostrarStatusSimplit(cantidad) {
             const status = document.getElementById('simplitStatus');
             status.className = 'alert alert-success';
-            status.textContent = `✅ ${cantidad} registros cargados de Simplit - Actualizando tabla...`;
+            status.textContent = `✅ ${cantidad} registros cargados de Simplit`;
             status.classList.remove('hidden');
             
-            // Recargar cierres y actualizar tabla con datos de Simplit
-            await cargarCierresDesdeFirebase();
-            
-            status.textContent = `✅ ${cantidad} registros cargados de Simplit - Tabla actualizada`;
+            cargarCierresDesdeFirebase();
             document.getElementById('exportBtn').disabled = false;
         }
 
@@ -945,13 +936,6 @@
                     
                     return fechaCoincide && (tiendaCoincideExacta || tiendaCoincideCodigo);
                 });
-
-                // Debug: mostrar en consola si encontró match
-                if (simplitRecord) {
-                    console.log(`✅ Match encontrado para ${cierre.tienda}:`, simplitRecord);
-                } else {
-                    console.log(`❌ No match para ${cierre.tienda} (${cierre.fecha})`);
-                }
 
                 const totalSimplit = simplitRecord ? parseFloat(simplitRecord.Total_Ventas || simplitRecord.total_ventas || 0) : 0;
                 const diferencia = cierre.total - totalSimplit;
