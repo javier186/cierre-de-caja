@@ -863,13 +863,21 @@
             }
         }
 
-        function mostrarStatusSimplit(cantidad) {
+        async function mostrarStatusSimplit(cantidad) {
             const status = document.getElementById('simplitStatus');
             status.className = 'alert alert-success';
-            status.textContent = `✅ ${cantidad} registros cargados de Simplit`;
+            status.textContent = `✅ ${cantidad} registros cargados de Simplit - Actualizando tabla...`;
             status.classList.remove('hidden');
             
-            cargarCierresDesdeFirebase();
+            // Agregar console.log para debugging
+            console.log('📊 Datos Simplit cargados:', cantidad, 'registros');
+            console.log('📋 Primer registro:', simplitData[0]);
+            console.log('📋 Columnas detectadas:', Object.keys(simplitData[0] || {}));
+            
+            // Esperar a que se actualice la tabla
+            await cargarCierresDesdeFirebase();
+            
+            status.textContent = `✅ ${cantidad} registros cargados de Simplit - Tabla actualizada`;
             document.getElementById('exportBtn').disabled = false;
         }
 
@@ -949,6 +957,14 @@
                     
                     return fechaCoincide && (tiendaCoincideExacta || tiendaCoincideCodigo);
                 });
+
+                // Debug logging
+                if (simplitRecord) {
+                    console.log(`✅ Match encontrado para ${cierre.tienda} (${cierre.fecha}):`, simplitRecord);
+                } else {
+                    console.log(`❌ No match para ${cierre.tienda} (${cierre.fecha})`);
+                    console.log('   Buscando en:', simplitData.map(s => `${s.Tienda || s.tienda} - ${s.Fecha || s.fecha}`));
+                }
 
                 const totalSimplit = simplitRecord ? parseFloat(simplitRecord.Total_Ventas || simplitRecord.total_ventas || 0) : 0;
                 const diferencia = cierre.total - totalSimplit;
