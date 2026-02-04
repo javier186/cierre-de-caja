@@ -1,0 +1,736 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>📊 Dashboard Supervisor - Cierre de Caja</title>
+    
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    
+    <!-- Librerías -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2em;
+            margin-bottom: 10px;
+        }
+
+        .status {
+            font-size: 0.9em;
+            opacity: 0.9;
+            margin-top: 10px;
+        }
+
+        .status.connected {
+            color: #90EE90;
+        }
+
+        .status.disconnected {
+            color: #FFB6C1;
+        }
+
+        .content {
+            padding: 30px;
+        }
+
+        .section {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 25px;
+            border: 2px solid #e9ecef;
+        }
+
+        .section-title {
+            font-size: 1.5em;
+            color: #667eea;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .alert {
+            padding: 15px 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .alert-success {
+            background: #d4edda;
+            color: #155724;
+            border-left: 4px solid #28a745;
+        }
+
+        .alert-info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border-left: 4px solid #17a2b8;
+        }
+
+        .alert-warning {
+            background: #fff3cd;
+            color: #856404;
+            border-left: 4px solid #ffc107;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .upload-area-simplit {
+            border: 3px dashed #667eea;
+            border-radius: 15px;
+            padding: 40px;
+            text-align: center;
+            background: white;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-bottom: 20px;
+        }
+
+        .upload-area-simplit:hover {
+            background: #f0f4ff;
+            border-color: #764ba2;
+        }
+
+        input[type="file"] {
+            display: none;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            background: white;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        th {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px;
+            text-align: left;
+            font-weight: 600;
+        }
+
+        td {
+            padding: 12px 15px;
+            border-bottom: 1px solid #dee2e6;
+        }
+
+        tr:hover {
+            background: #f8f9fa;
+        }
+
+        .status-ok {
+            background: #d4edda;
+            color: #155724;
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-weight: 600;
+        }
+
+        .status-error {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-weight: 600;
+        }
+
+        .status-pending {
+            background: #fff3cd;
+            color: #856404;
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-weight: 600;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 35px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 1.1em;
+            font-weight: bold;
+            transition: all 0.3s;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+            width: 100%;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+
+        .stat-card .label {
+            color: #6c757d;
+            font-size: 0.9em;
+            margin-bottom: 10px;
+        }
+
+        .stat-card .value {
+            font-size: 2em;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .footer {
+            text-align: center;
+            padding: 20px;
+            color: #6c757d;
+            font-size: 0.9em;
+            border-top: 1px solid #e9ecef;
+        }
+
+        @media (max-width: 768px) {
+            table {
+                font-size: 0.9em;
+            }
+            
+            th, td {
+                padding: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📊 Dashboard de Supervisor</h1>
+            <p>Sistema de Verificación de Cierres</p>
+            <div class="status" id="connectionStatus">🔴 Conectando...</div>
+        </div>
+
+        <div class="content">
+            <!-- ESTADÍSTICAS -->
+            <div class="section">
+                <div class="section-title">📈 Estadísticas del Día</div>
+                <div class="stats-grid" id="statsGrid">
+                    <div class="stat-card">
+                        <div class="label">Total Cierres</div>
+                        <div class="value" id="statTotal">0</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="label">✅ Cuadran</div>
+                        <div class="value" id="statCuadran" style="color: #28a745;">0</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="label">⚠️ Dif. Menor</div>
+                        <div class="value" id="statDifMenor" style="color: #ffc107;">0</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="label">❌ No Cuadran</div>
+                        <div class="value" id="statNoCuadran" style="color: #dc3545;">0</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- CARGAR SIMPLIT -->
+            <div class="section">
+                <div class="section-title">📊 Cargar Datos de Simplit</div>
+                <div class="alert alert-info">
+                    💡 Carga el archivo Excel (.xlsx) o CSV con los datos de Simplit<br>
+                    <strong>Columnas requeridas:</strong> Tienda, Fecha, Total_Ventas
+                </div>
+                <input type="file" id="simplitFile" accept=".csv,.xlsx,.xls">
+                <div class="upload-area-simplit" onclick="document.getElementById('simplitFile').click()">
+                    <div style="font-size: 3em; margin-bottom: 10px;">📁</div>
+                    <div style="font-size: 1.2em; font-weight: bold; margin-bottom: 5px;">
+                        Arrastra el archivo de Simplit aquí
+                    </div>
+                    <div style="color: #6c757d;">o haz clic para seleccionar</div>
+                </div>
+                <div id="simplitStatus" class="hidden"></div>
+            </div>
+
+            <!-- TABLA CONSOLIDADA -->
+            <div class="section">
+                <div class="section-title">📋 Tabla Consolidada</div>
+                <div class="alert alert-info">
+                    📡 Los datos se cargan automáticamente desde Firebase
+                </div>
+                <div id="consolidadoContainer">
+                    <div class="loading">
+                        <div class="spinner"></div>
+                        <p>Cargando cierres desde la base de datos...</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ACCIONES -->
+            <div class="section">
+                <button class="btn btn-success" id="exportBtn" disabled style="margin-bottom: 10px;">📥 Exportar a Excel</button>
+                <button class="btn btn-danger" id="clearDataBtn">🗑️ Limpiar Todos los Datos</button>
+            </div>
+        </div>
+
+        <div class="footer">
+            Dashboard de Supervisor · Acceso Restringido
+        </div>
+    </div>
+
+    <!-- Modal para visualizar imágenes -->
+    <div id="imageModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 10000; justify-content: center; align-items: center;">
+        <div style="position: relative; max-width: 90%; max-height: 90%; background: white; border-radius: 15px; padding: 20px;">
+            <button onclick="cerrarModal()" style="position: absolute; top: 10px; right: 10px; background: #dc3545; color: white; border: none; border-radius: 50%; width: 40px; height: 40px; font-size: 24px; cursor: pointer; z-index: 10001;">×</button>
+            <img id="modalImage" src="" style="max-width: 100%; max-height: 80vh; object-fit: contain; border-radius: 10px;">
+            <div style="text-align: center; margin-top: 15px;">
+                <button onclick="descargarImagen()" class="btn" style="width: auto; display: inline-block; margin-right: 10px;">📥 Descargar</button>
+                <button onclick="cerrarModal()" class="btn" style="width: auto; display: inline-block; background: #6c757d;">❌ Cerrar</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ===== CONFIGURACIÓN DE FIREBASE =====
+        const firebaseConfig = {
+            apiKey: "AIzaSyCyEw28OeV_ddZDWU6R0MOzgM5yffD94EU",
+            authDomain: "sistema-cierres-caja.firebaseapp.com",
+            projectId: "sistema-cierres-caja",
+            storageBucket: "sistema-cierres-caja.firebasestorage.app",
+            messagingSenderId: "12629027824",
+            appId: "1:12629027824:web:07a5c3afe13c416bc40b35"
+        };
+
+        // Inicializar Firebase
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+
+        // Verificar conexión
+        db.collection('cierres').limit(1).get()
+            .then(() => {
+                document.getElementById('connectionStatus').textContent = '🟢 Conectado';
+                document.getElementById('connectionStatus').className = 'status connected';
+            })
+            .catch((error) => {
+                document.getElementById('connectionStatus').textContent = '🔴 Error de conexión';
+                document.getElementById('connectionStatus').className = 'status disconnected';
+                console.error('Error:', error);
+            });
+
+        // Variables globales
+        let simplitData = [];
+
+        // ===== FUNCIONES PARA MODAL DE IMÁGENES =====
+        let imagenActual = '';
+
+        function abrirModal(imagenUrl) {
+            imagenActual = imagenUrl;
+            document.getElementById('modalImage').src = imagenUrl;
+            document.getElementById('imageModal').style.display = 'flex';
+        }
+
+        function cerrarModal() {
+            document.getElementById('imageModal').style.display = 'none';
+        }
+
+        function descargarImagen() {
+            const a = document.createElement('a');
+            a.href = imagenActual;
+            a.download = `cierre_${Date.now()}.jpg`;
+            a.click();
+        }
+
+        // Cerrar modal con ESC
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') cerrarModal();
+        });
+
+        // ===== CARGAR CIERRES DESDE FIREBASE =====
+        async function cargarCierresDesdeFirebase() {
+            try {
+                const snapshot = await db.collection('cierres').orderBy('timestamp', 'desc').get();
+                const cierres = [];
+                
+                snapshot.forEach(doc => {
+                    cierres.push({
+                        id: doc.id,
+                        ...doc.data()
+                    });
+                });
+
+                actualizarTablaConsolidado(cierres);
+                actualizarEstadisticas(cierres);
+            } catch (error) {
+                console.error('Error al cargar cierres:', error);
+                document.getElementById('consolidadoContainer').innerHTML = 
+                    '<div class="alert alert-warning">⚠️ Error al cargar datos</div>';
+            }
+        }
+
+        // ===== MANEJO DE ARCHIVO SIMPLIT =====
+        document.getElementById('simplitFile').addEventListener('change', handleSimplitFile);
+
+        function handleSimplitFile(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const extension = file.name.split('.').pop().toLowerCase();
+
+            if (extension === 'csv') {
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    Papa.parse(event.target.result, {
+                        header: true,
+                        skipEmptyLines: true,
+                        complete: function(results) {
+                            simplitData = results.data;
+                            console.log('📊 CSV cargado:', simplitData.length, 'registros');
+                            mostrarStatusSimplit(simplitData.length);
+                        }
+                    });
+                };
+                reader.readAsText(file);
+            } else if (extension === 'xlsx' || extension === 'xls') {
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    const data = new Uint8Array(event.target.result);
+                    const workbook = XLSX.read(data, { type: 'array' });
+                    const firstSheetName = workbook.SheetNames[0];
+                    const worksheet = workbook.Sheets[firstSheetName];
+                    simplitData = XLSX.utils.sheet_to_json(worksheet);
+                    console.log('📊 Excel cargado:', simplitData.length, 'registros');
+                    console.log('📋 Columnas:', Object.keys(simplitData[0] || {}));
+                    mostrarStatusSimplit(simplitData.length);
+                };
+                reader.readAsArrayBuffer(file);
+            }
+        }
+
+        async function mostrarStatusSimplit(cantidad) {
+            const status = document.getElementById('simplitStatus');
+            status.className = 'alert alert-success';
+            status.textContent = `✅ ${cantidad} registros cargados - Actualizando...`;
+            status.classList.remove('hidden');
+            
+            await cargarCierresDesdeFirebase();
+            
+            status.textContent = `✅ ${cantidad} registros cargados - Tabla actualizada`;
+            document.getElementById('exportBtn').disabled = false;
+        }
+
+        // ===== ACTUALIZAR TABLA CONSOLIDADO =====
+        function actualizarTablaConsolidado(cierres) {
+            const container = document.getElementById('consolidadoContainer');
+
+            if (cierres.length === 0) {
+                container.innerHTML = '<div class="alert alert-info">📭 No hay cierres registrados</div>';
+                return;
+            }
+
+            if (simplitData.length === 0) {
+                container.innerHTML = generarTablaSinSimplit(cierres);
+            } else {
+                container.innerHTML = generarTablaConSimplit(cierres);
+            }
+        }
+
+        function generarTablaSinSimplit(cierres) {
+            let html = '<table><thead><tr>';
+            html += '<th>Tienda</th><th>Fecha</th><th>Crédito</th><th>Débito</th><th>Pago Móvil</th><th>Total</th><th>Foto</th>';
+            html += '</tr></thead><tbody>';
+
+            cierres.forEach(cierre => {
+                html += '<tr>';
+                html += `<td>${cierre.tienda}</td>`;
+                html += `<td>${cierre.fecha}</td>`;
+                html += `<td>Bs ${cierre.credito.toFixed(2)}</td>`;
+                html += `<td>Bs ${cierre.debito.toFixed(2)}</td>`;
+                html += `<td>Bs ${cierre.pagoMovil.toFixed(2)}</td>`;
+                html += `<td><strong>Bs ${cierre.total.toFixed(2)}</strong></td>`;
+                html += `<td><button onclick="abrirModal('${cierre.imagen}')" style="background: #667eea; color: white; border: none; padding: 8px 16px; border-radius: 5px; cursor: pointer;">Ver 📷</button></td>`;
+                html += '</tr>';
+            });
+
+            html += '</tbody></table>';
+            return html;
+        }
+
+        function generarTablaConSimplit(cierres) {
+            let html = '<table><thead><tr>';
+            html += '<th>Tienda</th><th>Fecha</th><th>Crédito</th><th>Débito</th><th>Pago Móvil</th>';
+            html += '<th>Total Cierre</th><th>Total Simplit</th><th>Diferencia</th><th>Estado</th><th>Foto</th>';
+            html += '</tr></thead><tbody>';
+
+            cierres.forEach(cierre => {
+                const simplitRecord = simplitData.find(s => {
+                    const tiendaSimplit = (s.Tienda || s.tienda || '').trim();
+                    const tiendaCierre = cierre.tienda.trim();
+                    const fechaSimplit = (s.Fecha || s.fecha || '').trim();
+                    const fechaCierre = cierre.fecha.trim();
+                    
+                    const fechaCoincide = fechaSimplit.includes(fechaCierre) || 
+                                         fechaCierre.includes(fechaSimplit) ||
+                                         fechaSimplit === fechaCierre;
+                    
+                    const tiendaCoincideExacta = tiendaSimplit.toLowerCase() === tiendaCierre.toLowerCase();
+                    
+                    const codigoTiendaCierre = tiendaCierre.match(/^\d+/);
+                    const codigoTiendaSimplit = tiendaSimplit.match(/^\d+/);
+                    const tiendaCoincideCodigo = codigoTiendaCierre && codigoTiendaSimplit && 
+                                                  codigoTiendaCierre[0] === codigoTiendaSimplit[0];
+                    
+                    return fechaCoincide && (tiendaCoincideExacta || tiendaCoincideCodigo);
+                });
+
+                if (simplitRecord) {
+                    console.log(`✅ Match: ${cierre.tienda}`);
+                } else {
+                    console.log(`❌ No match: ${cierre.tienda} (${cierre.fecha})`);
+                }
+
+                const totalSimplit = simplitRecord ? parseFloat(simplitRecord.Total_Ventas || simplitRecord.total_ventas || 0) : 0;
+                const diferencia = cierre.total - totalSimplit;
+                const estado = Math.abs(diferencia) <= 1 ? 'ok' : (Math.abs(diferencia) <= 10 ? 'pending' : 'error');
+
+                html += '<tr>';
+                html += `<td>${cierre.tienda}</td>`;
+                html += `<td>${cierre.fecha}</td>`;
+                html += `<td>Bs ${cierre.credito.toFixed(2)}</td>`;
+                html += `<td>Bs ${cierre.debito.toFixed(2)}</td>`;
+                html += `<td>Bs ${cierre.pagoMovil.toFixed(2)}</td>`;
+                html += `<td><strong>Bs ${cierre.total.toFixed(2)}</strong></td>`;
+                html += `<td><strong>Bs ${totalSimplit.toFixed(2)}</strong></td>`;
+                html += `<td style="color: ${diferencia >= 0 ? '#28a745' : '#dc3545'}"><strong>${diferencia >= 0 ? '+' : ''}Bs ${diferencia.toFixed(2)}</strong></td>`;
+                
+                let estadoTexto = estado === 'ok' ? '✅ CUADRA' : (estado === 'pending' ? '⚠️ DIF. MENOR' : '❌ NO CUADRA');
+                html += `<td><span class="status-${estado}">${estadoTexto}</span></td>`;
+                html += `<td><button onclick="abrirModal('${cierre.imagen}')" style="background: #667eea; color: white; border: none; padding: 8px 16px; border-radius: 5px; cursor: pointer;">Ver 📷</button></td>`;
+                html += '</tr>';
+            });
+
+            html += '</tbody></table>';
+            return html;
+        }
+
+        // ===== ACTUALIZAR ESTADÍSTICAS =====
+        function actualizarEstadisticas(cierres) {
+            if (simplitData.length === 0) {
+                document.getElementById('statTotal').textContent = cierres.length;
+                document.getElementById('statCuadran').textContent = '-';
+                document.getElementById('statDifMenor').textContent = '-';
+                document.getElementById('statNoCuadran').textContent = '-';
+                return;
+            }
+
+            let cuadran = 0;
+            let difMenor = 0;
+            let noCuadran = 0;
+
+            cierres.forEach(cierre => {
+                const simplitRecord = simplitData.find(s => {
+                    const tiendaSimplit = (s.Tienda || s.tienda || '').trim();
+                    const tiendaCierre = cierre.tienda.trim();
+                    const fechaSimplit = (s.Fecha || s.fecha || '').trim();
+                    const fechaCierre = cierre.fecha.trim();
+                    
+                    const fechaCoincide = fechaSimplit.includes(fechaCierre) || fechaCierre.includes(fechaSimplit) || fechaSimplit === fechaCierre;
+                    const tiendaCoincideExacta = tiendaSimplit.toLowerCase() === tiendaCierre.toLowerCase();
+                    
+                    const codigoTiendaCierre = tiendaCierre.match(/^\d+/);
+                    const codigoTiendaSimplit = tiendaSimplit.match(/^\d+/);
+                    const tiendaCoincideCodigo = codigoTiendaCierre && codigoTiendaSimplit && codigoTiendaCierre[0] === codigoTiendaSimplit[0];
+                    
+                    return fechaCoincide && (tiendaCoincideExacta || tiendaCoincideCodigo);
+                });
+
+                const totalSimplit = simplitRecord ? parseFloat(simplitRecord.Total_Ventas || simplitRecord.total_ventas || 0) : 0;
+                const diferencia = Math.abs(cierre.total - totalSimplit);
+
+                if (diferencia <= 1) cuadran++;
+                else if (diferencia <= 10) difMenor++;
+                else noCuadran++;
+            });
+
+            document.getElementById('statTotal').textContent = cierres.length;
+            document.getElementById('statCuadran').textContent = cuadran;
+            document.getElementById('statDifMenor').textContent = difMenor;
+            document.getElementById('statNoCuadran').textContent = noCuadran;
+        }
+
+        // ===== EXPORTAR A EXCEL =====
+        document.getElementById('exportBtn').addEventListener('click', async () => {
+            try {
+                const snapshot = await db.collection('cierres').get();
+                const cierres = [];
+                
+                snapshot.forEach(doc => {
+                    cierres.push(doc.data());
+                });
+
+                const datos = [];
+                datos.push(['Tienda', 'Fecha', 'Crédito', 'Débito', 'Pago Móvil', 'Total Cierre', 'Total Simplit', 'Diferencia', 'Estado']);
+
+                cierres.forEach(cierre => {
+                    const simplitRecord = simplitData.find(s => {
+                        const tiendaSimplit = (s.Tienda || s.tienda || '').trim();
+                        const tiendaCierre = cierre.tienda.trim();
+                        const fechaSimplit = (s.Fecha || s.fecha || '').trim();
+                        const fechaCierre = cierre.fecha.trim();
+                        
+                        const fechaCoincide = fechaSimplit.includes(fechaCierre) || fechaCierre.includes(fechaSimplit) || fechaSimplit === fechaCierre;
+                        const tiendaCoincideExacta = tiendaSimplit.toLowerCase() === tiendaCierre.toLowerCase();
+                        
+                        const codigoTiendaCierre = tiendaCierre.match(/^\d+/);
+                        const codigoTiendaSimplit = tiendaSimplit.match(/^\d+/);
+                        const tiendaCoincideCodigo = codigoTiendaCierre && codigoTiendaSimplit && codigoTiendaCierre[0] === codigoTiendaSimplit[0];
+                        
+                        return fechaCoincide && (tiendaCoincideExacta || tiendaCoincideCodigo);
+                    });
+
+                    const totalSimplit = simplitRecord ? parseFloat(simplitRecord.Total_Ventas || simplitRecord.total_ventas || 0) : 0;
+                    const diferencia = cierre.total - totalSimplit;
+                    const estado = Math.abs(diferencia) <= 1 ? 'CUADRA' : (Math.abs(diferencia) <= 10 ? 'DIF_MENOR' : 'NO_CUADRA');
+
+                    datos.push([
+                        cierre.tienda,
+                        cierre.fecha,
+                        cierre.credito,
+                        cierre.debito,
+                        cierre.pagoMovil,
+                        cierre.total,
+                        totalSimplit,
+                        diferencia,
+                        estado
+                    ]);
+                });
+
+                const wb = XLSX.utils.book_new();
+                const ws = XLSX.utils.aoa_to_sheet(datos);
+                ws['!cols'] = [
+                    { wch: 25 }, { wch: 12 }, { wch: 12 }, { wch: 12 }, { wch: 12 },
+                    { wch: 14 }, { wch: 14 }, { wch: 12 }, { wch: 12 }
+                ];
+
+                XLSX.utils.book_append_sheet(wb, ws, 'Consolidado');
+                const fecha = new Date().toISOString().split('T')[0];
+                XLSX.writeFile(wb, `Consolidado_Cierres_${fecha}.xlsx`);
+            } catch (error) {
+                console.error('Error al exportar:', error);
+                alert('Error al exportar: ' + error.message);
+            }
+        });
+
+        // ===== LIMPIAR DATOS =====
+        document.getElementById('clearDataBtn').addEventListener('click', async () => {
+            if (!confirm('¿ESTÁS SEGURO de eliminar TODOS los cierres?\n\nEsta acción NO se puede deshacer.')) {
+                return;
+            }
+
+            if (!confirm('CONFIRMA NUEVAMENTE:\n¿Eliminar todos los datos de la base de datos?')) {
+                return;
+            }
+
+            try {
+                const snapshot = await db.collection('cierres').get();
+                const batch = db.batch();
+                
+                snapshot.docs.forEach(doc => {
+                    batch.delete(doc.ref);
+                });
+                
+                await batch.commit();
+                alert('✅ Todos los datos han sido eliminados');
+                cargarCierresDesdeFirebase();
+            } catch (error) {
+                console.error('Error al eliminar:', error);
+                alert('Error: ' + error.message);
+            }
+        });
+
+        // Cargar cierres al inicio
+        cargarCierresDesdeFirebase();
+    </script>
+</body>
+</html>
