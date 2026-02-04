@@ -32,31 +32,39 @@ const auth = firebase.auth();
 const db = firebase.firestore();
 
 async function login() {
-  const email = email.value;
-  const password = password.value;
+  const email = document.getElementById("email").value;
+  const password = document.getElementById("password").value;
+
+  if (!email || !password) {
+    alert("Coloca correo y contraseña");
+    return;
+  }
 
   try {
     const cred = await auth.signInWithEmailAndPassword(email, password);
-    const uid = cred.user.uid;
 
+    const uid = cred.user.uid;
     const userDoc = await db.collection("usuarios").doc(uid).get();
+
     if (!userDoc.exists) {
       alert("Usuario sin permisos");
+      await auth.signOut();
       return;
     }
 
-    const data = userDoc.data();
+    const rol = userDoc.data().rol;
 
-    if (data.rol === "admin") {
+    if (rol === "admin") {
       window.location.href = "supervisor-dashboard.html";
-    } else if (data.rol === "tienda") {
+    } else if (rol === "tienda") {
       window.location.href = "registro-tienda.html";
     } else {
       alert("Rol no válido");
+      await auth.signOut();
     }
 
-  } catch (e) {
-    alert("Error: " + e.message);
+  } catch (error) {
+    alert("Error: " + error.message);
   }
 }
 </script>
