@@ -7,6 +7,7 @@
     
     <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
     
     <style>
@@ -278,11 +279,36 @@
             color: #6c757d;
             font-size: 0.9em;
         }
+
+        .logout-btn {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: 2px solid white;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s;
+            font-size: 0.9em;
+        }
+
+        .logout-btn:hover {
+            background: white;
+            color: #667eea;
+        }
+
+        .header {
+            position: relative;
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
+            <button class="logout-btn" onclick="cerrarSesion()">🚪 Salir</button>
             <h1>🏪 Registro de Cierre de Caja</h1>
             <p>Sistema para Tiendas</p>
             <div class="status" id="connectionStatus">🔴 Conectando...</div>
@@ -396,27 +422,6 @@
     </div>
 
     <script>
-        
-        firebase.auth().onAuthStateChanged(async (user) => {
-          if (!user) {
-            window.location.href = "login.html";
-            return;
-          }
-
-          const doc = await db.collection("usuarios").doc(user.uid).get();
-          if (!doc.exists || doc.data().rol !== "tienda") {
-            alert("Acceso no autorizado");
-            window.location.href = "login.html";
-            return;
-          }
-
-          // Auto seleccionar tienda
-          const tiendaUsuario = doc.data().tienda;
-          document.getElementById("tiendaSelect").value = tiendaUsuario;
-          document.getElementById("tiendaSelect").disabled = true;
-        });
-
-        
         // ===== CONFIGURACIÓN DE FIREBASE =====
         const firebaseConfig = {
             apiKey: "AIzaSyCyEw28OeV_ddZDWU6R0MOzgM5yffD94EU",
@@ -429,7 +434,51 @@
 
         // Inicializar Firebase
         firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
         const db = firebase.firestore();
+
+        // ===== PROTECCIÓN DE RUTA =====
+        auth.onAuthStateChanged(async (user) => {
+            if (!user) {
+                console.log('❌ No hay usuario autenticado, redirigiendo a login...');
+                window.location.href = "login.html";
+                return;
+            }
+
+            try {
+                const userDoc = await db.collection("usuarios").doc(user.uid).get();
+                if (!userDoc.exists) {
+                    console.log('❌ Usuario no tiene documento en Firestore');
+                    alert("Usuario sin permisos asignados");
+                    await auth.signOut();
+                    window.location.href = "login.html";
+                    return;
+                }
+
+                const rol = userDoc.data().rol;
+                if (rol !== "tienda") {
+                    console.log('❌ Usuario no es tienda:', rol);
+                    alert("Este acceso es solo para tiendas");
+                    await auth.signOut();
+                    window.location.href = "login.html";
+                    return;
+                }
+
+                console.log('✅ Usuario tienda autenticado:', user.email);
+
+                // Auto-seleccionar tienda del usuario
+                const tiendaUsuario = userDoc.data().tienda;
+                if (tiendaUsuario) {
+                    document.getElementById("tiendaSelect").value = tiendaUsuario;
+                    document.getElementById("tiendaSelect").disabled = true;
+                    console.log('✅ Tienda auto-seleccionada:', tiendaUsuario);
+                }
+            } catch (error) {
+                console.error('❌ Error verificando permisos:', error);
+                alert("Error verificando permisos");
+                window.location.href = "login.html";
+            }
+        });
 
         // Verificar conexión
         db.collection('cierres').limit(1).get()
@@ -685,6 +734,20 @@
             document.getElementById('previewArea').innerHTML = '';
             calcularTotal();
             validarFormulario();
+        }
+
+        // ===== CERRAR SESIÓN =====
+        async function cerrarSesion() {
+            if (confirm('¿Deseas cerrar sesión?')) {
+                try {
+                    await auth.signOut();
+                    console.log('✅ Sesión cerrada');
+                    window.location.href = 'login.html';
+                } catch (error) {
+                    console.error('Error al cerrar sesión:', error);
+                    alert('Error al cerrar sesión');
+                }
+            }
         }
     </script>
 </body>
