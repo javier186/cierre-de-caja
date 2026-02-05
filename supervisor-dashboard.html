@@ -415,10 +415,15 @@
         const db = firebase.firestore();
 
         // ===== PROTECCIÓN DE RUTA =====
+        let authCheckComplete = false; // Bandera para evitar múltiples redirects
+        
         auth.onAuthStateChanged(async (user) => {
+            if (authCheckComplete) return; // Evitar re-ejecuciones
+            
             if (!user) {
                 console.log('❌ No hay usuario autenticado, redirigiendo a login...');
-                window.location.href = "login.html";
+                authCheckComplete = true;
+                window.location.replace("login.html");
                 return;
             }
 
@@ -428,7 +433,8 @@
                     console.log('❌ Usuario no tiene documento en Firestore');
                     alert("Usuario sin permisos asignados");
                     await auth.signOut();
-                    window.location.href = "login.html";
+                    authCheckComplete = true;
+                    window.location.replace("login.html");
                     return;
                 }
 
@@ -437,47 +443,31 @@
                     console.log('❌ Usuario no es admin/supervisor:', rol);
                     alert("Solo administradores pueden acceder al dashboard");
                     await auth.signOut();
-                    window.location.href = "login.html";
+                    authCheckComplete = true;
+                    window.location.replace("login.html");
                     return;
                 }
 
                 console.log('✅ Usuario autenticado:', user.email, '| Rol:', rol);
+                authCheckComplete = true; // Marcar como completado
+                
             } catch (error) {
                 console.error('❌ Error verificando permisos:', error);
-                alert("Error verificando permisos");
-                window.location.href = "login.html";
+                alert("Error verificando permisos: " + error.message);
+                authCheckComplete = true;
+                window.location.replace("login.html");
             }
         });
 
 
-        // Verificar conexión
-        firebase.auth().onAuthStateChanged(async (user) => {
-  if (!user) {
-    window.location.href = "login.html";
-    return;
-  }
-
-  try {
-    const userDoc = await db.collection("usuarios").doc(user.uid).get();
-    if (!userDoc.exists || userDoc.data().rol !== "tienda") {
-      alert("Acceso no autorizado");
-      window.location.href = "login.html";
-      return;
-    }
-
-    // Auto asignar tienda
-    const tiendaUsuario = userDoc.data().tienda;
-    document.getElementById("tiendaSelect").value = tiendaUsuario;
-    document.getElementById("tiendaSelect").disabled = true;
-
-    document.getElementById('connectionStatus').textContent = '🟢 Conectado';
-    document.getElementById('connectionStatus').className = 'status connected';
-
-  } catch (e) {
-    console.error(e);
-    document.getElementById('connectionStatus').textContent = '🔴 Error';
-  }
-});
+        // Verificar conexión a Firestore
+        db.collection('cierres').limit(1).get()
+            .then(() => {
+                console.log('✅ Conexión a Firestore exitosa');
+            })
+            .catch((error) => {
+                console.error('❌ Error de conexión a Firestore:', error);
+            });
 
 
         // Variables globales
