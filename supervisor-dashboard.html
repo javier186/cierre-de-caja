@@ -463,22 +463,35 @@
         // ===== CARGAR CIERRES DESDE FIREBASE =====
         async function cargarCierresDesdeFirebase() {
             try {
-                const snapshot = await db.collection('cierres').orderBy('timestamp', 'desc').get();
+                console.log('🔄 Cargando cierres desde Firebase...');
+                
+                // Quitar orderBy para evitar problemas de índice
+                const snapshot = await db.collection('cierres').get();
                 const cierres = [];
                 
                 snapshot.forEach(doc => {
+                    const data = doc.data();
                     cierres.push({
                         id: doc.id,
-                        ...doc.data()
+                        ...data
                     });
+                });
+
+                console.log(`✅ ${cierres.length} cierres cargados`);
+
+                // Ordenar por fecha localmente
+                cierres.sort((a, b) => {
+                    if (a.fecha > b.fecha) return -1;
+                    if (a.fecha < b.fecha) return 1;
+                    return 0;
                 });
 
                 actualizarTablaConsolidado(cierres);
                 actualizarEstadisticas(cierres);
             } catch (error) {
-                console.error('Error al cargar cierres:', error);
+                console.error('❌ Error al cargar cierres:', error);
                 document.getElementById('consolidadoContainer').innerHTML = 
-                    '<div class="alert alert-warning">⚠️ Error al cargar datos</div>';
+                    `<div class="alert alert-warning">⚠️ Error al cargar datos: ${error.message}</div>`;
             }
         }
 
@@ -522,15 +535,24 @@
         }
 
         async function mostrarStatusSimplit(cantidad) {
+            console.log('📊 mostrarStatusSimplit llamado con:', cantidad, 'registros');
             const status = document.getElementById('simplitStatus');
             status.className = 'alert alert-success';
-            status.textContent = `✅ ${cantidad} registros cargados - Actualizando...`;
+            status.textContent = `✅ ${cantidad} registros cargados - Actualizando tabla...`;
             status.classList.remove('hidden');
             
-            await cargarCierresDesdeFirebase();
-            
-            status.textContent = `✅ ${cantidad} registros cargados - Tabla actualizada`;
-            document.getElementById('exportBtn').disabled = false;
+            try {
+                console.log('🔄 Llamando a cargarCierresDesdeFirebase...');
+                await cargarCierresDesdeFirebase();
+                console.log('✅ Tabla actualizada correctamente');
+                
+                status.textContent = `✅ ${cantidad} registros cargados - Tabla actualizada`;
+                document.getElementById('exportBtn').disabled = false;
+            } catch (error) {
+                console.error('❌ Error en mostrarStatusSimplit:', error);
+                status.className = 'alert alert-warning';
+                status.textContent = `⚠️ Error al actualizar: ${error.message}`;
+            }
         }
 
         // ===== ACTUALIZAR TABLA CONSOLIDADO =====
