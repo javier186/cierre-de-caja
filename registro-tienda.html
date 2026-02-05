@@ -438,10 +438,15 @@
         const db = firebase.firestore();
 
         // ===== PROTECCIÓN DE RUTA =====
+        let authCheckComplete = false; // Bandera para evitar múltiples redirects
+        
         auth.onAuthStateChanged(async (user) => {
+            if (authCheckComplete) return; // Evitar re-ejecuciones
+            
             if (!user) {
                 console.log('❌ No hay usuario autenticado, redirigiendo a login...');
-                window.location.href = "login.html";
+                authCheckComplete = true;
+                window.location.replace("login.html"); // replace en vez de href
                 return;
             }
 
@@ -451,7 +456,8 @@
                     console.log('❌ Usuario no tiene documento en Firestore');
                     alert("Usuario sin permisos asignados");
                     await auth.signOut();
-                    window.location.href = "login.html";
+                    authCheckComplete = true;
+                    window.location.replace("login.html");
                     return;
                 }
 
@@ -460,11 +466,13 @@
                     console.log('❌ Usuario no es tienda:', rol);
                     alert("Este acceso es solo para tiendas");
                     await auth.signOut();
-                    window.location.href = "login.html";
+                    authCheckComplete = true;
+                    window.location.replace("login.html");
                     return;
                 }
 
                 console.log('✅ Usuario tienda autenticado:', user.email);
+                authCheckComplete = true; // Marcar como completado
 
                 // Auto-seleccionar tienda del usuario
                 const tiendaUsuario = userDoc.data().tienda;
@@ -475,8 +483,9 @@
                 }
             } catch (error) {
                 console.error('❌ Error verificando permisos:', error);
-                alert("Error verificando permisos");
-                window.location.href = "login.html";
+                alert("Error verificando permisos: " + error.message);
+                authCheckComplete = true;
+                window.location.replace("login.html");
             }
         });
 
