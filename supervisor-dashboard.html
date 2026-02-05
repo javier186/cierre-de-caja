@@ -7,6 +7,7 @@
     
     <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
     
     <!-- Librerías -->
@@ -273,6 +274,30 @@
             border-top: 1px solid #e9ecef;
         }
 
+        .logout-btn {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: 2px solid white;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+
+        .logout-btn:hover {
+            background: white;
+            color: #667eea;
+        }
+
+        .header {
+            position: relative;
+        }
+
+
         @media (max-width: 768px) {
             table {
                 font-size: 0.9em;
@@ -287,6 +312,7 @@
 <body>
     <div class="container">
         <div class="header">
+            <button class="logout-btn" onclick="cerrarSesion()">🚪 Cerrar Sesión</button>
             <h1>📊 Dashboard de Supervisor</h1>
             <p>Sistema de Verificación de Cierres</p>
             <div class="status" id="connectionStatus">🔴 Conectando...</div>
@@ -373,21 +399,6 @@
     </div>
 
     <script>
-
-        firebase.auth().onAuthStateChanged(async (user) => {
-          if (!user) {
-            window.location.href = "login.html";
-            return;
-          }
-
-          const doc = await db.collection("usuarios").doc(user.uid).get();
-          if (!doc.exists || doc.data().rol !== "admin") {
-            alert("Solo administradores");
-            window.location.href = "login.html";
-          }
-        });
-
-        
         // ===== CONFIGURACIÓN DE FIREBASE =====
         const firebaseConfig = {
             apiKey: "AIzaSyCyEw28OeV_ddZDWU6R0MOzgM5yffD94EU",
@@ -400,7 +411,44 @@
 
         // Inicializar Firebase
         firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
         const db = firebase.firestore();
+
+        // ===== PROTECCIÓN DE RUTA =====
+        auth.onAuthStateChanged(async (user) => {
+            if (!user) {
+                console.log('❌ No hay usuario autenticado, redirigiendo a login...');
+                window.location.href = "login.html";
+                return;
+            }
+
+            try {
+                const userDoc = await db.collection("usuarios").doc(user.uid).get();
+                if (!userDoc.exists) {
+                    console.log('❌ Usuario no tiene documento en Firestore');
+                    alert("Usuario sin permisos asignados");
+                    await auth.signOut();
+                    window.location.href = "login.html";
+                    return;
+                }
+
+                const rol = userDoc.data().rol;
+                if (rol !== "admin" && rol !== "supervisor") {
+                    console.log('❌ Usuario no es admin/supervisor:', rol);
+                    alert("Solo administradores pueden acceder al dashboard");
+                    await auth.signOut();
+                    window.location.href = "login.html";
+                    return;
+                }
+
+                console.log('✅ Usuario autenticado:', user.email, '| Rol:', rol);
+            } catch (error) {
+                console.error('❌ Error verificando permisos:', error);
+                alert("Error verificando permisos");
+                window.location.href = "login.html";
+            }
+        });
+
 
         // Verificar conexión
         firebase.auth().onAuthStateChanged(async (user) => {
@@ -783,6 +831,20 @@
                 alert('Error: ' + error.message);
             }
         });
+
+        // ===== CERRAR SESIÓN =====
+        async function cerrarSesion() {
+            if (confirm('¿Deseas cerrar sesión?')) {
+                try {
+                    await auth.signOut();
+                    console.log('✅ Sesión cerrada');
+                    window.location.href = 'login.html';
+                } catch (error) {
+                    console.error('Error al cerrar sesión:', error);
+                    alert('Error al cerrar sesión');
+                }
+            }
+        }
 
         // Cargar cierres al inicio
         cargarCierresDesdeFirebase();
