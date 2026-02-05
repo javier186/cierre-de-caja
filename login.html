@@ -419,22 +419,15 @@
             }
         });
 
-        // Verificar si ya hay sesión activa
-        auth.onAuthStateChanged(async (user) => {
+        // ===== ELIMINADO EL AUTO-REDIRECT PROBLEMÁTICO =====
+        // Ya no redirigimos automáticamente si hay sesión activa
+        // Solo permitimos login manual para evitar bucles
+        
+        // Opcional: Cerrar sesión previa al cargar login
+        auth.onAuthStateChanged((user) => {
             if (user) {
-                try {
-                    const userDoc = await db.collection("usuarios").doc(user.uid).get();
-                    if (userDoc.exists) {
-                        const rol = userDoc.data().rol;
-                        if (rol === "admin" || rol === "supervisor") {
-                            window.location.href = "supervisor-dashboard.html";
-                        } else if (rol === "tienda") {
-                            window.location.href = "registro-tienda.html";
-                        }
-                    }
-                } catch (error) {
-                    console.error("Error verificando sesión:", error);
-                }
+                console.log('Sesión activa detectada. Cerrando para login limpio...');
+                auth.signOut();
             }
         });
     </script>
