@@ -276,10 +276,14 @@
             height: 100%;
             background: rgba(0,0,0,0.95);
             z-index: 1000;
-            display: flex;
+            display: none;
             flex-direction: column;
             justify-content: center;
             align-items: center;
+        }
+        
+        .camera-view.active {
+            display: flex;
         }
 
         #video {
@@ -410,7 +414,7 @@
     </div>
 
     <!-- Vista de cámara -->
-    <div id="cameraView" class="camera-view hidden">
+    <div id="cameraView" class="camera-view">
         <video id="video" autoplay playsinline></video>
         <canvas id="canvas"></canvas>
         <div class="camera-controls">
@@ -541,7 +545,7 @@
                     video: { facingMode: 'environment' } 
                 });
                 video.srcObject = stream;
-                cameraView.classList.remove('hidden');
+                cameraView.classList.add('active');
             } catch (error) {
                 alert('No se pudo acceder a la cámara. Por favor usa la opción de galería.');
             }
@@ -571,7 +575,7 @@
                 stream.getTracks().forEach(track => track.stop());
                 stream = null;
             }
-            cameraView.classList.add('hidden');
+            cameraView.classList.remove('active');
         }
 
         function handleFile(file) {
