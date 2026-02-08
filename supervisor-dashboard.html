@@ -143,6 +143,10 @@
             cursor: pointer;
             transition: all 0.3s;
             margin-bottom: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
         }
 
         .upload-area-simplit:hover {
@@ -351,19 +355,20 @@
             <div class="section">
                 <div class="section-title">📂 Cargar Archivo Simplit</div>
                 
-                <div id="simplitStatus" class="alert alert-info">
-                    ℹ️ Sube un archivo CSV o Excel de Simplit para comparar
+                <div class="upload-wrapper">
+
+                    <div id="simplitStatus" class="alert alert-info">
+                        ℹ️ Sube un archivo CSV o Excel de Simplit para comparar
+                    </div>
+
+                    <label for="simplitFile" class="upload-area-simplit">
+                        📊
+                        <strong>Selecciona archivo Simplit</strong>
+                        <small>CSV, XLSX, XLS</small>
+                    </label>
+
                 </div>
 
-                <label for="simplitFile" class="upload-area-simplit">
-                    <div style="font-size: 3em; margin-bottom: 10px;">📊</div>
-                    <div style="font-size: 1.2em; font-weight: bold; margin-bottom: 5px;">
-                        Selecciona archivo Simplit
-                    </div>
-                    <div style="color: #6c757d; font-size: 0.9em;">
-                        Formatos aceptados: CSV, XLSX, XLS
-                    </div>
-                </label>
                 <input type="file" id="simplitFile" accept=".csv,.xlsx,.xls">
             </div>
 
