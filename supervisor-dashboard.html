@@ -7,6 +7,7 @@
     
     <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
     
     <!-- Librerías -->
@@ -41,6 +42,7 @@
             color: white;
             padding: 30px;
             text-align: center;
+            position: relative;
         }
 
         .header h1 {
@@ -60,6 +62,24 @@
 
         .status.disconnected {
             color: #FFB6C1;
+        }
+
+        .logout-btn {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(255,255,255,0.2);
+            color: white;
+            border: 2px solid white;
+            padding: 8px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+
+        .logout-btn:hover {
+            background: rgba(255,255,255,0.3);
         }
 
         .content {
@@ -210,76 +230,87 @@
             transform: none;
         }
 
-        .btn-success {
-            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
-        }
-
         .btn-danger {
             background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
         }
 
-        .loading {
-            text-align: center;
-            padding: 40px;
-        }
-
-        .spinner {
-            border: 4px solid #f3f3f3;
-            border-top: 4px solid #667eea;
-            border-radius: 50%;
-            width: 40px;
-            height: 40px;
-            animation: spin 1s linear infinite;
-            margin: 0 auto 20px;
-        }
-
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
+        .btn-success {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
         }
 
         .stats-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 15px;
-            margin-bottom: 20px;
+            gap: 20px;
+            margin-bottom: 30px;
         }
 
         .stat-card {
             background: white;
+            border-radius: 12px;
             padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
             text-align: center;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            border: 2px solid #e9ecef;
+        }
+
+        .stat-card .number {
+            font-size: 2.5em;
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 5px;
         }
 
         .stat-card .label {
             color: #6c757d;
             font-size: 0.9em;
-            margin-bottom: 10px;
         }
 
-        .stat-card .value {
-            font-size: 2em;
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.9);
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            max-width: 90%;
+            max-height: 90%;
+        }
+
+        .modal-content img {
+            max-width: 100%;
+            max-height: 90vh;
+            border-radius: 10px;
+        }
+
+        .close-modal {
+            position: absolute;
+            top: 20px;
+            right: 40px;
+            color: white;
+            font-size: 40px;
             font-weight: bold;
-            color: #667eea;
-        }
-
-        .footer {
-            text-align: center;
-            padding: 20px;
-            color: #6c757d;
-            font-size: 0.9em;
-            border-top: 1px solid #e9ecef;
+            cursor: pointer;
         }
 
         @media (max-width: 768px) {
-            table {
-                font-size: 0.9em;
+            .stats-grid {
+                grid-template-columns: 1fr;
             }
-            
+
+            table {
+                font-size: 0.85em;
+            }
+
             th, td {
-                padding: 10px;
+                padding: 8px;
             }
         }
     </style>
@@ -287,107 +318,85 @@
 <body>
     <div class="container">
         <div class="header">
-            <h1>📊 Dashboard de Supervisor</h1>
-            <p>Sistema de Verificación de Cierres</p>
-            <div class="status" id="connectionStatus">🔴 Conectando...</div>
+            <button class="logout-btn" onclick="cerrarSesion()">🚪 Salir</button>
+            <h1>📊 Dashboard Supervisor</h1>
+            <div class="status" id="statusFirebase">🔄 Conectando...</div>
         </div>
 
         <div class="content">
-            <!-- ESTADÍSTICAS -->
+            <!-- Estadísticas -->
             <div class="section">
-                <div class="section-title">📈 Estadísticas del Día</div>
-                <div class="stats-grid" id="statsGrid">
+                <div class="section-title">📈 Estadísticas</div>
+                <div class="stats-grid">
                     <div class="stat-card">
+                        <div class="number" id="statTotal">0</div>
                         <div class="label">Total Cierres</div>
-                        <div class="value" id="statTotal">0</div>
                     </div>
                     <div class="stat-card">
+                        <div class="number" id="statCuadran" style="color: #28a745;">0</div>
                         <div class="label">✅ Cuadran</div>
-                        <div class="value" id="statCuadran" style="color: #28a745;">0</div>
                     </div>
                     <div class="stat-card">
+                        <div class="number" id="statDifMenor" style="color: #ffc107;">0</div>
                         <div class="label">⚠️ Dif. Menor</div>
-                        <div class="value" id="statDifMenor" style="color: #ffc107;">0</div>
                     </div>
                     <div class="stat-card">
+                        <div class="number" id="statNoCuadran" style="color: #dc3545;">0</div>
                         <div class="label">❌ No Cuadran</div>
-                        <div class="value" id="statNoCuadran" style="color: #dc3545;">0</div>
                     </div>
                 </div>
             </div>
 
-            <!-- CARGAR SIMPLIT -->
+            <!-- Cargar Simplit -->
             <div class="section">
-                <div class="section-title">📊 Cargar Datos de Simplit</div>
-                <div class="alert alert-info">
-                    💡 Carga el archivo Excel (.xlsx) o CSV con los datos de Simplit<br>
-                    <strong>Columnas requeridas:</strong> Tienda, Fecha, Total_Ventas
+                <div class="section-title">📂 Cargar Archivo Simplit</div>
+                
+                <div id="simplitStatus" class="alert alert-info">
+                    ℹ️ Sube un archivo CSV o Excel de Simplit para comparar
                 </div>
-                <input type="file" id="simplitFile" accept=".csv,.xlsx,.xls">
-                <div class="upload-area-simplit" onclick="document.getElementById('simplitFile').click()">
-                    <div style="font-size: 3em; margin-bottom: 10px;">📁</div>
+
+                <label for="simplitFile" class="upload-area-simplit">
+                    <div style="font-size: 3em; margin-bottom: 10px;">📊</div>
                     <div style="font-size: 1.2em; font-weight: bold; margin-bottom: 5px;">
-                        Arrastra el archivo de Simplit aquí
+                        Selecciona archivo Simplit
                     </div>
-                    <div style="color: #6c757d;">o haz clic para seleccionar</div>
-                </div>
-                <div id="simplitStatus" class="hidden"></div>
-            </div>
-
-            <!-- TABLA CONSOLIDADA -->
-            <div class="section">
-                <div class="section-title">📋 Tabla Consolidada</div>
-                <div class="alert alert-info">
-                    📡 Los datos se cargan automáticamente desde Firebase
-                </div>
-                <div id="consolidadoContainer">
-                    <div class="loading">
-                        <div class="spinner"></div>
-                        <p>Cargando cierres desde la base de datos...</p>
+                    <div style="color: #6c757d; font-size: 0.9em;">
+                        Formatos aceptados: CSV, XLSX, XLS
                     </div>
+                </label>
+                <input type="file" id="simplitFile" accept=".csv,.xlsx,.xls">
+            </div>
+
+            <!-- Tabla de Resultados -->
+            <div class="section">
+                <div class="section-title">📋 Cierres Registrados</div>
+                <div id="tablaResultados">
+                    <p style="text-align: center; color: #6c757d; padding: 40px;">
+                        🔄 Cargando datos...
+                    </p>
                 </div>
             </div>
 
-            <!-- ACCIONES -->
+            <!-- Acciones -->
             <div class="section">
-                <button class="btn btn-success" id="exportBtn" disabled style="margin-bottom: 10px;">📥 Exportar a Excel</button>
-                <button class="btn btn-danger" id="clearDataBtn">🗑️ Limpiar Todos los Datos</button>
+                <div class="section-title">⚙️ Acciones</div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                    <button class="btn btn-success" id="exportBtn">📥 Exportar a Excel</button>
+                    <button class="btn btn-danger" id="clearDataBtn">🗑️ Limpiar Todos los Datos</button>
+                </div>
             </div>
-        </div>
-
-        <div class="footer">
-            Dashboard de Supervisor · Acceso Restringido
         </div>
     </div>
 
-    <!-- Modal para visualizar imágenes -->
-    <div id="imageModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 10000; justify-content: center; align-items: center;">
-        <div style="position: relative; max-width: 90%; max-height: 90%; background: white; border-radius: 15px; padding: 20px;">
-            <button onclick="cerrarModal()" style="position: absolute; top: 10px; right: 10px; background: #dc3545; color: white; border: none; border-radius: 50%; width: 40px; height: 40px; font-size: 24px; cursor: pointer; z-index: 10001;">×</button>
-            <img id="modalImage" src="" style="max-width: 100%; max-height: 80vh; object-fit: contain; border-radius: 10px;">
-            <div style="text-align: center; margin-top: 15px;">
-                <button onclick="descargarImagen()" class="btn" style="width: auto; display: inline-block; margin-right: 10px;">📥 Descargar</button>
-                <button onclick="cerrarModal()" class="btn" style="width: auto; display: inline-block; background: #6c757d;">❌ Cerrar</button>
-            </div>
+    <!-- Modal para ver imágenes -->
+    <div id="imageModal" class="modal" onclick="cerrarModal()">
+        <span class="close-modal">&times;</span>
+        <div class="modal-content">
+            <img id="modalImage" src="" alt="Imagen del cierre">
         </div>
     </div>
 
     <script>
-
-        firebase.auth().onAuthStateChanged(async (user) => {
-          if (!user) {
-            window.location.href = "login.html";
-            return;
-          }
-
-          const doc = await db.collection("usuarios").doc(user.uid).get();
-          if (!doc.exists || doc.data().rol !== "admin") {
-            alert("Solo administradores");
-            window.location.href = "login.html";
-          }
-        });
-
-        
         // ===== CONFIGURACIÓN DE FIREBASE =====
         const firebaseConfig = {
             apiKey: "AIzaSyCyEw28OeV_ddZDWU6R0MOzgM5yffD94EU",
@@ -398,158 +407,119 @@
             appId: "1:12629027824:web:07a5c3afe13c416bc40b35"
         };
 
-        // Inicializar Firebase
         firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
         const db = firebase.firestore();
 
-        // Verificar conexión
-        firebase.auth().onAuthStateChanged(async (user) => {
-  if (!user) {
-    window.location.href = "login.html";
-    return;
-  }
-
-  try {
-    const userDoc = await db.collection("usuarios").doc(user.uid).get();
-    if (!userDoc.exists || userDoc.data().rol !== "tienda") {
-      alert("Acceso no autorizado");
-      window.location.href = "login.html";
-      return;
-    }
-
-    // Auto asignar tienda
-    const tiendaUsuario = userDoc.data().tienda;
-    document.getElementById("tiendaSelect").value = tiendaUsuario;
-    document.getElementById("tiendaSelect").disabled = true;
-
-    document.getElementById('connectionStatus').textContent = '🟢 Conectado';
-    document.getElementById('connectionStatus').className = 'status connected';
-
-  } catch (e) {
-    console.error(e);
-    document.getElementById('connectionStatus').textContent = '🔴 Error';
-  }
-});
-
-
-        // Variables globales
         let simplitData = [];
 
-        // ===== FUNCIONES PARA MODAL DE IMÁGENES =====
-        let imagenActual = '';
-
-        function abrirModal(imagenUrl) {
-            imagenActual = imagenUrl;
-            document.getElementById('modalImage').src = imagenUrl;
-            document.getElementById('imageModal').style.display = 'flex';
-        }
-
-        function cerrarModal() {
-            document.getElementById('imageModal').style.display = 'none';
-        }
-
-        function descargarImagen() {
-            const a = document.createElement('a');
-            a.href = imagenActual;
-            a.download = `cierre_${Date.now()}.jpg`;
-            a.click();
-        }
-
-        // Cerrar modal con ESC
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape') cerrarModal();
+        // ===== VERIFICAR AUTENTICACIÓN =====
+        auth.onAuthStateChanged((user) => {
+            if (!user) {
+                console.log("❌ Usuario no autenticado, redirigiendo a login...");
+                window.location.href = "login.html";
+                return;
+            }
+            
+            console.log("✅ Usuario autenticado:", user.email);
+            document.getElementById('statusFirebase').className = 'status connected';
+            document.getElementById('statusFirebase').textContent = '✅ Conectado - ' + user.email;
+            
+            // Cargar cierres
+            cargarCierresDesdeFirebase();
         });
 
-        // ===== CARGAR CIERRES DESDE FIREBASE =====
-        async function cargarCierresDesdeFirebase() {
-            try {
-                const snapshot = await db.collection('cierres').orderBy('timestamp', 'desc').get();
-                const cierres = [];
-                
-                snapshot.forEach(doc => {
-                    cierres.push({
-                        id: doc.id,
-                        ...doc.data()
-                    });
+        // ===== FUNCIÓN PARA CERRAR SESIÓN =====
+        function cerrarSesion() {
+            if (confirm('¿Estás seguro que deseas cerrar sesión?')) {
+                auth.signOut().then(() => {
+                    window.location.href = "login.html";
                 });
-
-                actualizarTablaConsolidado(cierres);
-                actualizarEstadisticas(cierres);
-            } catch (error) {
-                console.error('Error al cargar cierres:', error);
-                document.getElementById('consolidadoContainer').innerHTML = 
-                    '<div class="alert alert-warning">⚠️ Error al cargar datos</div>';
             }
         }
 
-        // ===== MANEJO DE ARCHIVO SIMPLIT =====
-        document.getElementById('simplitFile').addEventListener('change', handleSimplitFile);
-
-        function handleSimplitFile(e) {
+        // ===== CARGAR SIMPLIT =====
+        document.getElementById('simplitFile').addEventListener('change', (e) => {
             const file = e.target.files[0];
             if (!file) return;
 
             const extension = file.name.split('.').pop().toLowerCase();
 
             if (extension === 'csv') {
-                const reader = new FileReader();
-                reader.onload = function(event) {
-                    Papa.parse(event.target.result, {
-                        header: true,
-                        skipEmptyLines: true,
-                        complete: function(results) {
-                            simplitData = results.data;
-                            console.log('📊 CSV cargado:', simplitData.length, 'registros');
-                            mostrarStatusSimplit(simplitData.length);
-                        }
-                    });
-                };
-                reader.readAsText(file);
+                Papa.parse(file, {
+                    header: true,
+                    complete: (results) => {
+                        simplitData = results.data;
+                        console.log('✅ CSV cargado:', simplitData.length, 'registros');
+                        mostrarSimplitStatus(simplitData.length);
+                        cargarCierresDesdeFirebase();
+                    },
+                    error: (error) => {
+                        alert('Error al leer CSV: ' + error.message);
+                    }
+                });
             } else if (extension === 'xlsx' || extension === 'xls') {
                 const reader = new FileReader();
-                reader.onload = function(event) {
-                    const data = new Uint8Array(event.target.result);
-                    const workbook = XLSX.read(data, { type: 'array' });
-                    const firstSheetName = workbook.SheetNames[0];
-                    const worksheet = workbook.Sheets[firstSheetName];
-                    simplitData = XLSX.utils.sheet_to_json(worksheet);
-                    console.log('📊 Excel cargado:', simplitData.length, 'registros');
-                    console.log('📋 Columnas:', Object.keys(simplitData[0] || {}));
-                    mostrarStatusSimplit(simplitData.length);
+                reader.onload = (e) => {
+                    try {
+                        const data = new Uint8Array(e.target.result);
+                        const workbook = XLSX.read(data, { type: 'array' });
+                        const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+                        simplitData = XLSX.utils.sheet_to_json(firstSheet);
+                        console.log('✅ Excel cargado:', simplitData.length, 'registros');
+                        mostrarSimplitStatus(simplitData.length);
+                        cargarCierresDesdeFirebase();
+                    } catch (error) {
+                        alert('Error al leer Excel: ' + error.message);
+                    }
                 };
                 reader.readAsArrayBuffer(file);
             }
+        });
+
+        function mostrarSimplitStatus(cantidad) {
+            const statusDiv = document.getElementById('simplitStatus');
+            statusDiv.className = 'alert alert-success';
+            statusDiv.innerHTML = `✅ Archivo Simplit cargado: ${cantidad} registros`;
         }
 
-        async function mostrarStatusSimplit(cantidad) {
-            const status = document.getElementById('simplitStatus');
-            status.className = 'alert alert-success';
-            status.textContent = `✅ ${cantidad} registros cargados - Actualizando...`;
-            status.classList.remove('hidden');
-            
-            await cargarCierresDesdeFirebase();
-            
-            status.textContent = `✅ ${cantidad} registros cargados - Tabla actualizada`;
-            document.getElementById('exportBtn').disabled = false;
-        }
+        // ===== CARGAR CIERRES DESDE FIREBASE =====
+        async function cargarCierresDesdeFirebase() {
+            try {
+                const snapshot = await db.collection('cierres')
+                    .orderBy('timestamp', 'desc')
+                    .get();
 
-        // ===== ACTUALIZAR TABLA CONSOLIDADO =====
-        function actualizarTablaConsolidado(cierres) {
-            const container = document.getElementById('consolidadoContainer');
+                const cierres = [];
+                snapshot.forEach(doc => {
+                    cierres.push(doc.data());
+                });
 
-            if (cierres.length === 0) {
-                container.innerHTML = '<div class="alert alert-info">📭 No hay cierres registrados</div>';
-                return;
+                console.log('✅ Cierres cargados:', cierres.length);
+
+                if (simplitData.length > 0) {
+                    document.getElementById('tablaResultados').innerHTML = generarTablaConSimplit(cierres);
+                    actualizarEstadisticas(cierres);
+                } else {
+                    document.getElementById('tablaResultados').innerHTML = generarTablaSinSimplit(cierres);
+                    actualizarEstadisticas(cierres);
+                }
+            } catch (error) {
+                console.error('❌ Error al cargar cierres:', error);
+                document.getElementById('tablaResultados').innerHTML = `
+                    <div class="alert alert-error">
+                        ❌ Error al cargar datos: ${error.message}
+                    </div>
+                `;
             }
-
-            if (simplitData.length === 0) {
-                container.innerHTML = generarTablaSinSimplit(cierres);
-            } else {
-                container.innerHTML = generarTablaConSimplit(cierres);
-            }
         }
 
+        // ===== GENERAR TABLA SIN SIMPLIT =====
         function generarTablaSinSimplit(cierres) {
+            if (cierres.length === 0) {
+                return '<p style="text-align: center; color: #6c757d; padding: 40px;">No hay cierres registrados</p>';
+            }
+
             let html = '<table><thead><tr>';
             html += '<th>Tienda</th><th>Fecha</th><th>Crédito</th><th>Débito</th><th>Pago Móvil</th><th>Total</th><th>Foto</th>';
             html += '</tr></thead><tbody>';
@@ -596,12 +566,6 @@
                     
                     return fechaCoincide && (tiendaCoincideExacta || tiendaCoincideCodigo);
                 });
-
-                if (simplitRecord) {
-                    console.log(`✅ Match: ${cierre.tienda}`);
-                } else {
-                    console.log(`❌ No match: ${cierre.tienda} (${cierre.fecha})`);
-                }
 
                 const totalSimplit = simplitRecord ? parseFloat(simplitRecord.Total_Ventas || simplitRecord.total_ventas || 0) : 0;
                 const diferencia = cierre.total - totalSimplit;
@@ -670,6 +634,18 @@
             document.getElementById('statCuadran').textContent = cuadran;
             document.getElementById('statDifMenor').textContent = difMenor;
             document.getElementById('statNoCuadran').textContent = noCuadran;
+        }
+
+        // ===== MODAL DE IMAGEN =====
+        function abrirModal(imagenBase64) {
+            const modal = document.getElementById('imageModal');
+            const modalImg = document.getElementById('modalImage');
+            modal.style.display = 'flex';
+            modalImg.src = imagenBase64;
+        }
+
+        function cerrarModal() {
+            document.getElementById('imageModal').style.display = 'none';
         }
 
         // ===== EXPORTAR A EXCEL =====
@@ -761,9 +737,6 @@
                 alert('Error: ' + error.message);
             }
         });
-
-        // Cargar cierres al inicio
-        cargarCierresDesdeFirebase();
     </script>
 </body>
 </html>

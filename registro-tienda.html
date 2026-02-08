@@ -7,6 +7,7 @@
     
     <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
     
     <style>
@@ -37,6 +38,7 @@
             color: white;
             padding: 30px;
             text-align: center;
+            position: relative;
         }
 
         .header h1 {
@@ -56,6 +58,24 @@
 
         .status.disconnected {
             color: #FFB6C1;
+        }
+
+        .logout-btn {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(255,255,255,0.2);
+            color: white;
+            border: 2px solid white;
+            padding: 8px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+
+        .logout-btn:hover {
+            background: rgba(255,255,255,0.3);
         }
 
         .content {
@@ -244,22 +264,47 @@
             border-left: 4px solid #28a745;
         }
 
-        .alert-info {
-            background: #d1ecf1;
-            color: #0c5460;
-            border-left: 4px solid #17a2b8;
-        }
-
         .hidden {
             display: none;
         }
 
-        video {
+        .camera-view {
+            position: fixed;
+            top: 0;
+            left: 0;
             width: 100%;
-            max-width: 500px;
+            height: 100%;
+            background: rgba(0,0,0,0.95);
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        #video {
+            max-width: 90%;
+            max-height: 70vh;
             border-radius: 10px;
-            margin: 20px auto;
-            display: block;
+        }
+
+        .camera-controls {
+            margin-top: 20px;
+            display: flex;
+            gap: 15px;
+        }
+
+        .camera-controls button {
+            padding: 15px 30px;
+            font-size: 1.1em;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        #canvas {
+            display: none;
         }
 
         @media (max-width: 768px) {
@@ -270,153 +315,111 @@
             .photo-options {
                 grid-template-columns: 1fr;
             }
-        }
 
-        .footer {
-            text-align: center;
-            padding: 20px;
-            color: #6c757d;
-            font-size: 0.9em;
+            .total-display .value {
+                font-size: 2em;
+            }
         }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
+            <button class="logout-btn" onclick="cerrarSesion()">🚪 Salir</button>
             <h1>🏪 Registro de Cierre de Caja</h1>
-            <p>Sistema para Tiendas</p>
-            <div class="status" id="connectionStatus">🔴 Conectando...</div>
+            <div class="status" id="statusFirebase">🔄 Conectando...</div>
         </div>
 
         <div class="content">
-            <!-- INFORMACIÓN DE TIENDA -->
+            <div id="successMsg" class="alert alert-success hidden">
+                ✅ ¡Cierre guardado exitosamente!
+            </div>
+
             <div class="section">
-                <div class="section-title">🏬 Información de la Tienda</div>
+                <div class="section-title">📝 Datos del Cierre</div>
+                
                 <div class="input-group">
-                    <label>Selecciona tu Tienda:</label>
+                    <label for="tiendaSelect">🏬 Selecciona la Tienda</label>
                     <select id="tiendaSelect">
-                        <option value="">-- Selecciona tu tienda --</option>
-                        <option value="4 IBM">4 IBM</option>
-                        <option value="17 Leti Guarenas">17 Leti Guarenas</option>
-                        <option value="172 Leti Guarenas p.2">172 Leti Guarenas p.2</option>
-                        <option value="172 Leti Guarenas p.4">172 Leti Guarenas p.4</option>
-                        <option value="44 Parmalat">44 Parmalat</option>
-                        <option value="045 Dronena">045 Dronena</option>
-                        <option value="046 Provincial">046 Provincial</option>
-                        <option value="047 Simple tv">047 Simple tv</option>
-                        <option value="048 Leti Caracas piso 13">048 Leti Caracas piso 13</option>
-                        <option value="049 Cocacola">049 Cocacola</option>
-                        <option value="050 Dronena BQTO">050 Dronena BQTO</option>
-                        <option value="051 Latin Pagos">051 Latin Pagos</option>
-                        <option value="052 Bnci">052 Bnci</option>
-                        <option value="053 Leti Caracas piso 2">053 Leti Caracas piso 2</option>
-                        <option value="054 Simple cdt">054 Simple cdt</option>
-                        <option value="056 PWC">056 PWC</option>
-                        <option value="057 Plumrose">057 Plumrose</option>
-                        <option value="058 Seguro Venezuela">058 Seguro Venezuela</option>
-                        <option value="059 Rontarca">059 Rontarca</option>
-                        <option value="062 BNC Rosal">062 BNC Rosal</option>
+                        <option value="">-- Selecciona una tienda --</option>
+                        <option value="001 CC CIUDAD TAMANACO">001 CC CIUDAD TAMANACO</option>
+                        <option value="002 CC SAN IGNACIO">002 CC SAN IGNACIO</option>
+                        <option value="003 CC TOLÓN">003 CC TOLÓN</option>
+                        <option value="004 CC SAMBIL">004 CC SAMBIL</option>
+                        <option value="005 CC LA VELA">005 CC LA VELA</option>
+                        <option value="006 CC VALLE ARRIBA">006 CC VALLE ARRIBA</option>
+                        <option value="007 CC LAS AMERICAS">007 CC LAS AMERICAS</option>
                     </select>
                 </div>
+
                 <div class="input-group">
-                    <label>Fecha del Cierre:</label>
+                    <label for="fechaCierre">📅 Fecha del Cierre</label>
                     <input type="date" id="fechaCierre">
                 </div>
             </div>
 
-            <!-- MONTOS DEL CIERRE -->
             <div class="section">
-                <div class="section-title">💰 Montos del Cierre</div>
+                <div class="section-title">💳 Montos de Venta</div>
+                
                 <div class="three-columns">
                     <div class="input-group">
-                        <label>Crédito (Bs):</label>
-                        <input type="number" id="montoCredito" placeholder="0.00" step="0.01" value="0">
+                        <label for="montoCredito">💳 Crédito</label>
+                        <input type="number" id="montoCredito" step="0.01" value="0" min="0">
                     </div>
+
                     <div class="input-group">
-                        <label>Débito (Bs):</label>
-                        <input type="number" id="montoDebito" placeholder="0.00" step="0.01" value="0">
+                        <label for="montoDebito">💳 Débito</label>
+                        <input type="number" id="montoDebito" step="0.01" value="0" min="0">
                     </div>
+
                     <div class="input-group">
-                        <label>Pago Móvil (Bs):</label>
-                        <input type="number" id="pagoMovil" placeholder="0.00" step="0.01" value="0">
+                        <label for="pagoMovil">📱 Pago Móvil</label>
+                        <input type="number" id="pagoMovil" step="0.01" value="0" min="0">
                     </div>
                 </div>
 
                 <div class="total-display">
-                    <div class="label">TOTAL CALCULADO</div>
+                    <div class="label">TOTAL DEL CIERRE</div>
                     <div class="value" id="totalCalculado">Bs 0.00</div>
                 </div>
             </div>
 
-            <!-- FOTO DEL CIERRE -->
             <div class="section">
-                <div class="section-title">📸 Foto del Cierre de Caja</div>
-                <div class="alert alert-info">
-                    💡 Toma una foto clara del ticket de cierre de caja
-                </div>
+                <div class="section-title">📷 Foto del Cierre</div>
                 
                 <div class="photo-options">
                     <div class="photo-btn" id="takePictureBtn">
-                        <div class="icon">📷</div>
-                        <div style="font-weight: 600; color: #667eea;">Tomar Foto</div>
+                        <div class="icon">📸</div>
+                        <div>Tomar Foto</div>
                     </div>
-                    <div class="photo-btn" onclick="document.getElementById('galleryFile').click()">
+
+                    <label for="galleryFile" class="photo-btn">
                         <div class="icon">🖼️</div>
-                        <div style="font-weight: 600; color: #667eea;">Galería</div>
-                    </div>
+                        <div>Seleccionar de Galería</div>
+                    </label>
                 </div>
 
                 <input type="file" id="galleryFile" accept="image/*">
                 <input type="file" id="cameraCapture" accept="image/*" capture="environment">
 
-                <div id="cameraView" class="hidden">
-                    <video id="video" autoplay playsinline></video>
-                    <canvas id="canvas" style="display: none;"></canvas>
-                    <div style="text-align: center; margin-top: 20px;">
-                        <button class="btn btn-success" id="captureBtn" style="width: auto; display: inline-block; margin-right: 10px;">📸 Capturar</button>
-                        <button class="btn" id="closeCameraBtn" style="width: auto; display: inline-block; background: #dc3545;">❌ Cerrar</button>
-                    </div>
-                </div>
-
-                <div class="preview-area" id="previewArea"></div>
+                <div id="previewArea" class="preview-area"></div>
             </div>
 
-            <!-- BOTÓN GUARDAR -->
-            <div class="section">
-                <button class="btn" id="guardarBtn" disabled>💾 Guardar Cierre</button>
-                <div class="alert alert-success hidden" id="successMsg">
-                    ✅ Cierre guardado exitosamente en la base de datos
-                </div>
-            </div>
+            <button class="btn btn-success" id="guardarBtn" disabled>💾 Guardar Cierre</button>
         </div>
+    </div>
 
-        <div class="footer">
-            Sistema de Registro de Cierres · Solo para uso de Tiendas
+    <!-- Vista de cámara -->
+    <div id="cameraView" class="camera-view hidden">
+        <video id="video" autoplay playsinline></video>
+        <canvas id="canvas"></canvas>
+        <div class="camera-controls">
+            <button id="captureBtn" style="background: #28a745; color: white;">📸 Capturar</button>
+            <button id="closeCameraBtn" style="background: #dc3545; color: white;">❌ Cerrar</button>
         </div>
     </div>
 
     <script>
-        
-        firebase.auth().onAuthStateChanged(async (user) => {
-          if (!user) {
-            window.location.href = "login.html";
-            return;
-          }
-
-          const doc = await db.collection("usuarios").doc(user.uid).get();
-          if (!doc.exists || doc.data().rol !== "tienda") {
-            alert("Acceso no autorizado");
-            window.location.href = "login.html";
-            return;
-          }
-
-          // Auto seleccionar tienda
-          const tiendaUsuario = doc.data().tienda;
-          document.getElementById("tiendaSelect").value = tiendaUsuario;
-          document.getElementById("tiendaSelect").disabled = true;
-        });
-
-        
         // ===== CONFIGURACIÓN DE FIREBASE =====
         const firebaseConfig = {
             apiKey: "AIzaSyCyEw28OeV_ddZDWU6R0MOzgM5yffD94EU",
@@ -427,30 +430,40 @@
             appId: "1:12629027824:web:07a5c3afe13c416bc40b35"
         };
 
-        // Inicializar Firebase
         firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
         const db = firebase.firestore();
 
-        // Verificar conexión
-        db.collection('cierres').limit(1).get()
-            .then(() => {
-                document.getElementById('connectionStatus').textContent = '🟢 Conectado';
-                document.getElementById('connectionStatus').className = 'status connected';
-            })
-            .catch((error) => {
-                document.getElementById('connectionStatus').textContent = '🔴 Error de conexión';
-                document.getElementById('connectionStatus').className = 'status disconnected';
-                console.error('Error de conexión:', error);
-            });
-
-        // Variables globales
         let uploadedImage = null;
         let stream = null;
 
-        // Configurar fecha actual
-        document.getElementById('fechaCierre').valueAsDate = new Date();
+        // ===== VERIFICAR AUTENTICACIÓN =====
+        auth.onAuthStateChanged((user) => {
+            if (!user) {
+                console.log("❌ Usuario no autenticado, redirigiendo a login...");
+                window.location.href = "login.html";
+                return;
+            }
+            
+            console.log("✅ Usuario autenticado:", user.email);
+            document.getElementById('statusFirebase').className = 'status connected';
+            document.getElementById('statusFirebase').textContent = '✅ Conectado - ' + user.email;
+            
+            // Establecer fecha de hoy por defecto
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('fechaCierre').value = today;
+        });
 
-        // ===== FUNCIÓN PARA COMPRIMIR IMÁGENES =====
+        // ===== FUNCIÓN PARA CERRAR SESIÓN =====
+        function cerrarSesion() {
+            if (confirm('¿Estás seguro que deseas cerrar sesión?')) {
+                auth.signOut().then(() => {
+                    window.location.href = "login.html";
+                });
+            }
+        }
+
+        // ===== COMPRIMIR IMAGEN =====
         async function comprimirImagen(file, maxWidth = 1200, quality = 0.7) {
             return new Promise((resolve) => {
                 const reader = new FileReader();
@@ -632,7 +645,9 @@
                     total,
                     imagen: imagenComprimida,
                     timestamp: firebase.firestore.FieldValue.serverTimestamp(),
-                    verificado: false
+                    verificado: false,
+                    usuarioId: auth.currentUser.uid,
+                    usuarioEmail: auth.currentUser.email
                 };
 
                 // Buscar si ya existe un cierre para esta tienda y fecha
@@ -669,7 +684,7 @@
                 limpiarFormulario();
 
             } catch (error) {
-                console.error('Error al guardar:', error);
+                console.error('❌ Error al guardar:', error);
                 alert('Error al guardar en la base de datos: ' + error.message);
             }
 

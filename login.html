@@ -349,11 +349,13 @@
                 const cred = await auth.signInWithEmailAndPassword(email, password);
                 const uid = cred.user.uid;
 
+                console.log("✅ Usuario autenticado:", uid);
+
                 // Verificar rol en Firestore
                 const userDoc = await db.collection("usuarios").doc(uid).get();
 
                 if (!userDoc.exists) {
-                    showAlert("Usuario sin permisos asignados");
+                    showAlert("Usuario sin permisos asignados. Contacta al administrador.");
                     await auth.signOut();
                     setLoading(false);
                     return;
@@ -361,6 +363,8 @@
 
                 const userData = userDoc.data();
                 const rol = userData.rol;
+
+                console.log("✅ Rol del usuario:", rol);
 
                 // Mostrar mensaje de éxito
                 showAlert(`¡Bienvenido! Redirigiendo...`, 'success');
@@ -379,7 +383,7 @@
                 }, 1000);
 
             } catch (error) {
-                console.error("Error de login:", error);
+                console.error("❌ Error de login:", error);
                 setLoading(false);
                 
                 // Mensajes de error personalizados
@@ -404,6 +408,9 @@
                     case 'auth/network-request-failed':
                         errorMessage = "Error de conexión. Verifica tu internet";
                         break;
+                    case 'permission-denied':
+                        errorMessage = "Error de permisos en Firebase. Verifica las reglas de Firestore";
+                        break;
                     default:
                         errorMessage = error.message;
                 }
@@ -419,14 +426,10 @@
             }
         });
 
-        // ===== ELIMINADO EL AUTO-REDIRECT PROBLEMÁTICO =====
-        // Ya no redirigimos automáticamente si hay sesión activa
-        // Solo permitimos login manual para evitar bucles
-        
-        // Opcional: Cerrar sesión previa al cargar login
+        // Cerrar sesión previa al cargar login para evitar bucles
         auth.onAuthStateChanged((user) => {
             if (user) {
-                console.log('Sesión activa detectada. Cerrando para login limpio...');
+                console.log('⚠️ Sesión activa detectada. Cerrando para login limpio...');
                 auth.signOut();
             }
         });
