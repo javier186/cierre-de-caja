@@ -7,7 +7,6 @@
     
     <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
     
     <!-- Librerías -->
@@ -274,30 +273,6 @@
             border-top: 1px solid #e9ecef;
         }
 
-        .logout-btn {
-            position: absolute;
-            top: 20px;
-            right: 20px;
-            background: rgba(255, 255, 255, 0.2);
-            color: white;
-            border: 2px solid white;
-            padding: 10px 20px;
-            border-radius: 8px;
-            cursor: pointer;
-            font-weight: bold;
-            transition: all 0.3s;
-        }
-
-        .logout-btn:hover {
-            background: white;
-            color: #667eea;
-        }
-
-        .header {
-            position: relative;
-        }
-
-
         @media (max-width: 768px) {
             table {
                 font-size: 0.9em;
@@ -312,7 +287,6 @@
 <body>
     <div class="container">
         <div class="header">
-            <button class="logout-btn" onclick="cerrarSesion()">🚪 Cerrar Sesión</button>
             <h1>📊 Dashboard de Supervisor</h1>
             <p>Sistema de Verificación de Cierres</p>
             <div class="status" id="connectionStatus">🔴 Conectando...</div>
@@ -399,6 +373,21 @@
     </div>
 
     <script>
+
+        firebase.auth().onAuthStateChanged(async (user) => {
+          if (!user) {
+            window.location.href = "login.html";
+            return;
+          }
+
+          const doc = await db.collection("usuarios").doc(user.uid).get();
+          if (!doc.exists || doc.data().rol !== "admin") {
+            alert("Solo administradores");
+            window.location.href = "login.html";
+          }
+        });
+
+        
         // ===== CONFIGURACIÓN DE FIREBASE =====
         const firebaseConfig = {
             apiKey: "AIzaSyCyEw28OeV_ddZDWU6R0MOzgM5yffD94EU",
@@ -411,63 +400,36 @@
 
         // Inicializar Firebase
         firebase.initializeApp(firebaseConfig);
-        const auth = firebase.auth();
         const db = firebase.firestore();
 
-        // ===== PROTECCIÓN DE RUTA =====
-        let authCheckComplete = false; // Bandera para evitar múltiples redirects
-        
-        auth.onAuthStateChanged(async (user) => {
-            if (authCheckComplete) return; // Evitar re-ejecuciones
-            
-            if (!user) {
-                console.log('❌ No hay usuario autenticado, redirigiendo a login...');
-                authCheckComplete = true;
-                window.location.replace("login.html");
-                return;
-            }
+        // Verificar conexión
+        firebase.auth().onAuthStateChanged(async (user) => {
+  if (!user) {
+    window.location.href = "login.html";
+    return;
+  }
 
-            try {
-                const userDoc = await db.collection("usuarios").doc(user.uid).get();
-                if (!userDoc.exists) {
-                    console.log('❌ Usuario no tiene documento en Firestore');
-                    alert("Usuario sin permisos asignados");
-                    await auth.signOut();
-                    authCheckComplete = true;
-                    window.location.replace("login.html");
-                    return;
-                }
+  try {
+    const userDoc = await db.collection("usuarios").doc(user.uid).get();
+    if (!userDoc.exists || userDoc.data().rol !== "tienda") {
+      alert("Acceso no autorizado");
+      window.location.href = "login.html";
+      return;
+    }
 
-                const rol = userDoc.data().rol;
-                if (rol !== "admin" && rol !== "supervisor") {
-                    console.log('❌ Usuario no es admin/supervisor:', rol);
-                    alert("Solo administradores pueden acceder al dashboard");
-                    await auth.signOut();
-                    authCheckComplete = true;
-                    window.location.replace("login.html");
-                    return;
-                }
+    // Auto asignar tienda
+    const tiendaUsuario = userDoc.data().tienda;
+    document.getElementById("tiendaSelect").value = tiendaUsuario;
+    document.getElementById("tiendaSelect").disabled = true;
 
-                console.log('✅ Usuario autenticado:', user.email, '| Rol:', rol);
-                authCheckComplete = true; // Marcar como completado
-                
-            } catch (error) {
-                console.error('❌ Error verificando permisos:', error);
-                alert("Error verificando permisos: " + error.message);
-                authCheckComplete = true;
-                window.location.replace("login.html");
-            }
-        });
+    document.getElementById('connectionStatus').textContent = '🟢 Conectado';
+    document.getElementById('connectionStatus').className = 'status connected';
 
-
-        // Verificar conexión a Firestore
-        db.collection('cierres').limit(1).get()
-            .then(() => {
-                console.log('✅ Conexión a Firestore exitosa');
-            })
-            .catch((error) => {
-                console.error('❌ Error de conexión a Firestore:', error);
-            });
+  } catch (e) {
+    console.error(e);
+    document.getElementById('connectionStatus').textContent = '🔴 Error';
+  }
+});
 
 
         // Variables globales
@@ -501,35 +463,22 @@
         // ===== CARGAR CIERRES DESDE FIREBASE =====
         async function cargarCierresDesdeFirebase() {
             try {
-                console.log('🔄 Cargando cierres desde Firebase...');
-                
-                // Quitar orderBy para evitar problemas de índice
-                const snapshot = await db.collection('cierres').get();
+                const snapshot = await db.collection('cierres').orderBy('timestamp', 'desc').get();
                 const cierres = [];
                 
                 snapshot.forEach(doc => {
-                    const data = doc.data();
                     cierres.push({
                         id: doc.id,
-                        ...data
+                        ...doc.data()
                     });
-                });
-
-                console.log(`✅ ${cierres.length} cierres cargados`);
-
-                // Ordenar por fecha localmente
-                cierres.sort((a, b) => {
-                    if (a.fecha > b.fecha) return -1;
-                    if (a.fecha < b.fecha) return 1;
-                    return 0;
                 });
 
                 actualizarTablaConsolidado(cierres);
                 actualizarEstadisticas(cierres);
             } catch (error) {
-                console.error('❌ Error al cargar cierres:', error);
+                console.error('Error al cargar cierres:', error);
                 document.getElementById('consolidadoContainer').innerHTML = 
-                    `<div class="alert alert-warning">⚠️ Error al cargar datos: ${error.message}</div>`;
+                    '<div class="alert alert-warning">⚠️ Error al cargar datos</div>';
             }
         }
 
@@ -573,24 +522,15 @@
         }
 
         async function mostrarStatusSimplit(cantidad) {
-            console.log('📊 mostrarStatusSimplit llamado con:', cantidad, 'registros');
             const status = document.getElementById('simplitStatus');
             status.className = 'alert alert-success';
-            status.textContent = `✅ ${cantidad} registros cargados - Actualizando tabla...`;
+            status.textContent = `✅ ${cantidad} registros cargados - Actualizando...`;
             status.classList.remove('hidden');
             
-            try {
-                console.log('🔄 Llamando a cargarCierresDesdeFirebase...');
-                await cargarCierresDesdeFirebase();
-                console.log('✅ Tabla actualizada correctamente');
-                
-                status.textContent = `✅ ${cantidad} registros cargados - Tabla actualizada`;
-                document.getElementById('exportBtn').disabled = false;
-            } catch (error) {
-                console.error('❌ Error en mostrarStatusSimplit:', error);
-                status.className = 'alert alert-warning';
-                status.textContent = `⚠️ Error al actualizar: ${error.message}`;
-            }
+            await cargarCierresDesdeFirebase();
+            
+            status.textContent = `✅ ${cantidad} registros cargados - Tabla actualizada`;
+            document.getElementById('exportBtn').disabled = false;
         }
 
         // ===== ACTUALIZAR TABLA CONSOLIDADO =====
@@ -821,20 +761,6 @@
                 alert('Error: ' + error.message);
             }
         });
-
-        // ===== CERRAR SESIÓN =====
-        async function cerrarSesion() {
-            if (confirm('¿Deseas cerrar sesión?')) {
-                try {
-                    await auth.signOut();
-                    console.log('✅ Sesión cerrada');
-                    window.location.href = 'login.html';
-                } catch (error) {
-                    console.error('Error al cerrar sesión:', error);
-                    alert('Error al cerrar sesión');
-                }
-            }
-        }
 
         // Cargar cierres al inicio
         cargarCierresDesdeFirebase();
