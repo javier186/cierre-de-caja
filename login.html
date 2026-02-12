@@ -8,6 +8,7 @@
     <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
     
     <style>
         :root {
@@ -154,6 +155,45 @@
             background: var(--white);
         }
 
+        .alert {
+            display: none;
+            padding: 12px 16px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            font-size: 0.88em;
+            font-weight: 500;
+            animation: slideDown 0.3s ease;
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .alert-error {
+            background: #FFE8E8;
+            color: #D32F2F;
+            border-left: 4px solid #D32F2F;
+        }
+
+        .alert-success {
+            background: #E8F5E9;
+            color: #2E7D32;
+            border-left: 4px solid #2E7D32;
+        }
+
+        .alert-warning {
+            background: #FFF3E0;
+            color: #F57C00;
+            border-left: 4px solid #F57C00;
+        }
+
         .input-group {
             margin-bottom: 16px;
             position: relative;
@@ -239,46 +279,43 @@
             transform: translateY(-50%) scale(1.1);
         }
 
-        .role-selector {
-            background: var(--light-blue);
-            border: 2px solid #D1E7EB;
-            border-radius: 10px;
-            padding: 14px;
-            margin-bottom: 16px;
-        }
-
-        .role-selector label {
-            display: block;
-            margin-bottom: 7px;
-            font-weight: 600;
-            color: var(--text-dark);
-            font-size: 0.88em;
-        }
-
         .btn {
-            background: linear-gradient(135deg, var(--primary-orange) 0%, #FFA500 100%);
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, var(--primary-blue) 0%, var(--dark-blue) 100%);
             color: var(--white);
             border: none;
-            padding: 13px;
             border-radius: 10px;
-            cursor: pointer;
             font-size: 1em;
             font-weight: 600;
-            width: 100%;
+            cursor: pointer;
             transition: all 0.3s ease;
-            box-shadow: 0 4px 16px rgba(255, 140, 66, 0.3);
-            margin-top: 6px;
-            letter-spacing: 0.5px;
-            text-transform: uppercase;
+            position: relative;
+            overflow: hidden;
+            margin-top: 8px;
         }
 
-        .btn:hover:not(:disabled) {
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.5s;
+        }
+
+        .btn:hover::before {
+            left: 100%;
+        }
+
+        .btn:hover {
             transform: translateY(-2px);
-            box-shadow: 0 8px 24px rgba(255, 140, 66, 0.4);
-            background: linear-gradient(135deg, #FFA500 0%, var(--primary-orange) 100%);
+            box-shadow: 0 8px 20px rgba(0, 107, 125, 0.3);
         }
 
-        .btn:active:not(:disabled) {
+        .btn:active {
             transform: translateY(0);
         }
 
@@ -288,82 +325,34 @@
             transform: none;
         }
 
-        .alert {
-            padding: 12px 16px;
-            border-radius: 8px;
-            margin-bottom: 16px;
-            display: none;
-            animation: fadeIn 0.3s;
-            font-size: 0.88em;
-            font-weight: 500;
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(-10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        .alert-error {
-            background: #FFE8E8;
-            color: #C62828;
-            border-left: 4px solid #C62828;
-        }
-
-        .alert-success {
-            background: #E8F5E9;
-            color: #2E7D32;
-            border-left: 4px solid #2E7D32;
-        }
-
-        .login-footer {
-            text-align: center;
-            padding: 14px;
-            background: #F8FAFB;
-            color: var(--text-light);
-            font-size: 0.82em;
-            border-top: 1px solid #E8ECED;
-        }
-
-        .loading-spinner {
-            display: none;
-            width: 22px;
-            height: 22px;
-            border: 3px solid rgba(255, 255, 255, 0.3);
-            border-top: 3px solid var(--white);
-            border-radius: 50%;
-            animation: spin 0.8s linear infinite;
-            margin: 0 auto;
-        }
-
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-
         .btn-content {
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 12px;
+            gap: 10px;
         }
 
-        @media (max-width: 500px) {
-            .login-header {
-                padding: 40px 25px 30px;
-            }
+        .loading-spinner {
+            display: none;
+            width: 18px;
+            height: 18px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-top-color: var(--white);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
 
-            .login-body {
-                padding: 35px 25px;
-            }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
 
-            .login-header h1 {
-                font-size: 1.6em;
-            }
-
-            .logo-container {
-                width: 70px;
-                height: 70px;
-            }
+        .login-footer {
+            background: #F8F9FA;
+            padding: 14px;
+            text-align: center;
+            font-size: 0.82em;
+            color: var(--text-light);
+            border-top: 1px solid #E9ECEF;
         }
 
         /* Efecto de focus en los campos */
@@ -470,6 +459,7 @@
         // Inicializar Firebase
         firebase.initializeApp(firebaseConfig);
         const auth = firebase.auth();
+        const db = firebase.firestore();
 
         // ===== FUNCIONES AUXILIARES =====
         function showAlert(message, type = 'error') {
@@ -508,15 +498,15 @@
             }
         }
 
-        // ===== FUNCIÓN DE LOGIN =====
+        // ===== FUNCIÓN DE LOGIN CON VALIDACIÓN DE ROL =====
         async function login(event) {
             event.preventDefault();
             
             const email = document.getElementById("email").value.trim();
             const password = document.getElementById("password").value;
-            const rol = document.getElementById("roleSelect").value;
+            const rolSeleccionado = document.getElementById("roleSelect").value;
 
-            if (!email || !password || !rol) {
+            if (!email || !password || !rolSeleccionado) {
                 showAlert("Por favor completa todos los campos");
                 return;
             }
@@ -524,21 +514,66 @@
             setLoading(true);
 
             try {
-                // Intentar iniciar sesión
+                // 1️⃣ PASO 1: Autenticar con Firebase Auth
                 const cred = await auth.signInWithEmailAndPassword(email, password);
                 const uid = cred.user.uid;
 
                 console.log("✅ Usuario autenticado:", uid);
-                console.log("👤 Rol seleccionado:", rol);
+                console.log("👤 Rol seleccionado:", rolSeleccionado);
 
-                // Mostrar mensaje de éxito
+                // 2️⃣ PASO 2: Obtener el rol real del usuario desde Firestore
+                const userDoc = await db.collection('usuarios').doc(uid).get();
+
+                if (!userDoc.exists) {
+                    // Si el usuario no existe en Firestore, creamos un registro básico
+                    console.warn("⚠️ Usuario no encontrado en Firestore, creando registro...");
+                    
+                    // Crear documento de usuario en Firestore
+                    await db.collection('usuarios').doc(uid).set({
+                        email: email,
+                        rol: rolSeleccionado,
+                        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                    
+                    // Continuar con el login
+                    showAlert(`¡Bienvenido! Redirigiendo...`, 'success');
+                    setTimeout(() => {
+                        if (rolSeleccionado === "admin") {
+                            window.location.href = "supervisor-dashboard.html";
+                        } else if (rolSeleccionado === "tienda") {
+                            window.location.href = "registro-tienda.html";
+                        }
+                    }, 1000);
+                    return;
+                }
+
+                const userData = userDoc.data();
+                const rolReal = userData.rol;
+
+                console.log("🔍 Rol real del usuario en BD:", rolReal);
+
+                // 3️⃣ PASO 3: Validar que el rol seleccionado coincida con el rol real
+                if (rolReal !== rolSeleccionado) {
+                    // ❌ El rol seleccionado NO coincide con el rol del usuario
+                    await auth.signOut(); // Cerrar sesión inmediatamente
+                    setLoading(false);
+                    
+                    showAlert(
+                        `❌ Acceso denegado. Tu cuenta es de tipo "${rolReal === 'admin' ? 'Administrador' : 'Tienda'}". Por favor selecciona el rol correcto.`,
+                        'error'
+                    );
+                    return;
+                }
+
+                // ✅ PASO 4: El rol coincide, permitir acceso
+                console.log("✅ Rol validado correctamente");
                 showAlert(`¡Bienvenido! Redirigiendo...`, 'success');
 
-                // Redirigir según rol seleccionado
+                // Redirigir según rol validado
                 setTimeout(() => {
-                    if (rol === "admin") {
+                    if (rolReal === "admin") {
                         window.location.href = "supervisor-dashboard.html";
-                    } else if (rol === "tienda") {
+                    } else if (rolReal === "tienda") {
                         window.location.href = "registro-tienda.html";
                     }
                 }, 1000);
