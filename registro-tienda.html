@@ -11,6 +11,17 @@
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
     
     <style>
+        :root {
+            --primary-blue: #006B7D;
+            --primary-orange: #FF8C42;
+            --dark-blue: #004A5A;
+            --light-blue: #E8F4F6;
+            --text-dark: #2C3E50;
+            --text-light: #7F8C8D;
+            --white: #FFFFFF;
+            --shadow: rgba(0, 107, 125, 0.15);
+        }
+
         * {
             margin: 0;
             padding: 0;
@@ -18,32 +29,81 @@
         }
 
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: 'Segoe UI', 'Roboto', 'Helvetica Neue', sans-serif;
+            background: linear-gradient(135deg, var(--primary-blue) 0%, var(--dark-blue) 100%);
             min-height: 100vh;
             padding: 20px;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        /* Decoración de fondo */
+        body::before {
+            content: '';
+            position: absolute;
+            width: 500px;
+            height: 500px;
+            background: radial-gradient(circle, rgba(255, 140, 66, 0.1) 0%, transparent 70%);
+            border-radius: 50%;
+            top: -200px;
+            right: -200px;
+            animation: pulse 8s ease-in-out infinite;
+            pointer-events: none;
+        }
+
+        body::after {
+            content: '';
+            position: absolute;
+            width: 400px;
+            height: 400px;
+            background: radial-gradient(circle, rgba(255, 140, 66, 0.08) 0%, transparent 70%);
+            border-radius: 50%;
+            bottom: -150px;
+            left: -150px;
+            animation: pulse 6s ease-in-out infinite reverse;
+            pointer-events: none;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); opacity: 0.5; }
+            50% { transform: scale(1.1); opacity: 0.8; }
         }
 
         .container {
             max-width: 800px;
             margin: 0 auto;
-            background: white;
-            border-radius: 20px;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            background: var(--white);
+            border-radius: 24px;
+            box-shadow: 0 30px 80px rgba(0, 0, 0, 0.3);
             overflow: hidden;
+            position: relative;
+            z-index: 1;
         }
 
         .header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
+            background: linear-gradient(135deg, var(--primary-blue) 0%, var(--dark-blue) 100%);
+            color: var(--white);
             padding: 30px;
             text-align: center;
             position: relative;
+            overflow: hidden;
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, var(--primary-orange) 0%, #FFA500 100%);
         }
 
         .header h1 {
             font-size: 2em;
             margin-bottom: 10px;
+            font-weight: 600;
+            letter-spacing: -0.5px;
         }
 
         .status {
@@ -65,17 +125,20 @@
             top: 20px;
             right: 20px;
             background: rgba(255,255,255,0.2);
-            color: white;
-            border: 2px solid white;
-            padding: 8px 16px;
-            border-radius: 8px;
+            color: var(--white);
+            border: 2px solid var(--white);
+            padding: 10px 20px;
+            border-radius: 10px;
             cursor: pointer;
-            font-weight: bold;
+            font-weight: 600;
             transition: all 0.3s;
+            font-size: 0.95em;
         }
 
         .logout-btn:hover {
             background: rgba(255,255,255,0.3);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
         }
 
         .content {
@@ -83,20 +146,26 @@
         }
 
         .section {
-            background: #f8f9fa;
+            background: var(--light-blue);
             border-radius: 15px;
             padding: 25px;
             margin-bottom: 25px;
-            border: 2px solid #e9ecef;
+            border: 2px solid #D0E8EC;
+            transition: all 0.3s;
+        }
+
+        .section:hover {
+            box-shadow: 0 4px 12px var(--shadow);
         }
 
         .section-title {
             font-size: 1.5em;
-            color: #667eea;
+            color: var(--primary-blue);
             margin-bottom: 20px;
             display: flex;
             align-items: center;
             gap: 10px;
+            font-weight: 600;
         }
 
         .input-group {
@@ -107,22 +176,24 @@
             display: block;
             margin-bottom: 8px;
             font-weight: 600;
-            color: #495057;
+            color: var(--text-dark);
+            font-size: 0.95em;
         }
 
         .input-group input, .input-group select {
             width: 100%;
-            padding: 12px;
-            border: 2px solid #dee2e6;
-            border-radius: 8px;
+            padding: 12px 16px;
+            border: 2px solid #D0E8EC;
+            border-radius: 10px;
             font-size: 1em;
             transition: all 0.3s;
+            font-family: inherit;
         }
 
         .input-group input:focus, .input-group select:focus {
             outline: none;
-            border-color: #667eea;
-            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+            border-color: var(--primary-blue);
+            box-shadow: 0 0 0 4px rgba(0, 107, 125, 0.1);
         }
 
         .three-columns {
@@ -132,18 +203,19 @@
         }
 
         .total-display {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 20px;
-            border-radius: 10px;
+            background: linear-gradient(135deg, var(--primary-blue) 0%, var(--dark-blue) 100%);
+            color: var(--white);
+            padding: 25px;
+            border-radius: 12px;
             text-align: center;
             margin: 20px 0;
+            box-shadow: 0 4px 15px var(--shadow);
         }
 
         .total-display .label {
             font-size: 0.9em;
             opacity: 0.9;
-            margin-bottom: 5px;
+            margin-bottom: 8px;
         }
 
         .total-display .value {
@@ -152,22 +224,41 @@
         }
 
         .btn {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
+            background: linear-gradient(135deg, var(--primary-blue) 0%, var(--dark-blue) 100%);
+            color: var(--white);
             border: none;
             padding: 15px 35px;
             border-radius: 10px;
             cursor: pointer;
             font-size: 1.1em;
-            font-weight: bold;
+            font-weight: 600;
             transition: all 0.3s;
-            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+            box-shadow: 0 4px 15px var(--shadow);
             width: 100%;
+        }
+
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.5s;
         }
 
         .btn:hover {
             transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+            box-shadow: 0 6px 20px var(--shadow);
+        }
+
+        .btn:hover::before {
+            left: 100%;
+        }
+
+        .btn:active {
+            transform: translateY(0);
         }
 
         .btn:disabled {
@@ -177,7 +268,8 @@
         }
 
         .btn-success {
-            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            background: linear-gradient(135deg, #2E7D32 0%, #388E3C 100%);
+            box-shadow: 0 4px 15px rgba(46, 125, 50, 0.3);
         }
 
         .photo-options {
@@ -193,16 +285,16 @@
             align-items: center;
             justify-content: center;
             padding: 30px 20px;
-            border: 3px dashed #667eea;
+            border: 3px dashed var(--primary-blue);
             border-radius: 15px;
-            background: white;
+            background: var(--white);
             cursor: pointer;
             transition: all 0.3s;
         }
 
         .photo-btn:hover {
-            background: #f0f4ff;
-            border-color: #764ba2;
+            background: var(--light-blue);
+            border-color: var(--primary-orange);
             transform: scale(1.05);
         }
 
@@ -235,53 +327,72 @@
             object-fit: cover;
         }
 
-        .preview-item .remove-btn {
+        .remove-btn {
             position: absolute;
-            top: 10px;
-            right: 10px;
-            background: #dc3545;
-            color: white;
+            top: 5px;
+            right: 5px;
+            background: var(--primary-orange);
+            color: var(--white);
             border: none;
             border-radius: 50%;
             width: 30px;
             height: 30px;
             cursor: pointer;
-            font-weight: bold;
+            font-size: 1.2em;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
-        .alert {
+        .remove-btn:hover {
+            background: #C62828;
+            transform: rotate(90deg);
+        }
+
+        .success-message {
+            background: #E8F5E9;
+            color: #2E7D32;
             padding: 15px 20px;
             border-radius: 10px;
             margin-bottom: 20px;
-            display: flex;
+            display: none;
             align-items: center;
             gap: 10px;
+            border-left: 4px solid #2E7D32;
+            animation: slideDown 0.3s ease;
         }
 
-        .alert-success {
-            background: #d4edda;
-            color: #155724;
-            border-left: 4px solid #28a745;
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
         .hidden {
             display: none;
         }
 
+        /* Cámara */
         .camera-view {
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0,0,0,0.95);
-            z-index: 1000;
+            background: rgba(0, 0, 0, 0.95);
+            z-index: 9999;
             display: none;
-            flex-direction: column;
             justify-content: center;
             align-items: center;
+            flex-direction: column;
         }
-        
+
         .camera-view.active {
             display: flex;
         }
@@ -299,53 +410,49 @@
         }
 
         .camera-controls button {
-            padding: 15px 30px;
-            font-size: 1.1em;
+            background: linear-gradient(135deg, var(--primary-blue) 0%, var(--dark-blue) 100%);
+            color: var(--white);
             border: none;
+            padding: 15px 30px;
             border-radius: 10px;
             cursor: pointer;
-            font-weight: bold;
+            font-size: 1em;
+            font-weight: 600;
+            transition: all 0.3s;
         }
 
-        #canvas {
-            display: none;
+        .camera-controls button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px var(--shadow);
         }
 
-        @media (max-width: 768px) {
-            .three-columns {
-                grid-template-columns: 1fr;
-            }
-
-            .photo-options {
-                grid-template-columns: 1fr;
-            }
-
-            .total-display .value {
-                font-size: 2em;
-            }
+        .camera-controls button.danger {
+            background: linear-gradient(135deg, #C62828 0%, #D32F2F 100%);
         }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
-            <button class="logout-btn" onclick="cerrarSesion()">🚪 Salir</button>
+            <button class="logout-btn" onclick="logout()">🚪 Cerrar Sesión</button>
             <h1>🏪 Registro de Cierre de Caja</h1>
-            <div class="status" id="statusFirebase">🔄 Conectando...</div>
+            <div class="status connected" id="firebaseStatus">🟢 Conectado a Firebase</div>
         </div>
 
         <div class="content">
-            <div id="successMsg" class="alert alert-success hidden">
-                ✅ ¡Cierre guardado exitosamente!
+            <!-- Mensaje de Éxito -->
+            <div id="successMsg" class="success-message">
+                ✅ <strong>¡Cierre guardado exitosamente!</strong>
             </div>
 
+            <!-- Información de Tienda y Fecha -->
             <div class="section">
-                <div class="section-title">📝 Datos del Cierre</div>
+                <div class="section-title">🏬 Información de la Tienda</div>
                 
                 <div class="input-group">
-                    <label for="tiendaSelect">🏬 Selecciona la Tienda</label>
-                    <select id="tiendaSelect">
-                        <option value="">-- Selecciona una tienda --</option>
+                    <label for="tiendaSelect">Selecciona tu Tienda</label>
+                    <select id="tiendaSelect" required>
+                        <option value="">-- Selecciona --</option>
                         <option value="004 IBM">004 IBM</option>
                         <option value="017 Leti Guarenas">017 Leti Guarenas</option>
                         <option value="172 Leti Guarenas p.2">172 Leti Guarenas p.2</option>
@@ -367,73 +474,75 @@
                         <option value="059 Rontarca">059 Rontarca</option>
                         <option value="062 BNC Rosal">062 BNC Rosal</option>
                     </select>
-
                 </div>
 
                 <div class="input-group">
-                    <label for="fechaCierre">📅 Fecha del Cierre</label>
-                    <input type="date" id="fechaCierre">
+                    <label for="fechaCierre">Fecha del Cierre</label>
+                    <input type="date" id="fechaCierre" required>
                 </div>
             </div>
 
+            <!-- Montos -->
             <div class="section">
-                <div class="section-title">💳 Montos de Venta</div>
+                <div class="section-title">💳 Montos de Cierre</div>
                 
                 <div class="three-columns">
                     <div class="input-group">
-                        <label for="montoCredito">💳 Crédito</label>
-                        <input type="number" id="montoCredito" step="0.01" value="0" min="0">
+                        <label for="montoCredito">Crédito (Bs)</label>
+                        <input type="number" id="montoCredito" step="0.01" value="0" required>
                     </div>
-
+                    
                     <div class="input-group">
-                        <label for="montoDebito">💳 Débito</label>
-                        <input type="number" id="montoDebito" step="0.01" value="0" min="0">
+                        <label for="montoDebito">Débito (Bs)</label>
+                        <input type="number" id="montoDebito" step="0.01" value="0" required>
                     </div>
-
+                    
                     <div class="input-group">
-                        <label for="pagoMovil">📱 Pago Móvil</label>
-                        <input type="number" id="pagoMovil" step="0.01" value="0" min="0">
+                        <label for="pagoMovil">Pago Móvil (Bs)</label>
+                        <input type="number" id="pagoMovil" step="0.01" value="0" required>
                     </div>
                 </div>
 
                 <div class="total-display">
-                    <div class="label">TOTAL DEL CIERRE</div>
+                    <div class="label">TOTAL CIERRE</div>
                     <div class="value" id="totalCalculado">Bs 0.00</div>
                 </div>
             </div>
 
+            <!-- Foto del Cierre -->
             <div class="section">
-                <div class="section-title">📷 Foto del Cierre</div>
+                <div class="section-title">📸 Foto del Cierre</div>
                 
                 <div class="photo-options">
                     <div class="photo-btn" id="takePictureBtn">
-                        <div class="icon">📸</div>
+                        <div class="icon">📷</div>
                         <div>Tomar Foto</div>
                     </div>
-
-                    <label for="galleryFile" class="photo-btn">
+                    
+                    <div class="photo-btn" onclick="document.getElementById('galleryFile').click()">
                         <div class="icon">🖼️</div>
-                        <div>Seleccionar de Galería</div>
-                    </label>
+                        <div>Desde Galería</div>
+                    </div>
                 </div>
-
+                
                 <input type="file" id="galleryFile" accept="image/*">
                 <input type="file" id="cameraCapture" accept="image/*" capture="environment">
-
+                
                 <div id="previewArea" class="preview-area"></div>
             </div>
 
+            <!-- Botón Guardar -->
             <button class="btn btn-success" id="guardarBtn" disabled>💾 Guardar Cierre</button>
         </div>
     </div>
 
-    <!-- Vista de cámara -->
-    <div id="cameraView" class="camera-view">
+    <!-- Vista de Cámara -->
+    <div class="camera-view" id="cameraView">
         <video id="video" autoplay playsinline></video>
-        <canvas id="canvas"></canvas>
+        <canvas id="canvas" style="display: none;"></canvas>
         <div class="camera-controls">
-            <button id="captureBtn" style="background: #28a745; color: white;">📸 Capturar</button>
-            <button id="closeCameraBtn" style="background: #dc3545; color: white;">❌ Cerrar</button>
+            <button id="captureBtn">📸 Capturar</button>
+            <button id="closeCameraBtn" class="danger">❌ Cancelar</button>
         </div>
     </div>
 
@@ -449,44 +558,38 @@
         };
 
         firebase.initializeApp(firebaseConfig);
-        const auth = firebase.auth();
         const db = firebase.firestore();
+        const auth = firebase.auth();
 
         let uploadedImage = null;
         let stream = null;
 
         // ===== VERIFICAR AUTENTICACIÓN =====
-        auth.onAuthStateChanged((user) => {
+        auth.onAuthStateChanged(user => {
             if (!user) {
-                console.log("❌ Usuario no autenticado, redirigiendo a login...");
-                window.location.href = "login.html";
-                return;
+                window.location.href = 'login.html';
+            } else {
+                console.log('✅ Usuario autenticado:', user.email);
+                // Establecer fecha actual por defecto
+                const hoy = new Date().toISOString().split('T')[0];
+                document.getElementById('fechaCierre').value = hoy;
             }
-            
-            console.log("✅ Usuario autenticado:", user.email);
-            document.getElementById('statusFirebase').className = 'status connected';
-            document.getElementById('statusFirebase').textContent = '✅ Conectado - ' + user.email;
-            
-            // Establecer fecha de hoy por defecto
-            const today = new Date().toISOString().split('T')[0];
-            document.getElementById('fechaCierre').value = today;
         });
 
-        // ===== FUNCIÓN PARA CERRAR SESIÓN =====
-        function cerrarSesion() {
-            if (confirm('¿Estás seguro que deseas cerrar sesión?')) {
-                auth.signOut().then(() => {
-                    window.location.href = "login.html";
-                });
-            }
+        function logout() {
+            auth.signOut().then(() => {
+                window.location.href = 'login.html';
+            });
         }
 
         // ===== COMPRIMIR IMAGEN =====
-        async function comprimirImagen(file, maxWidth = 1200, quality = 0.7) {
-            return new Promise((resolve) => {
+        function comprimirImagen(file, maxWidth = 1200, quality = 0.7) {
+            return new Promise((resolve, reject) => {
                 const reader = new FileReader();
+                reader.onerror = () => reject(new Error('Error al leer el archivo'));
                 reader.onload = (e) => {
                     const img = new Image();
+                    img.onerror = () => reject(new Error('Error al cargar la imagen'));
                     img.onload = () => {
                         const canvas = document.createElement('canvas');
                         let width = img.width;
@@ -695,8 +798,8 @@
 
                 // Mostrar mensaje de éxito
                 const successMsg = document.getElementById('successMsg');
-                successMsg.classList.remove('hidden');
-                setTimeout(() => successMsg.classList.add('hidden'), 3000);
+                successMsg.style.display = 'flex';
+                setTimeout(() => successMsg.style.display = 'none', 3000);
 
                 // Limpiar formulario
                 limpiarFormulario();
