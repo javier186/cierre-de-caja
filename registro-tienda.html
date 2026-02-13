@@ -1,0 +1,859 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🏪 Registro de Cierre de Caja</title>
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+
+    <style>
+        :root {
+            --primary-blue: #006B7D;
+            --primary-orange: #FF8C42;
+            --dark-blue: #004A5A;
+            --light-blue: #E8F4F6;
+            --text-dark: #2C3E50;
+            --text-light: #7F8C8D;
+            --white: #FFFFFF;
+            --shadow: rgba(0, 107, 125, 0.15);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', 'Roboto', 'Helvetica Neue', sans-serif;
+            background: linear-gradient(135deg, var(--primary-blue) 0%, var(--dark-blue) 100%);
+            min-height: 100vh;
+            padding: 20px;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        /* Decoración de fondo */
+        body::before {
+            content: '';
+            position: absolute;
+            width: 500px;
+            height: 500px;
+            background: radial-gradient(circle, rgba(255, 140, 66, 0.1) 0%, transparent 70%);
+            border-radius: 50%;
+            top: -200px;
+            right: -200px;
+            animation: pulse 8s ease-in-out infinite;
+            pointer-events: none;
+        }
+
+        body::after {
+            content: '';
+            position: absolute;
+            width: 400px;
+            height: 400px;
+            background: radial-gradient(circle, rgba(255, 140, 66, 0.08) 0%, transparent 70%);
+            border-radius: 50%;
+            bottom: -150px;
+            left: -150px;
+            animation: pulse 6s ease-in-out infinite reverse;
+            pointer-events: none;
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                transform: scale(1);
+                opacity: 0.5;
+            }
+
+            50% {
+                transform: scale(1.1);
+                opacity: 0.8;
+            }
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: var(--white);
+            border-radius: 24px;
+            box-shadow: 0 30px 80px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+            position: relative;
+            z-index: 1;
+        }
+
+        .header {
+            background: linear-gradient(135deg, var(--primary-blue) 0%, var(--dark-blue) 100%);
+            color: var(--white);
+            padding: 30px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, var(--primary-orange) 0%, #FFA500 100%);
+        }
+
+        .header h1 {
+            font-size: 2em;
+            margin-bottom: 10px;
+            font-weight: 600;
+            letter-spacing: -0.5px;
+        }
+
+        .status {
+            font-size: 0.9em;
+            opacity: 0.9;
+            margin-top: 10px;
+        }
+
+        .status.connected {
+            color: #90EE90;
+        }
+
+        .status.disconnected {
+            color: #FFB6C1;
+        }
+
+        .logout-btn {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(255, 255, 255, 0.2);
+            color: var(--white);
+            border: 2px solid var(--white);
+            padding: 10px 20px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+            font-size: 0.95em;
+        }
+
+        .logout-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        }
+
+        .content {
+            padding: 30px;
+        }
+
+        .section {
+            background: var(--light-blue);
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 25px;
+            border: 2px solid #D0E8EC;
+            transition: all 0.3s;
+        }
+
+        .section:hover {
+            box-shadow: 0 4px 12px var(--shadow);
+        }
+
+        .section-title {
+            font-size: 1.5em;
+            color: var(--primary-blue);
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 600;
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: var(--text-dark);
+            font-size: 0.95em;
+        }
+
+        .input-group input,
+        .input-group select {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #D0E8EC;
+            border-radius: 10px;
+            font-size: 1em;
+            transition: all 0.3s;
+            font-family: inherit;
+        }
+
+        .input-group input:focus,
+        .input-group select:focus {
+            outline: none;
+            border-color: var(--primary-blue);
+            box-shadow: 0 0 0 4px rgba(0, 107, 125, 0.1);
+        }
+
+        .three-columns {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 15px;
+        }
+
+        .total-display {
+            background: linear-gradient(135deg, var(--primary-blue) 0%, var(--dark-blue) 100%);
+            color: var(--white);
+            padding: 25px;
+            border-radius: 12px;
+            text-align: center;
+            margin: 20px 0;
+            box-shadow: 0 4px 15px var(--shadow);
+        }
+
+        .total-display .label {
+            font-size: 0.9em;
+            opacity: 0.9;
+            margin-bottom: 8px;
+        }
+
+        .total-display .value {
+            font-size: 2.5em;
+            font-weight: bold;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, var(--primary-blue) 0%, var(--dark-blue) 100%);
+            color: var(--white);
+            border: none;
+            padding: 15px 35px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 1.1em;
+            font-weight: 600;
+            transition: all 0.3s;
+            box-shadow: 0 4px 15px var(--shadow);
+            width: 100%;
+        }
+
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.5s;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px var(--shadow);
+        }
+
+        .btn:hover::before {
+            left: 100%;
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #2E7D32 0%, #388E3C 100%);
+            box-shadow: 0 4px 15px rgba(46, 125, 50, 0.3);
+        }
+
+        .photo-options {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .photo-btn {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 30px 20px;
+            border: 3px dashed var(--primary-blue);
+            border-radius: 15px;
+            background: var(--white);
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .photo-btn:hover {
+            background: var(--light-blue);
+            border-color: var(--primary-orange);
+            transform: scale(1.05);
+        }
+
+        .photo-btn .icon {
+            font-size: 3em;
+            margin-bottom: 10px;
+        }
+
+        input[type="file"] {
+            display: none;
+        }
+
+        .preview-area {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .preview-item {
+            position: relative;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .preview-item img {
+            width: 100%;
+            height: 150px;
+            object-fit: cover;
+        }
+
+        .remove-btn {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            background: var(--primary-orange);
+            color: var(--white);
+            border: none;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            cursor: pointer;
+            font-size: 1.2em;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .remove-btn:hover {
+            background: #C62828;
+            transform: rotate(90deg);
+        }
+
+        .success-message {
+            background: #E8F5E9;
+            color: #2E7D32;
+            padding: 15px 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            display: none;
+            align-items: center;
+            gap: 10px;
+            border-left: 4px solid #2E7D32;
+            animation: slideDown 0.3s ease;
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        /* Cámara */
+        .camera-view {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.95);
+            z-index: 9999;
+            display: none;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+        }
+
+        .camera-view.active {
+            display: flex;
+        }
+
+        #video {
+            max-width: 90%;
+            max-height: 70vh;
+            border-radius: 10px;
+        }
+
+        .camera-controls {
+            margin-top: 20px;
+            display: flex;
+            gap: 15px;
+        }
+
+        .camera-controls button {
+            background: linear-gradient(135deg, var(--primary-blue) 0%, var(--dark-blue) 100%);
+            color: var(--white);
+            border: none;
+            padding: 15px 30px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 1em;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .camera-controls button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px var(--shadow);
+        }
+
+        .camera-controls button.danger {
+            background: linear-gradient(135deg, #C62828 0%, #D32F2F 100%);
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="header">
+            <button class="logout-btn" onclick="logout()">🚪 Cerrar Sesión</button>
+            <h1>🏪 Registro de Cierre de Caja</h1>
+            <div class="status connected" id="firebaseStatus">🟢 Conectado a Firebase</div>
+        </div>
+
+        <div class="content">
+            <!-- Mensaje de Éxito -->
+            <div id="successMsg" class="success-message">
+                ✅ <strong>¡Cierre guardado exitosamente!</strong>
+            </div>
+
+            <!-- Información de Tienda y Fecha -->
+            <div class="section">
+                <div class="section-title">🏬 Información de la Tienda</div>
+
+                <div class="input-group">
+                    <label for="tiendaSelect">Selecciona tu Tienda</label>
+                    <select id="tiendaSelect" required>
+                        <option value="">-- Selecciona --</option>
+                        <option value="004 IBM">004 IBM</option>
+                        <option value="017 Leti Guarenas">017 Leti Guarenas</option>
+                        <option value="172 Leti Guarenas p.2">172 Leti Guarenas p.2</option>
+                        <option value="174 Leti Guarenas p.4">174 Leti Guarenas p.4</option>
+                        <option value="044 Parmalat">044 Parmalat</option>
+                        <option value="045 Dronena">045 Dronena</option>
+                        <option value="046 Provincial">046 Provincial</option>
+                        <option value="047 Simple tv">047 Simple tv</option>
+                        <option value="048 Leti Caracas piso 13">048 Leti Caracas piso 13</option>
+                        <option value="049 Cocacola">049 Cocacola</option>
+                        <option value="050 Dronena BQTO">050 Dronena BQTO</option>
+                        <option value="051 Latin Pagos">051 Latin Pagos</option>
+                        <option value="052 Bnci">052 Bnci</option>
+                        <option value="053 Leti Caracas piso 2">053 Leti Caracas piso 2</option>
+                        <option value="054 Simple cdt">054 Simple cdt</option>
+                        <option value="056 PWC">056 PWC</option>
+                        <option value="057 Plumrose">057 Plumrose</option>
+                        <option value="058 Seguro Venezuela">058 Seguro Venezuela</option>
+                        <option value="059 Rontarca">059 Rontarca</option>
+                        <option value="062 BNC Rosal">062 BNC Rosal</option>
+                    </select>
+                </div>
+
+                <div class="input-group">
+                    <label for="fechaCierre">Fecha del Cierre</label>
+                    <input type="date" id="fechaCierre" required>
+                </div>
+            </div>
+
+            <!-- Montos -->
+            <div class="section">
+                <div class="section-title">💳 Montos de Cierre</div>
+
+                <div class="three-columns">
+                    <div class="input-group">
+                        <label for="montoCredito">Crédito (Bs)</label>
+                        <input type="number" id="montoCredito" step="0.01" value="0" min="0" required>
+                    </div>
+
+                    <div class="input-group">
+                        <label for="montoDebito">Débito (Bs)</label>
+                        <input type="number" id="montoDebito" step="0.01" value="0" min="0" required>
+                    </div>
+
+                    <div class="input-group">
+                        <label for="pagoMovil">Pago Móvil (Bs)</label>
+                        <input type="number" id="pagoMovil" step="0.01" value="0" min="0" required>
+                    </div>
+                </div>
+
+                <div class="total-display">
+                    <div class="label">TOTAL CIERRE</div>
+                    <div class="value" id="totalCalculado">Bs 0.00</div>
+                </div>
+            </div>
+
+            <!-- Foto del Cierre -->
+            <div class="section">
+                <div class="section-title">📸 Foto del Cierre</div>
+
+                <div class="photo-options">
+                    <div class="photo-btn" id="takePictureBtn">
+                        <div class="icon">📷</div>
+                        <div>Tomar Foto</div>
+                    </div>
+
+                    <div class="photo-btn" onclick="document.getElementById('galleryFile').click()">
+                        <div class="icon">🖼️</div>
+                        <div>Desde Galería</div>
+                    </div>
+                </div>
+
+                <input type="file" id="galleryFile" accept="image/*">
+                <input type="file" id="cameraCapture" accept="image/*" capture="environment">
+
+                <div id="previewArea" class="preview-area"></div>
+            </div>
+
+            <!-- Botón Guardar -->
+            <button class="btn btn-success" id="guardarBtn" disabled>💾 Guardar Cierre</button>
+        </div>
+    </div>
+
+    <!-- Vista de Cámara -->
+    <div class="camera-view" id="cameraView">
+        <video id="video" autoplay playsinline></video>
+        <canvas id="canvas" style="display: none;"></canvas>
+        <div class="camera-controls">
+            <button id="captureBtn">📸 Capturar</button>
+            <button id="closeCameraBtn" class="danger">❌ Cancelar</button>
+        </div>
+    </div>
+
+    <script>
+        // ===== CONFIGURACIÓN DE FIREBASE =====
+        const firebaseConfig = {
+            apiKey: "AIzaSyCyEw28OeV_ddZDWU6R0MOzgM5yffD94EU",
+            authDomain: "sistema-cierres-caja.firebaseapp.com",
+            projectId: "sistema-cierres-caja",
+            storageBucket: "sistema-cierres-caja.firebasestorage.app",
+            messagingSenderId: "12629027824",
+            appId: "1:12629027824:web:07a5c3afe13c416bc40b35"
+        };
+
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+        const auth = firebase.auth();
+
+        let uploadedImage = null;
+        let stream = null;
+
+        // ===== VERIFICAR AUTENTICACIÓN =====
+        auth.onAuthStateChanged(user => {
+            if (!user) {
+                window.location.href = 'login.html';
+            } else {
+                console.log('✅ Usuario autenticado:', user.email);
+                // Establecer fecha actual por defecto
+                const hoy = new Date().toISOString().split('T')[0];
+                document.getElementById('fechaCierre').value = hoy;
+            }
+        });
+
+        function logout() {
+            auth.signOut().then(() => {
+                window.location.href = 'login.html';
+            });
+        }
+
+        // ===== COMPRIMIR IMAGEN =====
+        function comprimirImagen(file, maxWidth = 1200, quality = 0.7) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onerror = () => reject(new Error('Error al leer el archivo'));
+                reader.onload = (e) => {
+                    const img = new Image();
+                    img.onerror = () => reject(new Error('Error al cargar la imagen'));
+                    img.onload = () => {
+                        const canvas = document.createElement('canvas');
+                        let width = img.width;
+                        let height = img.height;
+
+                        if (width > maxWidth) {
+                            height = (height * maxWidth) / width;
+                            width = maxWidth;
+                        }
+
+                        canvas.width = width;
+                        canvas.height = height;
+
+                        const ctx = canvas.getContext('2d');
+                        ctx.drawImage(img, 0, 0, width, height);
+
+                        const comprimido = canvas.toDataURL('image/jpeg', quality);
+                        console.log(`📷 Imagen comprimida: ${(comprimido.length / 1024).toFixed(0)}KB`);
+                        resolve(comprimido);
+                    };
+                    img.src = e.target.result;
+                };
+                reader.readAsDataURL(file);
+            });
+        }
+
+        // ===== CALCULAR TOTAL AUTOMÁTICAMENTE =====
+        function calcularTotal() {
+            const credito = parseFloat(document.getElementById('montoCredito').value) || 0;
+            const debito = parseFloat(document.getElementById('montoDebito').value) || 0;
+            const pagoMovil = parseFloat(document.getElementById('pagoMovil').value) || 0;
+
+            // Validar que no haya números negativos
+            if (credito < 0 || debito < 0 || pagoMovil < 0) {
+                document.getElementById('totalCalculado').textContent = 'Bs 0.00';
+                document.getElementById('guardarBtn').disabled = true;
+
+                // Mostrar alerta de error
+                const successMsg = document.getElementById('successMsg');
+                successMsg.style.display = 'flex';
+                successMsg.style.background = '#FFEBEE';
+                successMsg.style.color = '#C62828';
+                successMsg.style.borderLeft = '4px solid #C62828';
+                successMsg.innerHTML = '❌ <strong>Los montos no pueden ser negativos</strong>';
+
+                setTimeout(() => successMsg.style.display = 'none', 3000);
+                return;
+            }
+
+            const total = credito + debito + pagoMovil;
+            document.getElementById('totalCalculado').textContent = `Bs ${total.toFixed(2)}`;
+
+            validarFormulario();
+        }
+
+        document.getElementById('montoCredito').addEventListener('input', calcularTotal);
+        document.getElementById('montoDebito').addEventListener('input', calcularTotal);
+        document.getElementById('pagoMovil').addEventListener('input', calcularTotal);
+
+        // ===== MANEJO DE FOTOS =====
+        document.getElementById('takePictureBtn').addEventListener('click', async () => {
+            if (/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) {
+                document.getElementById('cameraCapture').click();
+            } else {
+                await openCamera();
+            }
+        });
+
+        document.getElementById('galleryFile').addEventListener('change', (e) => {
+            if (e.target.files[0]) {
+                handleFile(e.target.files[0]);
+            }
+        });
+
+        document.getElementById('cameraCapture').addEventListener('change', (e) => {
+            if (e.target.files[0]) {
+                handleFile(e.target.files[0]);
+            }
+        });
+
+        async function openCamera() {
+            const cameraView = document.getElementById('cameraView');
+            const video = document.getElementById('video');
+
+            try {
+                stream = await navigator.mediaDevices.getUserMedia({
+                    video: { facingMode: 'environment' }
+                });
+                video.srcObject = stream;
+                cameraView.classList.add('active');
+            } catch (error) {
+                alert('No se pudo acceder a la cámara. Por favor usa la opción de galería.');
+            }
+        }
+
+        document.getElementById('captureBtn').addEventListener('click', () => {
+            const video = document.getElementById('video');
+            const canvas = document.getElementById('canvas');
+            const context = canvas.getContext('2d');
+
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            context.drawImage(video, 0, 0);
+
+            canvas.toBlob((blob) => {
+                const file = new File([blob], `cierre_${Date.now()}.jpg`, { type: 'image/jpeg' });
+                handleFile(file);
+                closeCamera();
+            }, 'image/jpeg', 0.95);
+        });
+
+        document.getElementById('closeCameraBtn').addEventListener('click', closeCamera);
+
+        function closeCamera() {
+            const cameraView = document.getElementById('cameraView');
+            if (stream) {
+                stream.getTracks().forEach(track => track.stop());
+                stream = null;
+            }
+            cameraView.classList.remove('active');
+        }
+
+        function handleFile(file) {
+            uploadedImage = file;
+            displayPreview(file);
+            validarFormulario();
+        }
+
+        function displayPreview(file) {
+            const previewArea = document.getElementById('previewArea');
+            previewArea.innerHTML = '';
+
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const div = document.createElement('div');
+                div.className = 'preview-item';
+                div.innerHTML = `
+                    <img src="${e.target.result}" alt="Preview">
+                    <button class="remove-btn" onclick="removeImage()">×</button>
+                `;
+                previewArea.appendChild(div);
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function removeImage() {
+            uploadedImage = null;
+            document.getElementById('previewArea').innerHTML = '';
+            validarFormulario();
+        }
+
+        // ===== VALIDACIÓN =====
+        function validarFormulario() {
+            const tienda = document.getElementById('tiendaSelect').value;
+            const fecha = document.getElementById('fechaCierre').value;
+            const hayImagen = uploadedImage !== null;
+            const total = parseFloat(document.getElementById('totalCalculado').textContent.replace('Bs ', ''));
+
+            const isValid = tienda && fecha && hayImagen && total > 0;
+            document.getElementById('guardarBtn').disabled = !isValid;
+        }
+
+        document.getElementById('tiendaSelect').addEventListener('change', validarFormulario);
+        document.getElementById('fechaCierre').addEventListener('change', validarFormulario);
+
+        // ===== GUARDAR CIERRE EN FIREBASE =====
+        document.getElementById('guardarBtn').addEventListener('click', async () => {
+            const tienda = document.getElementById('tiendaSelect').value;
+            const fecha = document.getElementById('fechaCierre').value;
+            const credito = parseFloat(document.getElementById('montoCredito').value) || 0;
+            const debito = parseFloat(document.getElementById('montoDebito').value) || 0;
+            const pagoMovil = parseFloat(document.getElementById('pagoMovil').value) || 0;
+            const total = credito + debito + pagoMovil;
+
+            // Deshabilitar botón mientras guarda
+            document.getElementById('guardarBtn').disabled = true;
+            document.getElementById('guardarBtn').textContent = '⏳ Guardando...';
+
+            try {
+                // Comprimir imagen antes de guardar
+                console.log('🔄 Comprimiendo imagen...');
+                const imagenComprimida = await comprimirImagen(uploadedImage, 1200, 0.7);
+
+                // Crear documento para Firebase
+                const cierre = {
+                    tienda,
+                    fecha,
+                    credito,
+                    debito,
+                    pagoMovil,
+                    total,
+                    imagen: imagenComprimida,
+                    timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+                    verificado: false,
+                    usuarioId: auth.currentUser.uid,
+                    usuarioEmail: auth.currentUser.email
+                };
+
+                // Buscar si ya existe un cierre para esta tienda y fecha
+                const querySnapshot = await db.collection('cierres')
+                    .where('tienda', '==', tienda)
+                    .where('fecha', '==', fecha)
+                    .get();
+
+                let docId;
+                if (!querySnapshot.empty) {
+                    // Ya existe, preguntar si quiere reemplazar
+                    if (confirm('Ya existe un cierre para esta tienda y fecha. ¿Deseas reemplazarlo?')) {
+                        docId = querySnapshot.docs[0].id;
+                        await db.collection('cierres').doc(docId).update(cierre);
+                        console.log('✅ Cierre actualizado:', docId);
+                    } else {
+                        document.getElementById('guardarBtn').disabled = false;
+                        document.getElementById('guardarBtn').textContent = '💾 Guardar Cierre';
+                        return;
+                    }
+                } else {
+                    // No existe, crear nuevo
+                    const docRef = await db.collection('cierres').add(cierre);
+                    docId = docRef.id;
+                    console.log('✅ Cierre guardado:', docId);
+                }
+
+                // Mostrar mensaje de éxito
+                const successMsg = document.getElementById('successMsg');
+                successMsg.style.display = 'flex';
+                setTimeout(() => successMsg.style.display = 'none', 3000);
+
+                // Limpiar formulario
+                limpiarFormulario();
+
+            } catch (error) {
+                console.error('❌ Error al guardar:', error);
+                alert('Error al guardar en la base de datos: ' + error.message);
+            }
+
+            document.getElementById('guardarBtn').textContent = '💾 Guardar Cierre';
+        });
+
+        function limpiarFormulario() {
+            document.getElementById('tiendaSelect').value = '';
+            document.getElementById('montoCredito').value = '0';
+            document.getElementById('montoDebito').value = '0';
+            document.getElementById('pagoMovil').value = '0';
+            uploadedImage = null;
+            document.getElementById('previewArea').innerHTML = '';
+            calcularTotal();
+            validarFormulario();
+        }
+    </script>
+</body>
+
+</html>
