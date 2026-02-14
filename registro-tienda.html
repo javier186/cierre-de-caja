@@ -1,15 +1,27 @@
 <!DOCTYPE html>
 <html lang="es">
+<<<<<<< HEAD
+=======
+
+>>>>>>> rama2
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>🏪 Registro de Cierre de Caja</title>
+<<<<<<< HEAD
     
+=======
+
+>>>>>>> rama2
     <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+<<<<<<< HEAD
     
+=======
+
+>>>>>>> rama2
     <style>
         :root {
             --primary-blue: #006B7D;
@@ -65,8 +77,22 @@
         }
 
         @keyframes pulse {
+<<<<<<< HEAD
             0%, 100% { transform: scale(1); opacity: 0.5; }
             50% { transform: scale(1.1); opacity: 0.8; }
+=======
+
+            0%,
+            100% {
+                transform: scale(1);
+                opacity: 0.5;
+            }
+
+            50% {
+                transform: scale(1.1);
+                opacity: 0.8;
+            }
+>>>>>>> rama2
         }
 
         .container {
@@ -124,7 +150,11 @@
             position: absolute;
             top: 20px;
             right: 20px;
+<<<<<<< HEAD
             background: rgba(255,255,255,0.2);
+=======
+            background: rgba(255, 255, 255, 0.2);
+>>>>>>> rama2
             color: var(--white);
             border: 2px solid var(--white);
             padding: 10px 20px;
@@ -136,9 +166,15 @@
         }
 
         .logout-btn:hover {
+<<<<<<< HEAD
             background: rgba(255,255,255,0.3);
             transform: translateY(-2px);
             box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+=======
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+>>>>>>> rama2
         }
 
         .content {
@@ -180,7 +216,12 @@
             font-size: 0.95em;
         }
 
+<<<<<<< HEAD
         .input-group input, .input-group select {
+=======
+        .input-group input,
+        .input-group select {
+>>>>>>> rama2
             width: 100%;
             padding: 12px 16px;
             border: 2px solid #D0E8EC;
@@ -190,7 +231,12 @@
             font-family: inherit;
         }
 
+<<<<<<< HEAD
         .input-group input:focus, .input-group select:focus {
+=======
+        .input-group input:focus,
+        .input-group select:focus {
+>>>>>>> rama2
             outline: none;
             border-color: var(--primary-blue);
             box-shadow: 0 0 0 4px rgba(0, 107, 125, 0.1);
@@ -318,7 +364,11 @@
             position: relative;
             border-radius: 10px;
             overflow: hidden;
+<<<<<<< HEAD
             box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+=======
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+>>>>>>> rama2
         }
 
         .preview-item img {
@@ -368,6 +418,10 @@
                 opacity: 0;
                 transform: translateY(-10px);
             }
+<<<<<<< HEAD
+=======
+
+>>>>>>> rama2
             to {
                 opacity: 1;
                 transform: translateY(0);
@@ -431,6 +485,10 @@
         }
     </style>
 </head>
+<<<<<<< HEAD
+=======
+
+>>>>>>> rama2
 <body>
     <div class="container">
         <div class="header">
@@ -448,7 +506,11 @@
             <!-- Información de Tienda y Fecha -->
             <div class="section">
                 <div class="section-title">🏬 Información de la Tienda</div>
+<<<<<<< HEAD
                 
+=======
+
+>>>>>>> rama2
                 <div class="input-group">
                     <label for="tiendaSelect">Selecciona tu Tienda</label>
                     <select id="tiendaSelect" required>
@@ -485,6 +547,7 @@
             <!-- Montos -->
             <div class="section">
                 <div class="section-title">💳 Montos de Cierre</div>
+<<<<<<< HEAD
                 
                 <div class="three-columns">
                     <div class="input-group">
@@ -500,6 +563,23 @@
                     <div class="input-group">
                         <label for="pagoMovil">Pago Móvil (Bs)</label>
                         <input type="number" id="pagoMovil" step="0.01" value="0" required>
+=======
+
+                <div class="three-columns">
+                    <div class="input-group">
+                        <label for="montoCredito">Crédito (Bs)</label>
+                        <input type="number" id="montoCredito" step="0.01" value="0" min="0" required>
+                    </div>
+
+                    <div class="input-group">
+                        <label for="montoDebito">Débito (Bs)</label>
+                        <input type="number" id="montoDebito" step="0.01" value="0" min="0" required>
+                    </div>
+
+                    <div class="input-group">
+                        <label for="pagoMovil">Pago Móvil (Bs)</label>
+                        <input type="number" id="pagoMovil" step="0.01" value="0" min="0" required>
+>>>>>>> rama2
                     </div>
                 </div>
 
@@ -512,22 +592,37 @@
             <!-- Foto del Cierre -->
             <div class="section">
                 <div class="section-title">📸 Foto del Cierre</div>
+<<<<<<< HEAD
                 
+=======
+
+>>>>>>> rama2
                 <div class="photo-options">
                     <div class="photo-btn" id="takePictureBtn">
                         <div class="icon">📷</div>
                         <div>Tomar Foto</div>
                     </div>
+<<<<<<< HEAD
                     
+=======
+
+>>>>>>> rama2
                     <div class="photo-btn" onclick="document.getElementById('galleryFile').click()">
                         <div class="icon">🖼️</div>
                         <div>Desde Galería</div>
                     </div>
                 </div>
+<<<<<<< HEAD
                 
                 <input type="file" id="galleryFile" accept="image/*">
                 <input type="file" id="cameraCapture" accept="image/*" capture="environment">
                 
+=======
+
+                <input type="file" id="galleryFile" accept="image/*">
+                <input type="file" id="cameraCapture" accept="image/*" capture="environment">
+
+>>>>>>> rama2
                 <div id="previewArea" class="preview-area"></div>
             </div>
 
@@ -621,10 +716,34 @@
             const credito = parseFloat(document.getElementById('montoCredito').value) || 0;
             const debito = parseFloat(document.getElementById('montoDebito').value) || 0;
             const pagoMovil = parseFloat(document.getElementById('pagoMovil').value) || 0;
+<<<<<<< HEAD
             
             const total = credito + debito + pagoMovil;
             document.getElementById('totalCalculado').textContent = `Bs ${total.toFixed(2)}`;
             
+=======
+
+            // Validar que no haya números negativos
+            if (credito < 0 || debito < 0 || pagoMovil < 0) {
+                document.getElementById('totalCalculado').textContent = 'Bs 0.00';
+                document.getElementById('guardarBtn').disabled = true;
+
+                // Mostrar alerta de error
+                const successMsg = document.getElementById('successMsg');
+                successMsg.style.display = 'flex';
+                successMsg.style.background = '#FFEBEE';
+                successMsg.style.color = '#C62828';
+                successMsg.style.borderLeft = '4px solid #C62828';
+                successMsg.innerHTML = '❌ <strong>Los montos no pueden ser negativos</strong>';
+
+                setTimeout(() => successMsg.style.display = 'none', 3000);
+                return;
+            }
+
+            const total = credito + debito + pagoMovil;
+            document.getElementById('totalCalculado').textContent = `Bs ${total.toFixed(2)}`;
+
+>>>>>>> rama2
             validarFormulario();
         }
 
@@ -658,8 +777,13 @@
             const video = document.getElementById('video');
 
             try {
+<<<<<<< HEAD
                 stream = await navigator.mediaDevices.getUserMedia({ 
                     video: { facingMode: 'environment' } 
+=======
+                stream = await navigator.mediaDevices.getUserMedia({
+                    video: { facingMode: 'environment' }
+>>>>>>> rama2
                 });
                 video.srcObject = stream;
                 cameraView.classList.add('active');
@@ -730,7 +854,11 @@
             const fecha = document.getElementById('fechaCierre').value;
             const hayImagen = uploadedImage !== null;
             const total = parseFloat(document.getElementById('totalCalculado').textContent.replace('Bs ', ''));
+<<<<<<< HEAD
             
+=======
+
+>>>>>>> rama2
             const isValid = tienda && fecha && hayImagen && total > 0;
             document.getElementById('guardarBtn').disabled = !isValid;
         }
@@ -824,4 +952,8 @@
         }
     </script>
 </body>
+<<<<<<< HEAD
+=======
+
+>>>>>>> rama2
 </html>
