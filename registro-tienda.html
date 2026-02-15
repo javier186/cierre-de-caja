@@ -571,250 +571,6 @@
             display: inline-block;
             animation: pulse-dot 1.2s ease-in-out infinite;
         }
-
-        /* ===== RESPONSIVE DESIGN ===== */
-        @media (max-width: 768px) {
-            body {
-                padding: 10px;
-            }
-
-            .container {
-                border-radius: 16px;
-            }
-
-            .header {
-                padding: 20px 15px;
-            }
-
-            .header h1 {
-                font-size: 1.5em;
-                margin-bottom: 8px;
-            }
-
-            .status {
-                font-size: 0.85em;
-            }
-
-            .logout-btn {
-                position: static;
-                margin: 15px auto 0;
-                display: block;
-                width: auto;
-                padding: 8px 16px;
-                font-size: 0.9em;
-            }
-
-            .content {
-                padding: 20px;
-            }
-
-            .section {
-                padding: 20px;
-                margin-bottom: 20px;
-                border-radius: 12px;
-            }
-
-            .section-title {
-                font-size: 1.3em;
-                margin-bottom: 15px;
-                gap: 8px;
-            }
-
-            /* Grid de 3 columnas → 1 columna en móvil */
-            .three-columns {
-                grid-template-columns: 1fr;
-                gap: 12px;
-            }
-
-            .input-group {
-                margin-bottom: 15px;
-            }
-
-            .input-group label {
-                font-size: 0.9em;
-                margin-bottom: 6px;
-            }
-
-            .input-group input,
-            .input-group select {
-                padding: 13px 14px;
-                font-size: 16px;
-                /* Evita zoom automático en iOS */
-            }
-
-            .total-display {
-                padding: 20px;
-                margin: 15px 0;
-            }
-
-            .total-display .label {
-                font-size: 0.85em;
-            }
-
-            .total-display .value {
-                font-size: 2em;
-            }
-
-            .total-usd {
-                font-size: 1em;
-            }
-
-            .usd-badge {
-                padding: 10px 12px;
-                font-size: 0.85em;
-            }
-
-            .btn {
-                padding: 14px 25px;
-                font-size: 1em;
-            }
-
-            .btn-group {
-                flex-direction: column;
-                gap: 10px;
-            }
-
-            .btn-group .btn {
-                width: 100%;
-            }
-
-            .photo-section {
-                padding: 20px;
-            }
-
-            .camera-btn {
-                padding: 14px;
-                font-size: 0.95em;
-            }
-
-            .preview-item {
-                width: 100%;
-                max-width: 300px;
-            }
-
-            .camera-view {
-                padding: 15px;
-            }
-
-            .camera-controls {
-                flex-direction: column;
-                gap: 10px;
-            }
-
-            .camera-controls button {
-                width: 100%;
-            }
-
-            .success-message {
-                padding: 20px;
-            }
-
-            .success-message h2 {
-                font-size: 1.5em;
-            }
-        }
-
-        @media (max-width: 480px) {
-            body {
-                padding: 5px;
-            }
-
-            .container {
-                border-radius: 12px;
-            }
-
-            .header {
-                padding: 15px 12px;
-            }
-
-            .header h1 {
-                font-size: 1.3em;
-            }
-
-            .logout-btn {
-                padding: 6px 12px;
-                font-size: 0.85em;
-            }
-
-            .content {
-                padding: 15px;
-            }
-
-            .section {
-                padding: 15px;
-                margin-bottom: 15px;
-            }
-
-            .section-title {
-                font-size: 1.2em;
-                margin-bottom: 12px;
-            }
-
-            .input-group {
-                margin-bottom: 12px;
-            }
-
-            .input-group label {
-                font-size: 0.87em;
-            }
-
-            .total-display {
-                padding: 15px;
-            }
-
-            .total-display .value {
-                font-size: 1.8em;
-            }
-
-            .btn {
-                padding: 12px 20px;
-                font-size: 0.95em;
-            }
-
-            .usd-badge {
-                padding: 8px 10px;
-                font-size: 0.8em;
-            }
-        }
-
-        /* Mejoras táctiles para dispositivos móviles */
-        @media (hover: none) and (pointer: coarse) {
-
-            .input-group input,
-            .input-group select,
-            .btn,
-            .camera-btn {
-                min-height: 48px;
-                /* Tamaño mínimo recomendado para táctil */
-            }
-
-            .logout-btn {
-                min-height: 44px;
-            }
-
-            .remove-btn {
-                min-width: 44px;
-                min-height: 44px;
-            }
-
-            /* Desactivar hover effects en táctil */
-            .section:hover,
-            .btn:hover,
-            .logout-btn:hover {
-                transform: none;
-            }
-        }
-
-        /* Orientación horizontal en móvil */
-        @media (max-width: 768px) and (orientation: landscape) {
-            .header h1 {
-                font-size: 1.3em;
-            }
-
-            .total-display .value {
-                font-size: 1.8em;
-            }
-        }
     </style>
 </head>
 
@@ -978,32 +734,15 @@
         let stream = null;
         let tasaBCV = 0; // Tasa BCV actual
 
-        // ===== VERIFICAR AUTENTICACIÓN Y ROL =====
-        auth.onAuthStateChanged(async (user) => {
+        // ===== VERIFICAR AUTENTICACIÓN =====
+        auth.onAuthStateChanged(user => {
             if (!user) {
                 window.location.href = 'login.html';
-                return;
-            }
-
-            try {
-                // Verificar que el usuario tenga rol 'tienda'
-                const userDoc = await db.collection('usuarios').doc(user.uid).get();
-                if (!userDoc.exists || userDoc.data().rol !== 'tienda') {
-                    console.warn('⛔ Acceso denegado: rol no es tienda');
-                    alert('⛔ No tienes permiso para acceder a esta página.');
-                    await auth.signOut();
-                    window.location.href = 'login.html';
-                    return;
-                }
-
-                console.log('✅ Usuario autenticado:', user.email, '| Rol: tienda');
+            } else {
+                console.log('✅ Usuario autenticado:', user.email);
                 // Establecer fecha actual por defecto
                 const hoy = new Date().toISOString().split('T')[0];
                 document.getElementById('fechaCierre').value = hoy;
-            } catch (error) {
-                console.error('❌ Error verificando rol:', error);
-                await auth.signOut();
-                window.location.href = 'login.html';
             }
         });
 
@@ -1231,19 +970,10 @@
             reader.onload = (e) => {
                 const div = document.createElement('div');
                 div.className = 'preview-item';
-
-                // Crear elementos de forma segura en lugar de innerHTML
-                const img = document.createElement('img');
-                img.src = e.target.result;
-                img.alt = 'Preview';
-
-                const btn = document.createElement('button');
-                btn.className = 'remove-btn';
-                btn.textContent = '×';
-                btn.addEventListener('click', removeImage);
-
-                div.appendChild(img);
-                div.appendChild(btn);
+                div.innerHTML = `
+                    <img src="${e.target.result}" alt="Preview">
+                    <button class="remove-btn" onclick="removeImage()">×</button>
+                `;
                 previewArea.appendChild(div);
             };
             reader.readAsDataURL(file);
