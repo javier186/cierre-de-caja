@@ -535,25 +535,14 @@
                 const userDoc = await db.collection('usuarios').doc(uid).get();
 
                 if (!userDoc.exists) {
-                    // Si el usuario no existe en Firestore, creamos un registro básico
-                    console.warn("⚠️ Usuario no encontrado en Firestore, creando registro...");
-
-                    // Crear documento de usuario en Firestore
-                    await db.collection('usuarios').doc(uid).set({
-                        email: email,
-                        rol: rolSeleccionado,
-                        createdAt: firebase.firestore.FieldValue.serverTimestamp()
-                    });
-
-                    // Continuar con el login
-                    showAlert(`¡Bienvenido! Redirigiendo...`, 'success');
-                    setTimeout(() => {
-                        if (rolSeleccionado === "admin") {
-                            window.location.href = "supervisor-dashboard.html";
-                        } else if (rolSeleccionado === "tienda") {
-                            window.location.href = "registro-tienda.html";
-                        }
-                    }, 1000);
+                    // ❌ Usuario no registrado en el sistema — denegar acceso
+                    console.warn("⚠️ Usuario autenticado pero NO registrado en Firestore");
+                    await auth.signOut();
+                    setLoading(false);
+                    showAlert(
+                        "❌ Tu cuenta no está registrada en el sistema. Contacta al administrador para que te asigne un rol.",
+                        'error'
+                    );
                     return;
                 }
 

@@ -1,19 +1,20 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>📊 Dashboard Supervisor - Cierre de Caja</title>
-    
+
     <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
-    
+
     <!-- Librerías -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-    
+
     <style>
         :root {
             --primary-blue: #006B7D;
@@ -69,8 +70,17 @@
         }
 
         @keyframes pulse {
-            0%, 100% { transform: scale(1); opacity: 0.5; }
-            50% { transform: scale(1.1); opacity: 0.8; }
+
+            0%,
+            100% {
+                transform: scale(1);
+                opacity: 0.5;
+            }
+
+            50% {
+                transform: scale(1.1);
+                opacity: 0.8;
+            }
         }
 
         .container {
@@ -128,7 +138,7 @@
             position: absolute;
             top: 20px;
             right: 20px;
-            background: rgba(255,255,255,0.2);
+            background: rgba(255, 255, 255, 0.2);
             color: var(--white);
             border: 2px solid var(--white);
             padding: 10px 20px;
@@ -140,9 +150,9 @@
         }
 
         .logout-btn:hover {
-            background: rgba(255,255,255,0.3);
+            background: rgba(255, 255, 255, 0.3);
             transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
         }
 
         .content {
@@ -187,6 +197,7 @@
                 opacity: 0;
                 transform: translateY(-10px);
             }
+
             to {
                 opacity: 1;
                 transform: translateY(0);
@@ -248,7 +259,7 @@
             background: var(--white);
             border-radius: 10px;
             overflow: hidden;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
         }
 
         th {
@@ -400,7 +411,7 @@
             max-width: 100%;
             max-height: 90vh;
             border-radius: 10px;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
         }
 
         .close-modal {
@@ -426,6 +437,7 @@
         }
     </style>
 </head>
+
 <body>
     <div class="container">
         <div class="header">
@@ -438,24 +450,25 @@
             <!-- Sección de Simplit -->
             <div class="section">
                 <div class="section-title">📁 Cargar Archivo Simplit (Excel/CSV)</div>
-                
+
                 <div id="alertSimplit" class="alert alert-info">
                     💡 Sube el archivo de Simplit para cruzar datos con los cierres registrados
                 </div>
 
                 <div class="upload-area-simplit" onclick="document.getElementById('simplitFile').click()">
                     <div style="font-size: 3em; margin-bottom: 10px;">📤</div>
-                    <div style="font-size: 1.2em; font-weight: 600; margin-bottom: 5px;">Arrastra o haz clic para subir</div>
+                    <div style="font-size: 1.2em; font-weight: 600; margin-bottom: 5px;">Arrastra o haz clic para subir
+                    </div>
                     <div style="color: var(--text-light); font-size: 0.9em;">Acepta archivos .xlsx, .xls, .csv</div>
                 </div>
-                
+
                 <input type="file" id="simplitFile" accept=".xlsx,.xls,.csv" />
             </div>
 
             <!-- Estadísticas -->
             <div class="section">
                 <div class="section-title">📈 Estadísticas Generales</div>
-                
+
                 <div class="stats-grid">
                     <div class="stat-card">
                         <div class="stat-value" id="statTotal">0</div>
@@ -479,7 +492,7 @@
             <!-- Acciones -->
             <div class="section">
                 <div class="section-title">🔧 Acciones</div>
-                
+
                 <button class="btn btn-success" id="exportBtn">📥 Exportar a Excel</button>
                 <button class="btn btn-orange" onclick="cargarCierresDesdeFirebase()">🔄 Actualizar</button>
                 <button class="btn btn-danger" id="clearDataBtn">🗑️ Limpiar Datos</button>
@@ -518,13 +531,30 @@
 
         let simplitData = [];
 
-        // ===== VERIFICAR AUTENTICACIÓN =====
-        auth.onAuthStateChanged(user => {
+        // ===== VERIFICAR AUTENTICACIÓN Y ROL =====
+        auth.onAuthStateChanged(async (user) => {
             if (!user) {
                 window.location.href = 'login.html';
-            } else {
-                console.log('✅ Usuario autenticado:', user.email);
+                return;
+            }
+
+            try {
+                // Verificar que el usuario tenga rol 'admin'
+                const userDoc = await db.collection('usuarios').doc(user.uid).get();
+                if (!userDoc.exists || userDoc.data().rol !== 'admin') {
+                    console.warn('⛔ Acceso denegado: rol no es admin');
+                    alert('⛔ No tienes permiso para acceder al panel de supervisor.');
+                    await auth.signOut();
+                    window.location.href = 'login.html';
+                    return;
+                }
+
+                console.log('✅ Usuario autenticado:', user.email, '| Rol: admin');
                 cargarCierresDesdeFirebase();
+            } catch (error) {
+                console.error('❌ Error verificando rol:', error);
+                await auth.signOut();
+                window.location.href = 'login.html';
             }
         });
 
@@ -586,14 +616,17 @@
             try {
                 const snapshot = await db.collection('cierres').orderBy('fecha', 'desc').get();
                 const cierres = [];
-                
+
                 snapshot.forEach(doc => {
                     cierres.push(doc.data());
                 });
 
                 console.log('📦 Cierres cargados:', cierres.length);
 
-                const tablaHTML = simplitData.length > 0 
+                // Reset array de imágenes antes de generar tablas
+                window._cierreImagenes = [];
+
+                const tablaHTML = simplitData.length > 0
                     ? generarTablaConSimplit(cierres)
                     : generarTablaSinSimplit(cierres);
 
@@ -621,7 +654,10 @@
                 html += `<td>Bs ${cierre.debito.toFixed(2)}</td>`;
                 html += `<td>Bs ${cierre.pagoMovil.toFixed(2)}</td>`;
                 html += `<td><strong>Bs ${cierre.total.toFixed(2)}</strong></td>`;
-                html += `<td><button onclick="abrirModal('${cierre.imagen}')" style="background: linear-gradient(135deg, #006B7D 0%, #004A5A 100%); color: white; border: none; padding: 8px 16px; border-radius: 8px; cursor: pointer; font-weight: 600;">Ver 📷</button></td>`;
+                const imgIndex = window._cierreImagenes ? window._cierreImagenes.length : 0;
+                if (!window._cierreImagenes) window._cierreImagenes = [];
+                window._cierreImagenes.push(cierre.imagen);
+                html += `<td><button onclick="abrirModalSeguro(${imgIndex})" style="background: linear-gradient(135deg, #006B7D 0%, #004A5A 100%); color: white; border: none; padding: 8px 16px; border-radius: 8px; cursor: pointer; font-weight: 600;">Ver 📷</button></td>`;
                 html += '</tr>';
             });
 
@@ -641,18 +677,18 @@
                     const tiendaCierre = cierre.tienda.trim();
                     const fechaSimplit = (s.Fecha || s.fecha || '').trim();
                     const fechaCierre = cierre.fecha.trim();
-                    
-                    const fechaCoincide = fechaSimplit.includes(fechaCierre) || 
-                                         fechaCierre.includes(fechaSimplit) ||
-                                         fechaSimplit === fechaCierre;
-                    
+
+                    const fechaCoincide = fechaSimplit.includes(fechaCierre) ||
+                        fechaCierre.includes(fechaSimplit) ||
+                        fechaSimplit === fechaCierre;
+
                     const tiendaCoincideExacta = tiendaSimplit.toLowerCase() === tiendaCierre.toLowerCase();
-                    
+
                     const codigoTiendaCierre = tiendaCierre.match(/^\d+/);
                     const codigoTiendaSimplit = tiendaSimplit.match(/^\d+/);
-                    const tiendaCoincideCodigo = codigoTiendaCierre && codigoTiendaSimplit && 
-                                                  codigoTiendaCierre[0] === codigoTiendaSimplit[0];
-                    
+                    const tiendaCoincideCodigo = codigoTiendaCierre && codigoTiendaSimplit &&
+                        codigoTiendaCierre[0] === codigoTiendaSimplit[0];
+
                     return fechaCoincide && (tiendaCoincideExacta || tiendaCoincideCodigo);
                 });
 
@@ -669,10 +705,13 @@
                 html += `<td><strong>Bs ${cierre.total.toFixed(2)}</strong></td>`;
                 html += `<td><strong>Bs ${totalSimplit.toFixed(2)}</strong></td>`;
                 html += `<td style="color: ${diferencia >= 0 ? '#2E7D32' : '#C62828'}"><strong>${diferencia >= 0 ? '+' : ''}Bs ${diferencia.toFixed(2)}</strong></td>`;
-                
+
                 let estadoTexto = estado === 'ok' ? '✅ CUADRA' : (estado === 'pending' ? '⚠️ DIF. MENOR' : '❌ NO CUADRA');
                 html += `<td><span class="status-${estado}">${estadoTexto}</span></td>`;
-                html += `<td><button onclick="abrirModal('${cierre.imagen}')" style="background: linear-gradient(135deg, #006B7D 0%, #004A5A 100%); color: white; border: none; padding: 8px 16px; border-radius: 8px; cursor: pointer; font-weight: 600;">Ver 📷</button></td>`;
+                const imgIndex = window._cierreImagenes ? window._cierreImagenes.length : 0;
+                if (!window._cierreImagenes) window._cierreImagenes = [];
+                window._cierreImagenes.push(cierre.imagen);
+                html += `<td><button onclick="abrirModalSeguro(${imgIndex})" style="background: linear-gradient(135deg, #006B7D 0%, #004A5A 100%); color: white; border: none; padding: 8px 16px; border-radius: 8px; cursor: pointer; font-weight: 600;">Ver 📷</button></td>`;
                 html += '</tr>';
             });
 
@@ -700,14 +739,14 @@
                     const tiendaCierre = cierre.tienda.trim();
                     const fechaSimplit = (s.Fecha || s.fecha || '').trim();
                     const fechaCierre = cierre.fecha.trim();
-                    
+
                     const fechaCoincide = fechaSimplit.includes(fechaCierre) || fechaCierre.includes(fechaSimplit) || fechaSimplit === fechaCierre;
                     const tiendaCoincideExacta = tiendaSimplit.toLowerCase() === tiendaCierre.toLowerCase();
-                    
+
                     const codigoTiendaCierre = tiendaCierre.match(/^\d+/);
                     const codigoTiendaSimplit = tiendaSimplit.match(/^\d+/);
                     const tiendaCoincideCodigo = codigoTiendaCierre && codigoTiendaSimplit && codigoTiendaCierre[0] === codigoTiendaSimplit[0];
-                    
+
                     return fechaCoincide && (tiendaCoincideExacta || tiendaCoincideCodigo);
                 });
 
@@ -725,12 +764,19 @@
             document.getElementById('statNoCuadran').textContent = noCuadran;
         }
 
-        // ===== MODAL DE IMAGEN =====
-        function abrirModal(imagenBase64) {
+        // ===== MODAL DE IMAGEN (seguro) =====
+        function abrirModalSeguro(index) {
             const modal = document.getElementById('imageModal');
             const modalImg = document.getElementById('modalImage');
+            const imagen = window._cierreImagenes && window._cierreImagenes[index];
+            if (!imagen) return;
+            // Validar que sea una imagen base64 legítima
+            if (!imagen.startsWith('data:image/')) {
+                console.warn('⚠️ Imagen con formato sospechoso, bloqueada');
+                return;
+            }
             modal.style.display = 'flex';
-            modalImg.src = imagenBase64;
+            modalImg.src = imagen;
         }
 
         function cerrarModal() {
@@ -742,7 +788,7 @@
             try {
                 const snapshot = await db.collection('cierres').get();
                 const cierres = [];
-                
+
                 snapshot.forEach(doc => {
                     cierres.push(doc.data());
                 });
@@ -756,14 +802,14 @@
                         const tiendaCierre = cierre.tienda.trim();
                         const fechaSimplit = (s.Fecha || s.fecha || '').trim();
                         const fechaCierre = cierre.fecha.trim();
-                        
+
                         const fechaCoincide = fechaSimplit.includes(fechaCierre) || fechaCierre.includes(fechaSimplit) || fechaSimplit === fechaCierre;
                         const tiendaCoincideExacta = tiendaSimplit.toLowerCase() === tiendaCierre.toLowerCase();
-                        
+
                         const codigoTiendaCierre = tiendaCierre.match(/^\d+/);
                         const codigoTiendaSimplit = tiendaSimplit.match(/^\d+/);
                         const tiendaCoincideCodigo = codigoTiendaCierre && codigoTiendaSimplit && codigoTiendaCierre[0] === codigoTiendaSimplit[0];
-                        
+
                         return fechaCoincide && (tiendaCoincideExacta || tiendaCoincideCodigo);
                     });
 
@@ -813,11 +859,11 @@
             try {
                 const snapshot = await db.collection('cierres').get();
                 const batch = db.batch();
-                
+
                 snapshot.docs.forEach(doc => {
                     batch.delete(doc.ref);
                 });
-                
+
                 await batch.commit();
                 alert('✅ Todos los datos han sido eliminados');
                 cargarCierresDesdeFirebase();
@@ -828,4 +874,5 @@
         });
     </script>
 </body>
+
 </html>
