@@ -1,19 +1,20 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>📊 Dashboard Supervisor - Cierre de Caja</title>
-    
+
     <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
-    
+
     <!-- Librerías -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-    
+
     <style>
         :root {
             --primary-blue: #006B7D;
@@ -69,8 +70,17 @@
         }
 
         @keyframes pulse {
-            0%, 100% { transform: scale(1); opacity: 0.5; }
-            50% { transform: scale(1.1); opacity: 0.8; }
+
+            0%,
+            100% {
+                transform: scale(1);
+                opacity: 0.5;
+            }
+
+            50% {
+                transform: scale(1.1);
+                opacity: 0.8;
+            }
         }
 
         .container {
@@ -128,7 +138,7 @@
             position: absolute;
             top: 20px;
             right: 20px;
-            background: rgba(255,255,255,0.2);
+            background: rgba(255, 255, 255, 0.2);
             color: var(--white);
             border: 2px solid var(--white);
             padding: 10px 20px;
@@ -140,9 +150,9 @@
         }
 
         .logout-btn:hover {
-            background: rgba(255,255,255,0.3);
+            background: rgba(255, 255, 255, 0.3);
             transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
         }
 
         .content {
@@ -187,6 +197,7 @@
                 opacity: 0;
                 transform: translateY(-10px);
             }
+
             to {
                 opacity: 1;
                 transform: translateY(0);
@@ -248,7 +259,7 @@
             background: var(--white);
             border-radius: 10px;
             overflow: hidden;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
         }
 
         th {
@@ -400,7 +411,7 @@
             max-width: 100%;
             max-height: 90vh;
             border-radius: 10px;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
         }
 
         .close-modal {
@@ -424,8 +435,116 @@
             background: var(--primary-blue);
             transform: rotate(90deg);
         }
+
+        /* ===== ESTILOS DE FILTROS ===== */
+        .filters-container {
+            background: var(--light-blue);
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            border: 2px solid #D0E8EC;
+        }
+
+        .filters-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .filter-group label {
+            font-weight: 600;
+            color: var(--text-dark);
+            font-size: 0.9em;
+        }
+
+        .filter-group input,
+        .filter-group select {
+            padding: 10px 12px;
+            border: 2px solid #D0E8EC;
+            border-radius: 8px;
+            font-size: 0.95em;
+            transition: all 0.3s;
+            font-family: inherit;
+            background: var(--white);
+        }
+
+        .filter-group input:focus,
+        .filter-group select:focus {
+            outline: none;
+            border-color: var(--primary-blue);
+            box-shadow: 0 0 0 3px rgba(0, 107, 125, 0.1);
+        }
+
+        .filter-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+        }
+
+        .btn-filter {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 0.95em;
+        }
+
+        .btn-apply-filter {
+            background: linear-gradient(135deg, var(--primary-blue) 0%, var(--dark-blue) 100%);
+            color: var(--white);
+        }
+
+        .btn-apply-filter:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px var(--shadow);
+        }
+
+        .btn-clear-filter {
+            background: #f8f9fa;
+            color: var(--text-dark);
+            border: 2px solid #dee2e6;
+        }
+
+        .btn-clear-filter:hover {
+            background: #e9ecef;
+        }
+
+        .filter-results-info {
+            text-align: center;
+            padding: 12px;
+            background: var(--white);
+            border-radius: 8px;
+            margin-top: 15px;
+            font-weight: 600;
+            color: var(--primary-blue);
+        }
+
+        /* Responsive para filtros */
+        @media (max-width: 768px) {
+            .filters-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .filter-actions {
+                flex-direction: column;
+            }
+
+            .btn-filter {
+                width: 100%;
+            }
+        }
     </style>
 </head>
+
 <body>
     <div class="container">
         <div class="header">
@@ -438,24 +557,25 @@
             <!-- Sección de Simplit -->
             <div class="section">
                 <div class="section-title">📁 Cargar Archivo Simplit (Excel/CSV)</div>
-                
+
                 <div id="alertSimplit" class="alert alert-info">
                     💡 Sube el archivo de Simplit para cruzar datos con los cierres registrados
                 </div>
 
                 <div class="upload-area-simplit" onclick="document.getElementById('simplitFile').click()">
                     <div style="font-size: 3em; margin-bottom: 10px;">📤</div>
-                    <div style="font-size: 1.2em; font-weight: 600; margin-bottom: 5px;">Arrastra o haz clic para subir</div>
+                    <div style="font-size: 1.2em; font-weight: 600; margin-bottom: 5px;">Arrastra o haz clic para subir
+                    </div>
                     <div style="color: var(--text-light); font-size: 0.9em;">Acepta archivos .xlsx, .xls, .csv</div>
                 </div>
-                
+
                 <input type="file" id="simplitFile" accept=".xlsx,.xls,.csv" />
             </div>
 
             <!-- Estadísticas -->
             <div class="section">
                 <div class="section-title">📈 Estadísticas Generales</div>
-                
+
                 <div class="stats-grid">
                     <div class="stat-card">
                         <div class="stat-value" id="statTotal">0</div>
@@ -479,10 +599,62 @@
             <!-- Acciones -->
             <div class="section">
                 <div class="section-title">🔧 Acciones</div>
-                
+
                 <button class="btn btn-success" id="exportBtn">📥 Exportar a Excel</button>
                 <button class="btn btn-orange" onclick="cargarCierresDesdeFirebase()">🔄 Actualizar</button>
                 <button class="btn btn-danger" id="clearDataBtn">🗑️ Limpiar Datos</button>
+            </div>
+
+            <!-- Filtros -->
+            <div class="section">
+                <div class="section-title">🔍 Filtros de Búsqueda</div>
+                <div class="filters-container">
+                    <div class="filters-grid">
+                        <div class="filter-group">
+                            <label for="filterTienda">🏪 Tienda</label>
+                            <input type="text" id="filterTienda" placeholder="Buscar por nombre...">
+                        </div>
+
+                        <div class="filter-group">
+                            <label for="filterFechaDesde">📅 Fecha Desde</label>
+                            <input type="date" id="filterFechaDesde">
+                        </div>
+
+                        <div class="filter-group">
+                            <label for="filterFechaHasta">📅 Fecha Hasta</label>
+                            <input type="date" id="filterFechaHasta">
+                        </div>
+
+                        <div class="filter-group">
+                            <label for="filterMontoMin">💰 Monto Mínimo (Bs)</label>
+                            <input type="number" id="filterMontoMin" placeholder="Ej: 0" min="0" step="0.01">
+                        </div>
+
+                        <div class="filter-group">
+                            <label for="filterMontoMax">💰 Monto Máximo (Bs)</label>
+                            <input type="number" id="filterMontoMax" placeholder="Ej: 10000" min="0" step="0.01">
+                        </div>
+
+                        <div class="filter-group">
+                            <label for="filterEstado">✅ Estado (Simplit)</label>
+                            <select id="filterEstado">
+                                <option value="todos">Todos</option>
+                                <option value="cuadra">✅ Cuadra</option>
+                                <option value="no-cuadra">❌ No Cuadra</option>
+                                <option value="pendiente">⏳ Pendiente (Sin Simplit)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="filter-actions">
+                        <button class="btn-filter btn-clear-filter" onclick="limpiarFiltros()">🗑️ Limpiar
+                            Filtros</button>
+                        <button class="btn-filter btn-apply-filter" onclick="aplicarFiltros()">🔍 Aplicar
+                            Filtros</button>
+                    </div>
+
+                    <div id="filterResultsInfo" class="filter-results-info" style="display: none;"></div>
+                </div>
             </div>
 
             <!-- Tabla de Resultados -->
@@ -517,6 +689,7 @@
         const auth = firebase.auth();
 
         let simplitData = [];
+        let cierresGlobal = []; // Variable global para almacenar todos los cierres
 
         // ===== VERIFICAR AUTENTICACIÓN =====
         auth.onAuthStateChanged(user => {
@@ -585,25 +758,31 @@
         async function cargarCierresDesdeFirebase() {
             try {
                 const snapshot = await db.collection('cierres').orderBy('fecha', 'desc').get();
-                const cierres = [];
-                
+                cierresGlobal = []; // Limpiar array global
+
                 snapshot.forEach(doc => {
-                    cierres.push(doc.data());
+                    cierresGlobal.push(doc.data());
                 });
 
-                console.log('📦 Cierres cargados:', cierres.length);
+                console.log('📦 Cierres cargados:', cierresGlobal.length);
 
-                const tablaHTML = simplitData.length > 0 
-                    ? generarTablaConSimplit(cierres)
-                    : generarTablaSinSimplit(cierres);
-
-                document.getElementById('tablaResultados').innerHTML = tablaHTML;
-                actualizarEstadisticas(cierres);
+                // Mostrar todos los cierres inicialmente
+                mostrarCierres(cierresGlobal);
 
             } catch (error) {
                 console.error('Error al cargar cierres:', error);
                 mostrarAlerta('❌ Error al cargar datos', 'warning');
             }
+        }
+
+        // ===== MOSTRAR CIERRES (con o sin filtros) =====
+        function mostrarCierres(cierres) {
+            const tablaHTML = simplitData.length > 0
+                ? generarTablaConSimplit(cierres)
+                : generarTablaSinSimplit(cierres);
+
+            document.getElementById('tablaResultados').innerHTML = tablaHTML;
+            actualizarEstadisticas(cierres);
         }
 
         // ===== GENERAR TABLAS =====
@@ -641,18 +820,18 @@
                     const tiendaCierre = cierre.tienda.trim();
                     const fechaSimplit = (s.Fecha || s.fecha || '').trim();
                     const fechaCierre = cierre.fecha.trim();
-                    
-                    const fechaCoincide = fechaSimplit.includes(fechaCierre) || 
-                                         fechaCierre.includes(fechaSimplit) ||
-                                         fechaSimplit === fechaCierre;
-                    
+
+                    const fechaCoincide = fechaSimplit.includes(fechaCierre) ||
+                        fechaCierre.includes(fechaSimplit) ||
+                        fechaSimplit === fechaCierre;
+
                     const tiendaCoincideExacta = tiendaSimplit.toLowerCase() === tiendaCierre.toLowerCase();
-                    
+
                     const codigoTiendaCierre = tiendaCierre.match(/^\d+/);
                     const codigoTiendaSimplit = tiendaSimplit.match(/^\d+/);
-                    const tiendaCoincideCodigo = codigoTiendaCierre && codigoTiendaSimplit && 
-                                                  codigoTiendaCierre[0] === codigoTiendaSimplit[0];
-                    
+                    const tiendaCoincideCodigo = codigoTiendaCierre && codigoTiendaSimplit &&
+                        codigoTiendaCierre[0] === codigoTiendaSimplit[0];
+
                     return fechaCoincide && (tiendaCoincideExacta || tiendaCoincideCodigo);
                 });
 
@@ -669,7 +848,7 @@
                 html += `<td><strong>Bs ${cierre.total.toFixed(2)}</strong></td>`;
                 html += `<td><strong>Bs ${totalSimplit.toFixed(2)}</strong></td>`;
                 html += `<td style="color: ${diferencia >= 0 ? '#2E7D32' : '#C62828'}"><strong>${diferencia >= 0 ? '+' : ''}Bs ${diferencia.toFixed(2)}</strong></td>`;
-                
+
                 let estadoTexto = estado === 'ok' ? '✅ CUADRA' : (estado === 'pending' ? '⚠️ DIF. MENOR' : '❌ NO CUADRA');
                 html += `<td><span class="status-${estado}">${estadoTexto}</span></td>`;
                 html += `<td><button onclick="abrirModal('${cierre.imagen}')" style="background: linear-gradient(135deg, #006B7D 0%, #004A5A 100%); color: white; border: none; padding: 8px 16px; border-radius: 8px; cursor: pointer; font-weight: 600;">Ver 📷</button></td>`;
@@ -700,14 +879,14 @@
                     const tiendaCierre = cierre.tienda.trim();
                     const fechaSimplit = (s.Fecha || s.fecha || '').trim();
                     const fechaCierre = cierre.fecha.trim();
-                    
+
                     const fechaCoincide = fechaSimplit.includes(fechaCierre) || fechaCierre.includes(fechaSimplit) || fechaSimplit === fechaCierre;
                     const tiendaCoincideExacta = tiendaSimplit.toLowerCase() === tiendaCierre.toLowerCase();
-                    
+
                     const codigoTiendaCierre = tiendaCierre.match(/^\d+/);
                     const codigoTiendaSimplit = tiendaSimplit.match(/^\d+/);
                     const tiendaCoincideCodigo = codigoTiendaCierre && codigoTiendaSimplit && codigoTiendaCierre[0] === codigoTiendaSimplit[0];
-                    
+
                     return fechaCoincide && (tiendaCoincideExacta || tiendaCoincideCodigo);
                 });
 
@@ -724,6 +903,142 @@
             document.getElementById('statDifMenor').textContent = difMenor;
             document.getElementById('statNoCuadran').textContent = noCuadran;
         }
+
+        // ===== FUNCIONES DE FILTRADO =====
+        function aplicarFiltros() {
+            // Obtener valores de los filtros
+            const filterTienda = document.getElementById('filterTienda').value.toLowerCase().trim();
+            const filterFechaDesde = document.getElementById('filterFechaDesde').value;
+            const filterFechaHasta = document.getElementById('filterFechaHasta').value;
+            const filterMontoMin = parseFloat(document.getElementById('filterMontoMin').value) || 0;
+            const filterMontoMax = parseFloat(document.getElementById('filterMontoMax').value) || Infinity;
+            const filterEstado = document.getElementById('filterEstado').value;
+
+            console.log('🔍 Aplicando filtros:', {
+                tienda: filterTienda,
+                fechaDesde: filterFechaDesde,
+                fechaHasta: filterFechaHasta,
+                montoMin: filterMontoMin,
+                montoMax: filterMontoMax,
+                estado: filterEstado
+            });
+
+            // Aplicar filtros
+            let cierresFiltrados = cierresGlobal.filter(cierre => {
+                // Filtro por tienda
+                if (filterTienda && !cierre.tienda.toLowerCase().includes(filterTienda)) {
+                    return false;
+                }
+
+                // Filtro por fecha desde
+                if (filterFechaDesde && cierre.fecha < filterFechaDesde) {
+                    return false;
+                }
+
+                // Filtro por fecha hasta
+                if (filterFechaHasta && cierre.fecha > filterFechaHasta) {
+                    return false;
+                }
+
+                // Filtro por monto
+                if (cierre.total < filterMontoMin || cierre.total > filterMontoMax) {
+                    return false;
+                }
+
+                // Filtro por estado (solo si hay datos de Simplit)
+                if (filterEstado !== 'todos' && simplitData.length > 0) {
+                    const simplitRecord = simplitData.find(s => {
+                        const tiendaSimplit = (s.Tienda || s.tienda || '').trim();
+                        const tiendaCierre = cierre.tienda.trim();
+                        const fechaSimplit = (s.Fecha || s.fecha || '').trim();
+                        const fechaCierre = cierre.fecha.trim();
+
+                        const fechaCoincide = fechaSimplit.includes(fechaCierre) ||
+                            fechaCierre.includes(fechaSimplit) ||
+                            fechaSimplit === fechaCierre;
+                        const tiendaCoincideExacta = tiendaSimplit.toLowerCase() === tiendaCierre.toLowerCase();
+
+                        const codigoTiendaCierre = tiendaCierre.match(/^\d+/);
+                        const codigoTiendaSimplit = tiendaSimplit.match(/^\d+/);
+                        const tiendaCoincideCodigo = codigoTiendaCierre && codigoTiendaSimplit &&
+                            codigoTiendaCierre[0] === codigoTiendaSimplit[0];
+
+                        return fechaCoincide && (tiendaCoincideExacta || tiendaCoincideCodigo);
+                    });
+
+                    const totalSimplit = simplitRecord ? parseFloat(simplitRecord.Total_Ventas || simplitRecord.total_ventas || 0) : 0;
+                    const diferencia = Math.abs(cierre.total - totalSimplit);
+
+                    let estado;
+                    if (!simplitRecord) {
+                        estado = 'pendiente';
+                    } else if (diferencia <= 1) {
+                        estado = 'cuadra';
+                    } else {
+                        estado = 'no-cuadra';
+                    }
+
+                    if (filterEstado !== estado) {
+                        return false;
+                    }
+                } else if (filterEstado === 'pendiente' && simplitData.length === 0) {
+                    // Si no hay Simplit cargado, todos son "pendientes"
+                    return true;
+                } else if (filterEstado !== 'todos' && filterEstado !== 'pendiente' && simplitData.length === 0) {
+                    // Si busca "cuadra" o "no-cuadra" pero no hay Simplit, no mostrar nada
+                    return false;
+                }
+
+                return true;
+            });
+
+            console.log(`📊 Resultados: ${cierresFiltrados.length} de ${cierresGlobal.length} cierres`);
+
+            // Mostrar resultados
+            mostrarCierres(cierresFiltrados);
+
+            // Mostrar información de resultados
+            const infoDiv = document.getElementById('filterResultsInfo');
+            if (cierresFiltrados.length === cierresGlobal.length) {
+                infoDiv.style.display = 'none';
+            } else {
+                infoDiv.style.display = 'block';
+                infoDiv.innerHTML = `📊 Mostrando ${cierresFiltrados.length} de ${cierresGlobal.length} registros`;
+            }
+        }
+
+        function limpiarFiltros() {
+            // Limpiar campos
+            document.getElementById('filterTienda').value = '';
+            document.getElementById('filterFechaDesde').value = '';
+            document.getElementById('filterFechaHasta').value = '';
+            document.getElementById('filterMontoMin').value = '';
+            document.getElementById('filterMontoMax').value = '';
+            document.getElementById('filterEstado').value = 'todos';
+
+            // Ocultar info de resultados
+            document.getElementById('filterResultsInfo').style.display = 'none';
+
+            // Mostrar todos los cierres
+            mostrarCierres(cierresGlobal);
+
+            console.log('🗑️ Filtros limpiados');
+        }
+
+        // Aplicar filtros al presionar Enter en los campos de texto
+        document.addEventListener('DOMContentLoaded', () => {
+            const filterInputs = ['filterTienda', 'filterFechaDesde', 'filterFechaHasta', 'filterMontoMin', 'filterMontoMax'];
+            filterInputs.forEach(id => {
+                const element = document.getElementById(id);
+                if (element) {
+                    element.addEventListener('keypress', (e) => {
+                        if (e.key === 'Enter') {
+                            aplicarFiltros();
+                        }
+                    });
+                }
+            });
+        });
 
         // ===== MODAL DE IMAGEN =====
         function abrirModal(imagenBase64) {
@@ -742,7 +1057,7 @@
             try {
                 const snapshot = await db.collection('cierres').get();
                 const cierres = [];
-                
+
                 snapshot.forEach(doc => {
                     cierres.push(doc.data());
                 });
@@ -756,14 +1071,14 @@
                         const tiendaCierre = cierre.tienda.trim();
                         const fechaSimplit = (s.Fecha || s.fecha || '').trim();
                         const fechaCierre = cierre.fecha.trim();
-                        
+
                         const fechaCoincide = fechaSimplit.includes(fechaCierre) || fechaCierre.includes(fechaSimplit) || fechaSimplit === fechaCierre;
                         const tiendaCoincideExacta = tiendaSimplit.toLowerCase() === tiendaCierre.toLowerCase();
-                        
+
                         const codigoTiendaCierre = tiendaCierre.match(/^\d+/);
                         const codigoTiendaSimplit = tiendaSimplit.match(/^\d+/);
                         const tiendaCoincideCodigo = codigoTiendaCierre && codigoTiendaSimplit && codigoTiendaCierre[0] === codigoTiendaSimplit[0];
-                        
+
                         return fechaCoincide && (tiendaCoincideExacta || tiendaCoincideCodigo);
                     });
 
@@ -813,11 +1128,11 @@
             try {
                 const snapshot = await db.collection('cierres').get();
                 const batch = db.batch();
-                
+
                 snapshot.docs.forEach(doc => {
                     batch.delete(doc.ref);
                 });
-                
+
                 await batch.commit();
                 alert('✅ Todos los datos han sido eliminados');
                 cargarCierresDesdeFirebase();
@@ -828,4 +1143,5 @@
         });
     </script>
 </body>
+
 </html>
