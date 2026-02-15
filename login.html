@@ -397,157 +397,6 @@
         .input-group:focus-within::after {
             width: 100%;
         }
-
-        /* ===== RESPONSIVE DESIGN ===== */
-        @media (max-width: 768px) {
-            body {
-                padding: 10px;
-            }
-
-            .login-container {
-                border-radius: 16px;
-                max-width: 100%;
-            }
-
-            .login-header {
-                padding: 20px 20px 16px;
-            }
-
-            .logo-container {
-                width: 50px;
-                height: 50px;
-                margin-bottom: 10px;
-            }
-
-            .login-header h1 {
-                font-size: 1.3em;
-            }
-
-            .login-header p {
-                font-size: 0.85em;
-            }
-
-            .login-body {
-                padding: 20px;
-            }
-
-            .input-group {
-                margin-bottom: 14px;
-            }
-
-            .input-group label {
-                font-size: 0.85em;
-                margin-bottom: 6px;
-            }
-
-            .input-group input {
-                padding: 13px 42px 13px 42px;
-                font-size: 16px;
-                /* Evita zoom automático en iOS */
-            }
-
-            .role-selector select {
-                padding: 13px 45px 13px 14px;
-                font-size: 16px;
-            }
-
-            .input-icon {
-                left: 12px;
-                font-size: 1em;
-            }
-
-            .password-toggle {
-                right: 12px;
-                font-size: 1em;
-            }
-
-            .btn {
-                padding: 15px;
-                font-size: 1em;
-                margin-top: 10px;
-            }
-
-            .alert {
-                padding: 10px 14px;
-                font-size: 0.85em;
-                margin-bottom: 16px;
-            }
-
-            .login-footer {
-                padding: 14px 20px;
-                font-size: 0.8em;
-            }
-
-            /* Ajustar decoración de fondo en móvil */
-            body::before,
-            body::after {
-                width: 300px;
-                height: 300px;
-            }
-        }
-
-        @media (max-width: 480px) {
-            body {
-                padding: 5px;
-            }
-
-            .login-container {
-                border-radius: 12px;
-            }
-
-            .login-header {
-                padding: 18px 15px 14px;
-            }
-
-            .login-header h1 {
-                font-size: 1.2em;
-            }
-
-            .login-body {
-                padding: 16px;
-            }
-
-            .input-group {
-                margin-bottom: 12px;
-            }
-
-            .btn {
-                padding: 14px;
-                font-size: 0.95em;
-            }
-
-            .alert {
-                font-size: 0.82em;
-            }
-
-            .login-footer {
-                font-size: 0.75em;
-            }
-        }
-
-        /* Mejoras táctiles para dispositivos móviles */
-        @media (hover: none) and (pointer: coarse) {
-
-            .input-group input,
-            .role-selector select,
-            .btn {
-                min-height: 48px;
-                /* Tamaño mínimo recomendado para táctil */
-            }
-
-            .password-toggle {
-                min-width: 44px;
-                min-height: 44px;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-            }
-
-            .btn:hover {
-                transform: none;
-                /* Desactivar hover en táctil */
-            }
-        }
     </style>
 </head>
 
@@ -686,14 +535,25 @@
                 const userDoc = await db.collection('usuarios').doc(uid).get();
 
                 if (!userDoc.exists) {
-                    // ❌ Usuario no registrado en el sistema — denegar acceso
-                    console.warn("⚠️ Usuario autenticado pero NO registrado en Firestore");
-                    await auth.signOut();
-                    setLoading(false);
-                    showAlert(
-                        "❌ Tu cuenta no está registrada en el sistema. Contacta al administrador para que te asigne un rol.",
-                        'error'
-                    );
+                    // Si el usuario no existe en Firestore, creamos un registro básico
+                    console.warn("⚠️ Usuario no encontrado en Firestore, creando registro...");
+
+                    // Crear documento de usuario en Firestore
+                    await db.collection('usuarios').doc(uid).set({
+                        email: email,
+                        rol: rolSeleccionado,
+                        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+
+                    // Continuar con el login
+                    showAlert(`¡Bienvenido! Redirigiendo...`, 'success');
+                    setTimeout(() => {
+                        if (rolSeleccionado === "admin") {
+                            window.location.href = "supervisor-dashboard.html";
+                        } else if (rolSeleccionado === "tienda") {
+                            window.location.href = "registro-tienda.html";
+                        }
+                    }, 1000);
                     return;
                 }
 
