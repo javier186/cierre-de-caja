@@ -571,6 +571,398 @@
             display: inline-block;
             animation: pulse-dot 1.2s ease-in-out infinite;
         }
+
+        /* ===== RESPONSIVE DESIGN ===== */
+        @media (max-width: 768px) {
+            body {
+                padding: 10px;
+            }
+
+            .container {
+                border-radius: 16px;
+            }
+
+            .header {
+                padding: 20px 15px;
+            }
+
+            .header h1 {
+                font-size: 1.5em;
+                margin-bottom: 8px;
+            }
+
+            .status {
+                font-size: 0.85em;
+            }
+
+            .logout-btn {
+                position: static;
+                margin: 15px auto 0;
+                display: block;
+                width: auto;
+                padding: 8px 16px;
+                font-size: 0.9em;
+            }
+
+            .content {
+                padding: 20px;
+            }
+
+            .section {
+                padding: 20px;
+                margin-bottom: 20px;
+                border-radius: 12px;
+            }
+
+            .section-title {
+                font-size: 1.3em;
+                margin-bottom: 15px;
+                gap: 8px;
+            }
+
+            /* Grid de 3 columnas → 1 columna en móvil */
+            .three-columns {
+                grid-template-columns: 1fr;
+                gap: 12px;
+            }
+
+            .input-group {
+                margin-bottom: 15px;
+            }
+
+            .input-group label {
+                font-size: 0.9em;
+                margin-bottom: 6px;
+            }
+
+            .input-group input,
+            .input-group select {
+                padding: 13px 14px;
+                font-size: 16px;
+                /* Evita zoom automático en iOS */
+            }
+
+            .total-display {
+                padding: 20px;
+                margin: 15px 0;
+            }
+
+            .total-display .label {
+                font-size: 0.85em;
+            }
+
+            .total-display .value {
+                font-size: 2em;
+            }
+
+            .total-usd {
+                font-size: 1em;
+            }
+
+            .usd-badge {
+                padding: 10px 12px;
+                font-size: 0.85em;
+            }
+
+            .btn {
+                padding: 14px 25px;
+                font-size: 1em;
+            }
+
+            .btn-group {
+                flex-direction: column;
+                gap: 10px;
+            }
+
+            .btn-group .btn {
+                width: 100%;
+            }
+
+            .photo-section {
+                padding: 20px;
+            }
+
+            .camera-btn {
+                padding: 14px;
+                font-size: 0.95em;
+            }
+
+            .preview-item {
+                width: 100%;
+                max-width: 300px;
+            }
+
+            .camera-view {
+                padding: 15px;
+            }
+
+            .camera-controls {
+                flex-direction: column;
+                gap: 10px;
+            }
+
+            .camera-controls button {
+                width: 100%;
+            }
+
+            .success-message {
+                padding: 20px;
+            }
+
+            .success-message h2 {
+                font-size: 1.5em;
+            }
+        }
+
+        @media (max-width: 480px) {
+            body {
+                padding: 5px;
+            }
+
+            .container {
+                border-radius: 12px;
+            }
+
+            .header {
+                padding: 15px 12px;
+            }
+
+            .header h1 {
+                font-size: 1.3em;
+            }
+
+            .logout-btn {
+                padding: 6px 12px;
+                font-size: 0.85em;
+            }
+
+            .content {
+                padding: 15px;
+            }
+
+            .section {
+                padding: 15px;
+                margin-bottom: 15px;
+            }
+
+            .section-title {
+                font-size: 1.2em;
+                margin-bottom: 12px;
+            }
+
+            .input-group {
+                margin-bottom: 12px;
+            }
+
+            .input-group label {
+                font-size: 0.87em;
+            }
+
+            .total-display {
+                padding: 15px;
+            }
+
+            .total-display .value {
+                font-size: 1.8em;
+            }
+
+            .btn {
+                padding: 12px 20px;
+                font-size: 0.95em;
+            }
+
+            .usd-badge {
+                padding: 8px 10px;
+                font-size: 0.8em;
+            }
+        }
+
+        /* Mejoras táctiles para dispositivos móviles */
+        @media (hover: none) and (pointer: coarse) {
+
+            .input-group input,
+            .input-group select,
+            .btn,
+            .camera-btn {
+                min-height: 48px;
+                /* Tamaño mínimo recomendado para táctil */
+            }
+
+            .logout-btn {
+                min-height: 44px;
+            }
+
+            .remove-btn {
+                min-width: 44px;
+                min-height: 44px;
+            }
+
+            /* Desactivar hover effects en táctil */
+            .section:hover,
+            .btn:hover,
+            .logout-btn:hover {
+                transform: none;
+            }
+        }
+
+        /* Orientación horizontal en móvil */
+        @media (max-width: 768px) and (orientation: landscape) {
+            .header h1 {
+                font-size: 1.3em;
+            }
+
+            .total-display .value {
+                font-size: 1.8em;
+            }
+        }
+
+        /* ===== MODAL DE TIMEOUT ===== */
+        .timeout-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 10000;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(5px);
+            animation: fadeIn 0.3s ease;
+        }
+
+        .timeout-modal.active {
+            display: flex;
+        }
+
+        .timeout-content {
+            background: var(--white);
+            border-radius: 20px;
+            padding: 40px;
+            max-width: 500px;
+            width: 90%;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+            text-align: center;
+            animation: slideInScale 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+
+            to {
+                opacity: 1;
+            }
+        }
+
+        @keyframes slideInScale {
+            from {
+                transform: scale(0.8) translateY(-20px);
+                opacity: 0;
+            }
+
+            to {
+                transform: scale(1) translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .timeout-icon {
+            font-size: 4em;
+            margin-bottom: 20px;
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        .timeout-title {
+            font-size: 1.8em;
+            color: var(--primary-blue);
+            margin-bottom: 15px;
+            font-weight: 600;
+        }
+
+        .timeout-message {
+            font-size: 1.1em;
+            color: var(--text-dark);
+            margin-bottom: 25px;
+            line-height: 1.6;
+        }
+
+        .timeout-timer {
+            font-size: 3em;
+            font-weight: bold;
+            color: var(--primary-orange);
+            margin: 20px 0;
+            font-family: 'Courier New', monospace;
+        }
+
+        .timeout-actions {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-top: 25px;
+        }
+
+        .timeout-btn {
+            padding: 15px 30px;
+            border: none;
+            border-radius: 10px;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .timeout-btn-continue {
+            background: linear-gradient(135deg, var(--primary-blue) 0%, var(--dark-blue) 100%);
+            color: var(--white);
+        }
+
+        .timeout-btn-continue:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px var(--shadow);
+        }
+
+        .timeout-btn-logout {
+            background: #f8f9fa;
+            color: var(--text-dark);
+            border: 2px solid #dee2e6;
+        }
+
+        .timeout-btn-logout:hover {
+            background: #e9ecef;
+        }
+
+        @media (max-width: 480px) {
+            .timeout-content {
+                padding: 30px 20px;
+            }
+
+            .timeout-icon {
+                font-size: 3em;
+            }
+
+            .timeout-title {
+                font-size: 1.4em;
+            }
+
+            .timeout-message {
+                font-size: 1em;
+            }
+
+            .timeout-timer {
+                font-size: 2.5em;
+            }
+
+            .timeout-actions {
+                flex-direction: column;
+            }
+
+            .timeout-btn {
+                width: 100%;
+            }
+        }
     </style>
 </head>
 
@@ -715,6 +1107,29 @@
         </div>
     </div>
 
+    <!-- Modal de Timeout/Inactividad -->
+    <div class="timeout-modal" id="timeoutModal">
+        <div class="timeout-content">
+            <div class="timeout-icon">⏰</div>
+            <div class="timeout-title">⚠️ Sesión por Expirar</div>
+            <div class="timeout-message">
+                Tu sesión se cerrará automáticamente por inactividad en:
+            </div>
+            <div class="timeout-timer" id="timeoutTimer">0:60</div>
+            <div class="timeout-message" style="font-size: 0.95em; color: var(--text-light);">
+                ¿Deseas continuar trabajando?
+            </div>
+            <div class="timeout-actions">
+                <button class="timeout-btn timeout-btn-continue" onclick="extenderSesion()">
+                    ✅ Seguir Trabajando
+                </button>
+                <button class="timeout-btn timeout-btn-logout" onclick="cerrarSesionManual()">
+                    🚪 Cerrar Sesión
+                </button>
+            </div>
+        </div>
+    </div>
+
     <script>
         // ===== CONFIGURACIÓN DE FIREBASE =====
         const firebaseConfig = {
@@ -734,19 +1149,167 @@
         let stream = null;
         let tasaBCV = 0; // Tasa BCV actual
 
-        // ===== VERIFICAR AUTENTICACIÓN =====
-        auth.onAuthStateChanged(user => {
+        // ===== SISTEMA DE TIMEOUT DE INACTIVIDAD =====
+        let inactivityTimer = null;
+        let warningTimer = null;
+        let countdownInterval = null;
+        const INACTIVITY_LIMIT = 2 * 60 * 1000; // 10 minutos en milisegundos
+        const WARNING_TIME = 1 * 60 * 1000; // 9 minutos - mostrar advertencia
+        const COUNTDOWN_START = 60; // segundos de countdown
+
+        function iniciarTimerInactividad() {
+            // Limpiar timers existentes
+            limpiarTimers();
+
+            console.log('⏱️ Timer de inactividad iniciado (10 minutos)');
+
+            // Timer de advertencia (a los 9 minutos)
+            warningTimer = setTimeout(() => {
+                mostrarAdvertenciaTimeout();
+            }, WARNING_TIME);
+
+            // Timer de cierre automático (a los 10 minutos)
+            inactivityTimer = setTimeout(() => {
+                cerrarSesionPorInactividad();
+            }, INACTIVITY_LIMIT);
+        }
+
+        function limpiarTimers() {
+            if (inactivityTimer) {
+                clearTimeout(inactivityTimer);
+                inactivityTimer = null;
+            }
+            if (warningTimer) {
+                clearTimeout(warningTimer);
+                warningTimer = null;
+            }
+            if (countdownInterval) {
+                clearInterval(countdownInterval);
+                countdownInterval = null;
+            }
+        }
+
+        function resetearTimerInactividad() {
+            // Solo resetear si no hay modal activo
+            const modal = document.getElementById('timeoutModal');
+            if (!modal.classList.contains('active')) {
+                limpiarTimers();
+                iniciarTimerInactividad();
+            }
+        }
+
+        function mostrarAdvertenciaTimeout() {
+            console.log('⚠️ Mostrando advertencia de timeout');
+            const modal = document.getElementById('timeoutModal');
+            modal.classList.add('active');
+
+            // Iniciar countdown de 60 segundos
+            let secondsLeft = COUNTDOWN_START;
+            actualizarTimerDisplay(secondsLeft);
+
+            countdownInterval = setInterval(() => {
+                secondsLeft--;
+                actualizarTimerDisplay(secondsLeft);
+
+                if (secondsLeft <= 0) {
+                    clearInterval(countdownInterval);
+                }
+            }, 1000);
+        }
+
+        function actualizarTimerDisplay(seconds) {
+            const minutes = Math.floor(seconds / 60);
+            const secs = seconds % 60;
+            const display = `${minutes}:${secs.toString().padStart(2, '0')}`;
+            document.getElementById('timeoutTimer').textContent = display;
+        }
+
+        function extenderSesion() {
+            console.log('✅ Sesión extendida por el usuario');
+            const modal = document.getElementById('timeoutModal');
+            modal.classList.remove('active');
+
+            // Limpiar y reiniciar timers
+            limpiarTimers();
+            iniciarTimerInactividad();
+        }
+
+        function cerrarSesionManual() {
+            console.log('🚪 Usuario cerró sesión manualmente desde modal');
+            logout();
+        }
+
+        function cerrarSesionPorInactividad() {
+            console.log('⏰ Cerrando sesión por inactividad (10 minutos)');
+            alert('⏰ Tu sesión se ha cerrado por inactividad (10 minutos sin actividad).');
+            logout();
+        }
+
+        // Detectar actividad del usuario
+        const activityEvents = ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart', 'click'];
+
+        activityEvents.forEach(event => {
+            document.addEventListener(event, resetearTimerInactividad, { passive: true });
+        });
+
+        // Iniciar timer cuando se carga la página
+        window.addEventListener('load', () => {
+            // Dar 2 segundos antes de iniciar el timer (para que cargue todo)
+            setTimeout(() => {
+                iniciarTimerInactividad();
+            }, 2000);
+        });
+
+        // ===== VERIFICAR AUTENTICACIÓN Y ROL =====
+        auth.onAuthStateChanged(async (user) => {
             if (!user) {
+                console.log('❌ No hay usuario autenticado, redirigiendo a login');
                 window.location.href = 'login.html';
-            } else {
-                console.log('✅ Usuario autenticado:', user.email);
+                return;
+            }
+
+            try {
+                // Verificar que el usuario tenga rol 'tienda'
+                const userDoc = await db.collection('usuarios').doc(user.uid).get();
+
+                if (!userDoc.exists) {
+                    console.warn('⛔ Usuario no existe en Firestore');
+                    alert('⛔ Tu cuenta no está registrada en el sistema. Contacta al administrador.');
+                    await auth.signOut();
+                    window.location.href = 'login.html';
+                    return;
+                }
+
+                const userData = userDoc.data();
+                const rolUsuario = String(userData.rol || '').trim().toLowerCase();
+
+                console.log('👤 Usuario:', user.email);
+                console.log('🔍 Rol del usuario:', userData.rol);
+                console.log('🔍 Rol normalizado:', rolUsuario);
+
+                if (rolUsuario !== 'tienda') {
+                    console.warn('⛔ Acceso denegado: rol no es tienda. Rol actual:', userData.rol);
+                    alert('⛔ No tienes permiso para acceder a esta página.\nTu rol es: ' + userData.rol);
+                    await auth.signOut();
+                    window.location.href = 'login.html';
+                    return;
+                }
+
+                console.log('✅ Usuario autenticado:', user.email, '| Rol: tienda');
                 // Establecer fecha actual por defecto
                 const hoy = new Date().toISOString().split('T')[0];
                 document.getElementById('fechaCierre').value = hoy;
+            } catch (error) {
+                console.error('❌ Error verificando rol:', error);
+                alert('Error al verificar permisos: ' + error.message);
+                await auth.signOut();
+                window.location.href = 'login.html';
             }
         });
 
         function logout() {
+            console.log('🚪 Cerrando sesión y limpiando timers');
+            limpiarTimers(); // Limpiar timers de inactividad
             auth.signOut().then(() => {
                 window.location.href = 'login.html';
             });
@@ -970,10 +1533,19 @@
             reader.onload = (e) => {
                 const div = document.createElement('div');
                 div.className = 'preview-item';
-                div.innerHTML = `
-                    <img src="${e.target.result}" alt="Preview">
-                    <button class="remove-btn" onclick="removeImage()">×</button>
-                `;
+
+                // Crear elementos de forma segura en lugar de innerHTML
+                const img = document.createElement('img');
+                img.src = e.target.result;
+                img.alt = 'Preview';
+
+                const btn = document.createElement('button');
+                btn.className = 'remove-btn';
+                btn.textContent = '×';
+                btn.addEventListener('click', removeImage);
+
+                div.appendChild(img);
+                div.appendChild(btn);
                 previewArea.appendChild(div);
             };
             reader.readAsDataURL(file);
