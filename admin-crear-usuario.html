@@ -1,0 +1,649 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🔐 Admin — Crear Usuario</title>
+
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+
+    <style>
+        :root {
+            --azul: #004A5A;
+            --azul-med: #006B7D;
+            --naranja: #FF8C42;
+            --rojo: #C62828;
+            --verde: #2E7D32;
+            --gris: #E8F4F6;
+            --texto: #2C3E50;
+            --blanco: #FFFFFF;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, var(--azul) 0%, #002B35 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        /* ── Pantalla de login admin ── */
+        #loginAdmin {
+            background: var(--blanco);
+            border-radius: 20px;
+            padding: 40px;
+            width: 100%;
+            max-width: 420px;
+            box-shadow: 0 30px 80px rgba(0,0,0,0.4);
+            text-align: center;
+        }
+
+        #loginAdmin .lock { font-size: 4em; margin-bottom: 10px; }
+        #loginAdmin h2 { color: var(--azul); font-size: 1.6em; margin-bottom: 6px; }
+        #loginAdmin p { color: #888; font-size: 0.9em; margin-bottom: 25px; }
+
+        /* ── Panel principal ── */
+        #panelAdmin {
+            display: none;
+            width: 100%;
+            max-width: 860px;
+        }
+
+        .card {
+            background: var(--blanco);
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 30px 80px rgba(0,0,0,0.4);
+        }
+
+        .header {
+            background: linear-gradient(135deg, var(--azul) 0%, var(--azul-med) 100%);
+            padding: 25px 30px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-top: 4px solid var(--naranja);
+        }
+
+        .header-left h1 { color: var(--blanco); font-size: 1.5em; }
+        .header-left p  { color: rgba(255,255,255,0.7); font-size: 0.85em; margin-top: 3px; }
+        .admin-badge {
+            background: var(--naranja);
+            color: var(--blanco);
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.85em;
+            font-weight: 700;
+        }
+
+        .content { padding: 30px; }
+
+        /* ── Formulario ── */
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 18px;
+            margin-bottom: 20px;
+        }
+
+        .form-group { display: flex; flex-direction: column; gap: 7px; }
+        .form-group.full { grid-column: 1 / -1; }
+
+        label {
+            font-weight: 600;
+            font-size: 0.9em;
+            color: var(--texto);
+        }
+
+        input, select {
+            padding: 11px 14px;
+            border: 2px solid #D0E8EC;
+            border-radius: 10px;
+            font-size: 0.95em;
+            font-family: inherit;
+            transition: border-color 0.2s;
+            color: var(--texto);
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: var(--azul-med);
+            box-shadow: 0 0 0 3px rgba(0,107,125,0.1);
+        }
+
+        .password-wrap { position: relative; }
+        .password-wrap input { width: 100%; padding-right: 44px; }
+        .toggle-pw {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 1.1em;
+            opacity: 0.5;
+        }
+        .toggle-pw:hover { opacity: 1; }
+
+        /* ── Botón guardar ── */
+        .btn-guardar {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, var(--azul) 0%, var(--azul-med) 100%);
+            color: var(--blanco);
+            border: none;
+            border-radius: 12px;
+            font-size: 1.05em;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-top: 5px;
+        }
+        .btn-guardar:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,107,125,0.3); }
+        .btn-guardar:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+        /* ── Alertas ── */
+        .alerta {
+            padding: 13px 16px;
+            border-radius: 10px;
+            margin-bottom: 18px;
+            display: none;
+            align-items: center;
+            gap: 10px;
+            font-weight: 600;
+            font-size: 0.95em;
+        }
+        .alerta.ok    { background: #E8F5E9; color: var(--verde); border-left: 4px solid var(--verde); }
+        .alerta.error { background: #FFEBEE; color: var(--rojo);  border-left: 4px solid var(--rojo); }
+
+        /* ── Lista de usuarios ── */
+        .usuarios-section { margin-top: 30px; }
+        .seccion-titulo {
+            font-size: 1.15em;
+            font-weight: 700;
+            color: var(--azul);
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .tabla-wrap { overflow-x: auto; border-radius: 12px; border: 2px solid #D0E8EC; }
+        table { width: 100%; border-collapse: collapse; font-size: 0.9em; }
+        thead { background: var(--azul); color: var(--blanco); }
+        thead th { padding: 11px 14px; text-align: left; }
+        tbody tr { border-bottom: 1px solid #E8F4F6; transition: background 0.15s; }
+        tbody tr:hover { background: var(--gris); }
+        tbody td { padding: 10px 14px; color: var(--texto); }
+
+        .badge-rol {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 20px;
+            font-size: 0.82em;
+            font-weight: 700;
+        }
+        .badge-tienda     { background: #E3F2FD; color: #1565C0; }
+        .badge-supervisor { background: #FFF3E0; color: #E65100; }
+        .badge-admin      { background: #F3E5F5; color: #6A1B9A; }
+
+        .btn-eliminar {
+            background: none;
+            border: 2px solid var(--rojo);
+            color: var(--rojo);
+            padding: 4px 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.82em;
+            font-weight: 700;
+            transition: all 0.2s;
+        }
+        .btn-eliminar:hover { background: var(--rojo); color: var(--blanco); }
+
+        /* ── Separador ── */
+        hr { border: none; border-top: 2px solid #E8F4F6; margin: 25px 0; }
+
+        /* ── Botón logout ── */
+        .footer {
+            padding: 15px 30px;
+            background: var(--gris);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.85em;
+            color: #888;
+        }
+        .btn-logout {
+            background: none;
+            border: 2px solid #ccc;
+            color: #666;
+            padding: 6px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+        .btn-logout:hover { border-color: var(--rojo); color: var(--rojo); }
+
+        /* ── login inputs ── */
+        #loginAdmin .form-group { text-align: left; margin-bottom: 15px; }
+        #loginAdmin .btn-guardar { margin-top: 10px; }
+        .login-error {
+            background: #FFEBEE;
+            color: var(--rojo);
+            border-left: 4px solid var(--rojo);
+            padding: 10px 14px;
+            border-radius: 8px;
+            font-size: 0.9em;
+            margin-top: 12px;
+            display: none;
+        }
+
+        @media(max-width: 600px) {
+            .form-grid { grid-template-columns: 1fr; }
+            .form-group.full { grid-column: 1; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════
+     PANTALLA LOGIN ADMIN
+════════════════════════════════════════════ -->
+<div id="loginAdmin">
+    <div class="lock">🔐</div>
+    <h2>Acceso Administrador</h2>
+    <p>Solo personal autorizado puede crear usuarios</p>
+
+    <div class="form-group">
+        <label>Correo</label>
+        <input type="email" id="adminEmail" placeholder="admin@correo.com">
+    </div>
+    <div class="form-group">
+        <label>Contraseña</label>
+        <div class="password-wrap">
+            <input type="password" id="adminPassword" placeholder="••••••••">
+            <button class="toggle-pw" onclick="togglePw('adminPassword', this)">👁️</button>
+        </div>
+    </div>
+    <button class="btn-guardar" onclick="loginAdmin()">Entrar</button>
+    <div class="login-error" id="loginError"></div>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     PANEL ADMIN
+════════════════════════════════════════════ -->
+<div id="panelAdmin">
+    <div class="card">
+        <div class="header">
+            <div class="header-left">
+                <h1>👥 Gestión de Usuarios</h1>
+                <p id="adminEmailLabel">—</p>
+            </div>
+            <span class="admin-badge">🔑 ADMIN</span>
+        </div>
+
+        <div class="content">
+
+            <!-- Alertas -->
+            <div class="alerta ok"    id="alertOk">✅ <span id="alertOkMsg"></span></div>
+            <div class="alerta error" id="alertErr">❌ <span id="alertErrMsg"></span></div>
+
+            <!-- Formulario crear usuario -->
+            <div class="seccion-titulo">➕ Crear Nuevo Usuario</div>
+
+            <div class="form-grid">
+                <div class="form-group">
+                    <label>Nombre completo</label>
+                    <input type="text" id="nuNombre" placeholder="Ej: María González">
+                </div>
+                <div class="form-group">
+                    <label>Correo electrónico</label>
+                    <input type="email" id="nuEmail" placeholder="maria@correo.com">
+                </div>
+                <div class="form-group">
+                    <label>Contraseña</label>
+                    <div class="password-wrap">
+                        <input type="password" id="nuPassword" placeholder="Mínimo 6 caracteres">
+                        <button class="toggle-pw" onclick="togglePw('nuPassword', this)">👁️</button>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Rol</label>
+                    <select id="nuRol" onchange="onRolChange()">
+                        <option value="">— Selecciona —</option>
+                        <option value="tienda">🏪 Tienda (trabajadora)</option>
+                        <option value="supervisor">📊 Supervisor</option>
+                        <option value="admin">🔑 Admin</option>
+                    </select>
+                </div>
+                <div class="form-group" id="campoKiosko">
+                    <label>Kiosko asignado</label>
+                    <select id="nuKiosko">
+                        <option value="">— Selecciona kiosko —</option>
+                        <option value="004 IBM">004 IBM</option>
+                        <option value="017 Leti Guarenas">017 Leti Guarenas</option>
+                        <option value="172 Leti Guarenas p.2">172 Leti Guarenas p.2</option>
+                        <option value="174 Leti Guarenas p.4">174 Leti Guarenas p.4</option>
+                        <option value="044 Parmalat">044 Parmalat</option>
+                        <option value="045 Dronena">045 Dronena</option>
+                        <option value="046 Provincial">046 Provincial</option>
+                        <option value="047 Simple tv">047 Simple tv</option>
+                        <option value="048 Leti Caracas piso 13">048 Leti Caracas piso 13</option>
+                        <option value="049 Cocacola">049 Cocacola</option>
+                        <option value="050 Dronena BQTO">050 Dronena BQTO</option>
+                        <option value="051 Latin Pagos">051 Latin Pagos</option>
+                        <option value="052 Bnci">052 Bnci</option>
+                        <option value="053 Leti Caracas piso 2">053 Leti Caracas piso 2</option>
+                        <option value="054 Simple cdt">054 Simple cdt</option>
+                        <option value="056 PWC">056 PWC</option>
+                        <option value="057 Plumrose">057 Plumrose</option>
+                        <option value="058 Seguro Venezuela">058 Seguro Venezuela</option>
+                        <option value="059 Rontarca">059 Rontarca</option>
+                        <option value="062 BNC Rosal">062 BNC Rosal</option>
+                    </select>
+                </div>
+            </div>
+
+            <button class="btn-guardar" id="btnCrear" onclick="crearUsuario()">➕ Crear Usuario</button>
+
+            <hr>
+
+            <!-- Lista de usuarios -->
+            <div class="usuarios-section">
+                <div class="seccion-titulo">📋 Usuarios Registrados <span id="totalUsuarios" style="font-weight:400;color:#888;font-size:0.85em;"></span></div>
+                <div class="tabla-wrap">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Nombre / Email</th>
+                                <th>Rol</th>
+                                <th>Kiosko</th>
+                                <th>Creado</th>
+                                <th>Acción</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tablaUsuarios">
+                            <tr><td colspan="5" style="text-align:center;color:#888;padding:20px;">Cargando...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="footer">
+            <span>⚠️ Este panel es solo para administradores</span>
+            <button class="btn-logout" onclick="logout()">🚪 Cerrar Sesión</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    // ═══════════════════════════════════════════
+    // CONFIGURACIÓN FIREBASE
+    // ═══════════════════════════════════════════
+    const firebaseConfig = {
+        apiKey: "AIzaSyCyEw28OeV_ddZDWU6R0MOzgM5yffD94EU",
+        authDomain: "sistema-cierres-caja.firebaseapp.com",
+        projectId: "sistema-cierres-caja",
+        storageBucket: "sistema-cierres-caja.firebasestorage.app",
+        messagingSenderId: "12629027824",
+        appId: "1:12629027824:web:07a5c3afe13c416bc40b35"
+    };
+
+    // App principal (para el admin logueado)
+    const appPrincipal = firebase.initializeApp(firebaseConfig, "principal");
+    const auth = appPrincipal.auth();
+    const db   = appPrincipal.firestore();
+
+    // App secundaria (para crear usuarios SIN cerrar sesión del admin)
+    const appSecundaria = firebase.initializeApp(firebaseConfig, "secundaria");
+    const authSecundaria = appSecundaria.auth();
+
+    // ─── Email del admin autorizado ───────────────────────────────────
+    // ⚠️ CAMBIA ESTO por tu correo de administrador
+    const ADMIN_EMAIL = "javierminecraft123jj@gmail.com";
+    // ─────────────────────────────────────────────────────────────────
+
+    // ═══════════════════════════════════════════
+    // LOGIN ADMIN
+    // ═══════════════════════════════════════════
+    async function loginAdmin() {
+        const email    = document.getElementById('adminEmail').value.trim();
+        const password = document.getElementById('adminPassword').value;
+        const errDiv   = document.getElementById('loginError');
+        errDiv.style.display = 'none';
+
+        if (!email || !password) {
+            errDiv.textContent = 'Completa todos los campos.';
+            errDiv.style.display = 'block';
+            return;
+        }
+
+        // Solo el email admin puede entrar
+        if (email.toLowerCase() !== ADMIN_EMAIL.toLowerCase()) {
+            errDiv.textContent = '⛔ No tienes permiso para acceder a este panel.';
+            errDiv.style.display = 'block';
+            return;
+        }
+
+        try {
+            await auth.signInWithEmailAndPassword(email, password);
+            mostrarPanel(email);
+        } catch (e) {
+            errDiv.textContent = '❌ ' + traducirError(e.code);
+            errDiv.style.display = 'block';
+        }
+    }
+
+    function mostrarPanel(email) {
+        document.getElementById('loginAdmin').style.display = 'none';
+        document.getElementById('panelAdmin').style.display = 'block';
+        document.getElementById('adminEmailLabel').textContent = '👤 ' + email;
+        cargarUsuarios();
+    }
+
+    // Enter en login
+    document.getElementById('adminPassword').addEventListener('keydown', e => {
+        if (e.key === 'Enter') loginAdmin();
+    });
+
+    // ═══════════════════════════════════════════
+    // CREAR USUARIO (sin cerrar sesión del admin)
+    // ═══════════════════════════════════════════
+    async function crearUsuario() {
+        const nombre   = document.getElementById('nuNombre').value.trim();
+        const email    = document.getElementById('nuEmail').value.trim();
+        const password = document.getElementById('nuPassword').value;
+        const rol      = document.getElementById('nuRol').value;
+        const kiosko   = document.getElementById('nuKiosko').value;
+
+        // Validación
+        if (!nombre || !email || !password || !rol) {
+            mostrarAlerta('error', 'Completa todos los campos obligatorios.');
+            return;
+        }
+        if (rol === 'tienda' && !kiosko) {
+            mostrarAlerta('error', 'Selecciona el kiosko para esta trabajadora.');
+            return;
+        }
+        if (password.length < 6) {
+            mostrarAlerta('error', 'La contraseña debe tener al menos 6 caracteres.');
+            return;
+        }
+
+        const btn = document.getElementById('btnCrear');
+        btn.disabled = true;
+        btn.textContent = '⏳ Creando...';
+
+        try {
+            // 1️⃣ Crear usuario en Firebase Auth usando la app SECUNDARIA
+            //    (así el admin no pierde su sesión)
+            const credencial = await authSecundaria.createUserWithEmailAndPassword(email, password);
+            const uid = credencial.user.uid;
+
+            // 2️⃣ Guardar datos en Firestore
+            await db.collection('usuarios').doc(uid).set({
+                nombre,
+                email,
+                rol,
+                kiosko: rol === 'tienda' ? kiosko : null,
+                createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                creadoPor: auth.currentUser.email
+            });
+
+            // 3️⃣ Cerrar sesión en la app secundaria (limpiar)
+            await authSecundaria.signOut();
+
+            mostrarAlerta('ok', `Usuario "${nombre}" (${email}) creado con rol "${rol}".`);
+            limpiarFormulario();
+            cargarUsuarios();
+
+        } catch (e) {
+            mostrarAlerta('error', traducirError(e.code));
+        } finally {
+            btn.disabled = false;
+            btn.textContent = '➕ Crear Usuario';
+        }
+    }
+
+    // ═══════════════════════════════════════════
+    // CARGAR LISTA DE USUARIOS
+    // ═══════════════════════════════════════════
+    async function cargarUsuarios() {
+        const tbody = document.getElementById('tablaUsuarios');
+        tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:#888;padding:20px;">Cargando...</td></tr>';
+
+        try {
+            const snap = await db.collection('usuarios').orderBy('createdAt', 'desc').get();
+            document.getElementById('totalUsuarios').textContent = `(${snap.size} usuarios)`;
+
+            if (snap.empty) {
+                tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:#888;padding:20px;">No hay usuarios aún.</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = '';
+            snap.forEach(doc => {
+                const u = doc.data();
+                const fecha = u.createdAt ? u.createdAt.toDate().toLocaleDateString('es-VE') : '—';
+                const badgeClass = u.rol === 'tienda' ? 'badge-tienda' : u.rol === 'supervisor' ? 'badge-supervisor' : 'badge-admin';
+                const kioskoCell = u.kiosko || '<span style="color:#bbb;">—</span>';
+
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>
+                        <strong>${u.nombre || '—'}</strong><br>
+                        <small style="color:#888;">${u.email}</small>
+                    </td>
+                    <td><span class="badge-rol ${badgeClass}">${u.rol}</span></td>
+                    <td>${kioskoCell}</td>
+                    <td>${fecha}</td>
+                    <td>
+                        <button class="btn-eliminar" onclick="eliminarUsuario('${doc.id}', '${u.nombre || u.email}')">
+                            🗑️ Eliminar
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        } catch (e) {
+            tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;color:red;padding:20px;">Error: ${e.message}</td></tr>`;
+        }
+    }
+
+    // ═══════════════════════════════════════════
+    // ELIMINAR USUARIO (solo de Firestore)
+    // ═══════════════════════════════════════════
+    async function eliminarUsuario(uid, nombre) {
+        if (!confirm(`¿Eliminar a "${nombre}" del sistema?\n\nNota: esto elimina sus datos de Firestore. Si necesitas revocar el acceso completamente, elimínalo también desde Firebase Console → Authentication.`)) return;
+
+        try {
+            await db.collection('usuarios').doc(uid).delete();
+            mostrarAlerta('ok', `Usuario "${nombre}" eliminado de Firestore.`);
+            cargarUsuarios();
+        } catch (e) {
+            mostrarAlerta('error', 'Error al eliminar: ' + e.message);
+        }
+    }
+
+    // ═══════════════════════════════════════════
+    // HELPERS
+    // ═══════════════════════════════════════════
+    function onRolChange() {
+        const rol = document.getElementById('nuRol').value;
+        document.getElementById('campoKiosko').style.display = rol === 'tienda' ? 'flex' : 'none';
+    }
+
+    function limpiarFormulario() {
+        ['nuNombre','nuEmail','nuPassword'].forEach(id => document.getElementById(id).value = '');
+        document.getElementById('nuRol').value = '';
+        document.getElementById('nuKiosko').value = '';
+        document.getElementById('campoKiosko').style.display = 'none';
+    }
+
+    function mostrarAlerta(tipo, msg) {
+        const idOk  = 'alertOk';
+        const idErr = 'alertErr';
+        document.getElementById(idOk).style.display  = 'none';
+        document.getElementById(idErr).style.display = 'none';
+
+        if (tipo === 'ok') {
+            document.getElementById('alertOkMsg').textContent = msg;
+            document.getElementById(idOk).style.display = 'flex';
+            setTimeout(() => document.getElementById(idOk).style.display = 'none', 5000);
+        } else {
+            document.getElementById('alertErrMsg').textContent = msg;
+            document.getElementById(idErr).style.display = 'flex';
+            setTimeout(() => document.getElementById(idErr).style.display = 'none', 6000);
+        }
+    }
+
+    function togglePw(inputId, btn) {
+        const inp = document.getElementById(inputId);
+        const show = inp.type === 'password';
+        inp.type = show ? 'text' : 'password';
+        btn.textContent = show ? '🙈' : '👁️';
+    }
+
+    function traducirError(code) {
+        const errores = {
+            'auth/email-already-in-use': 'Ese correo ya está registrado.',
+            'auth/invalid-email':        'El correo no es válido.',
+            'auth/weak-password':        'La contraseña es muy débil (mínimo 6 caracteres).',
+            'auth/wrong-password':       'Contraseña incorrecta.',
+            'auth/user-not-found':       'No existe una cuenta con ese correo.',
+            'auth/too-many-requests':    'Demasiados intentos. Espera unos minutos.',
+            'auth/network-request-failed': 'Sin conexión a internet.',
+        };
+        return errores[code] || ('Error: ' + code);
+    }
+
+    function logout() {
+        auth.signOut().then(() => {
+            document.getElementById('panelAdmin').style.display = 'none';
+            document.getElementById('loginAdmin').style.display = 'block';
+            document.getElementById('adminEmail').value = '';
+            document.getElementById('adminPassword').value = '';
+        });
+    }
+
+    // Verificar si ya hay sesión activa al cargar
+    auth.onAuthStateChanged(user => {
+        if (user && user.email.toLowerCase() === ADMIN_EMAIL.toLowerCase()) {
+            mostrarPanel(user.email);
+        }
+    });
+
+    // Campo kiosko oculto por defecto
+    document.getElementById('campoKiosko').style.display = 'none';
+</script>
+</body>
+</html>
