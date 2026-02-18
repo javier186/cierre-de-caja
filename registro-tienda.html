@@ -984,7 +984,7 @@
             <div class="section">
                 <div class="section-title">🏬 Información de la Tienda</div>
 
-                <div class="input-group">
+                <!--<div class="input-group">
                     <label for="tiendaSelect">Selecciona tu Tienda</label>
                     <select id="tiendaSelect" required>
                         <option value="">-- Selecciona --</option>
@@ -1009,6 +1009,11 @@
                         <option value="059 Rontarca">059 Rontarca</option>
                         <option value="062 BNC Rosal">062 BNC Rosal</option>
                     </select>
+                </div>  -->
+
+                <div class="input-group">
+                    <label>🏬 Tu Kiosko Asignado</label>
+                    <input type="text" id="kioskoAsignado" readonly>
                 </div>
 
                 <div class="input-group">
@@ -1148,6 +1153,8 @@
         let uploadedImage = null;
         let stream = null;
         let tasaBCV = 0; // Tasa BCV actual
+        let kioskoUsuario = null;
+
 
         // ===== SISTEMA DE TIMEOUT DE INACTIVIDAD =====
         let inactivityTimer = null;
@@ -1282,6 +1289,15 @@
 
                 const userData = userDoc.data();
                 const rolUsuario = String(userData.rol || '').trim().toLowerCase();
+                
+                // 🔥 OBTENER KIOSKO DEL USUARIO
+                kioskoUsuario = userData.kiosko;
+
+                // Mostrarlo en pantalla
+                document.getElementById('kioskoAsignado').value = kioskoUsuario;
+
+                console.log("🏪 Kiosko asignado automáticamente:", kioskoUsuario);
+
 
                 console.log('👤 Usuario:', user.email);
                 console.log('🔍 Rol del usuario:', userData.rol);
@@ -1559,21 +1575,22 @@
 
         // ===== VALIDACIÓN =====
         function validarFormulario() {
-            const tienda = document.getElementById('tiendaSelect').value;
+            //const tienda = document.getElementById('tiendaSelect').value;
             const fecha = document.getElementById('fechaCierre').value;
             const hayImagen = uploadedImage !== null;
             const total = parseFloat(document.getElementById('totalCalculado').textContent.replace('Bs ', ''));
 
-            const isValid = tienda && fecha && hayImagen && total > 0;
+            //const isValid = tienda && fecha && hayImagen && total > 0;
+            const isValid = kioskoUsuario && fecha && hayImagen && total > 0;
+
             document.getElementById('guardarBtn').disabled = !isValid;
         }
 
-        document.getElementById('tiendaSelect').addEventListener('change', validarFormulario);
         document.getElementById('fechaCierre').addEventListener('change', validarFormulario);
 
         // ===== GUARDAR CIERRE EN FIREBASE =====
         document.getElementById('guardarBtn').addEventListener('click', async () => {
-            const tienda = document.getElementById('tiendaSelect').value;
+            //const tienda = document.getElementById('tiendaSelect').value;
             const fecha = document.getElementById('fechaCierre').value;
             const credito = parseFloat(document.getElementById('montoCredito').value) || 0;
             const debito = parseFloat(document.getElementById('montoDebito').value) || 0;
@@ -1593,7 +1610,7 @@
                 const totalUSD = tasaBCV > 0 ? parseFloat((total / tasaBCV).toFixed(2)) : null;
 
                 const cierre = {
-                    tienda,
+                    kiosko: kioskoUsuario,
                     fecha,
                     credito,
                     debito,
@@ -1610,7 +1627,7 @@
 
                 // Buscar si ya existe un cierre para esta tienda y fecha
                 const querySnapshot = await db.collection('cierres')
-                    .where('tienda', '==', tienda)
+                    .where('kiosko', '==', kioskoUsuario)
                     .where('fecha', '==', fecha)
                     .get();
 
@@ -1619,7 +1636,7 @@
                     // Ya existe, preguntar si quiere reemplazar
                     if (confirm('Ya existe un cierre para esta tienda y fecha. ¿Deseas reemplazarlo?')) {
                         docId = querySnapshot.docs[0].id;
-                        await db.collection('cierres').doc(docId).update(cierre);
+                        await db.collection('cierres').doc(docId).set(cierre);
                         console.log('✅ Cierre actualizado:', docId);
                     } else {
                         document.getElementById('guardarBtn').disabled = false;
@@ -1650,7 +1667,6 @@
         });
 
         function limpiarFormulario() {
-            document.getElementById('tiendaSelect').value = '';
             document.getElementById('montoCredito').value = '0';
             document.getElementById('montoDebito').value = '0';
             document.getElementById('pagoMovil').value = '0';
