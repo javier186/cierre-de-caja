@@ -1223,47 +1223,74 @@
                 });
 
                 const datos = [];
-                datos.push(['Tienda', 'Fecha', 'Crédito', 'Débito', 'Pago Móvil', 'Total Cierre', 'Total Simplit', 'Diferencia', 'Estado']);
+                datos.push([
+                    'Tienda', 'Fecha', 'Crédito (Bs)', 'Débito (Bs)', 'Pago Móvil (Bs)',
+                    'Total Cierre (Bs)', 'Total Simplit (Bs)', 'Diferencia (Bs)', 'Estado',
+                    'Efectivo Recibido (Bs)', 'Efectivo Recibido ($)'
+                ]);
 
                 cierres.forEach(cierre => {
-                    const simplitRecord = simplitData.find(s => {
-                        const tiendaSimplit = (s.Tienda || s.tienda || '').trim();
-                        const tiendaCierre = (cierre.kiosko || cierre.tienda || "").trim();
-                        const fechaSimplit = (s.Fecha || s.fecha || '').trim();
-                        const fechaCierre = cierre.fecha.trim();
+                    // Protección contra campos undefined/null
+                    const tiendaCierre = String(cierre.kiosko || cierre.tienda || '').trim();
+                    const fechaCierre  = String(cierre.fecha  || '').trim();
+                    const credito      = parseFloat(cierre.credito   || 0);
+                    const debito       = parseFloat(cierre.debito    || 0);
+                    const pagoMovil    = parseFloat(cierre.pagoMovil || 0);
+                    const total        = parseFloat(cierre.total     || 0);
+                    const recibidoBs   = parseFloat(cierre.recibidoBs  || 0);
+                    const recibidoUsd  = parseFloat(cierre.recibidoUsd || 0);
 
-                        const fechaCoincide = fechaSimplit.includes(fechaCierre) || fechaCierre.includes(fechaSimplit) || fechaSimplit === fechaCierre;
-                        const tiendaCoincideExacta = tiendaSimplit.toLowerCase() === tiendaCierre.toLowerCase();
+                    let totalSimplit = 0;
+                    if (simplitData.length > 0) {
+                        const simplitRecord = simplitData.find(s => {
+                            const tiendaSimplit = String(s.Tienda || s.tienda || '').trim();
+                            const fechaSimplit  = String(s.Fecha  || s.fecha  || '').trim();
 
-                        const codigoTiendaCierre = tiendaCierre.match(/^\d+/);
-                        const codigoTiendaSimplit = tiendaSimplit.match(/^\d+/);
-                        const tiendaCoincideCodigo = codigoTiendaCierre && codigoTiendaSimplit && codigoTiendaCierre[0] === codigoTiendaSimplit[0];
+                            if (!fechaCierre || !fechaSimplit) return false;
 
-                        return fechaCoincide && (tiendaCoincideExacta || tiendaCoincideCodigo);
-                    });
+                            const fechaCoincide = fechaSimplit.includes(fechaCierre) ||
+                                fechaCierre.includes(fechaSimplit) ||
+                                fechaSimplit === fechaCierre;
 
-                    const totalSimplit = simplitRecord ? parseFloat(simplitRecord.Total_Ventas || simplitRecord.total_ventas || 0) : 0;
-                    const diferencia = cierre.total - totalSimplit;
-                    const estado = Math.abs(diferencia) <= 1 ? 'CUADRA' : (Math.abs(diferencia) <= 10 ? 'DIF_MENOR' : 'NO_CUADRA');
+                            const tiendaCoincideExacta = tiendaSimplit.toLowerCase() === tiendaCierre.toLowerCase();
+                            const codigoTiendaCierre   = tiendaCierre.match(/^\d+/);
+                            const codigoTiendaSimplit  = tiendaSimplit.match(/^\d+/);
+                            const tiendaCoincideCodigo = codigoTiendaCierre && codigoTiendaSimplit &&
+                                codigoTiendaCierre[0] === codigoTiendaSimplit[0];
+
+                            return fechaCoincide && (tiendaCoincideExacta || tiendaCoincideCodigo);
+                        });
+
+                        totalSimplit = simplitRecord
+                            ? parseFloat(simplitRecord.Total_Ventas || simplitRecord.total_ventas || 0)
+                            : 0;
+                    }
+
+                    const diferencia = total - totalSimplit;
+                    const estado = Math.abs(diferencia) <= 1 ? 'CUADRA'
+                        : (Math.abs(diferencia) <= 10 ? 'DIF_MENOR' : 'NO_CUADRA');
 
                     datos.push([
-                        (cierre.kiosko || cierre.tienda || ""),
-                        cierre.fecha,
-                        cierre.credito,
-                        cierre.debito,
-                        cierre.pagoMovil,
-                        cierre.total,
+                        tiendaCierre,
+                        fechaCierre,
+                        credito,
+                        debito,
+                        pagoMovil,
+                        total,
                         totalSimplit,
                         diferencia,
-                        estado
+                        estado,
+                        recibidoBs,
+                        recibidoUsd
                     ]);
                 });
 
                 const wb = XLSX.utils.book_new();
                 const ws = XLSX.utils.aoa_to_sheet(datos);
                 ws['!cols'] = [
-                    { wch: 25 }, { wch: 12 }, { wch: 12 }, { wch: 12 }, { wch: 12 },
-                    { wch: 14 }, { wch: 14 }, { wch: 12 }, { wch: 12 }
+                    { wch: 25 }, { wch: 12 }, { wch: 14 }, { wch: 12 }, { wch: 15 },
+                    { wch: 16 }, { wch: 16 }, { wch: 14 }, { wch: 12 },
+                    { wch: 20 }, { wch: 20 }
                 ];
 
                 XLSX.utils.book_append_sheet(wb, ws, 'Consolidado');
