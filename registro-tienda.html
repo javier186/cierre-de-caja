@@ -816,6 +816,78 @@
             }
         }
 
+        /* ===== EFECTIVO RECIBIDO ===== */
+        .efectivo-section {
+            background: linear-gradient(135deg, #f0faf0 0%, #e6f4e6 100%);
+            border: 2px solid #a8d5a8;
+            border-radius: 12px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+
+        .efectivo-title {
+            font-size: 1em;
+            font-weight: 700;
+            color: #2e7d32;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .efectivo-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        .efectivo-input-wrap {
+            position: relative;
+        }
+
+        .efectivo-input-wrap label {
+            display: block;
+            font-weight: 600;
+            font-size: 0.9em;
+            color: #2e7d32;
+            margin-bottom: 6px;
+        }
+
+        .efectivo-input-wrap .currency-prefix {
+            position: absolute;
+            left: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-weight: 700;
+            font-size: 1em;
+            color: #555;
+            pointer-events: none;
+            margin-top: 11px;
+        }
+
+        .efectivo-input-wrap input {
+            width: 100%;
+            padding: 12px 12px 12px 42px;
+            border: 2px solid #a8d5a8;
+            border-radius: 10px;
+            font-size: 1em;
+            background: #fff;
+            transition: all 0.3s;
+            font-family: inherit;
+        }
+
+        .efectivo-input-wrap input:focus {
+            outline: none;
+            border-color: #2e7d32;
+            box-shadow: 0 0 0 4px rgba(46, 125, 50, 0.12);
+        }
+
+        @media (max-width: 480px) {
+            .efectivo-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
         /* ===== MODAL DE TIMEOUT ===== */
         .timeout-modal {
             display: none;
@@ -1072,6 +1144,23 @@
                     <div class="label">TOTAL CIERRE</div>
                     <div class="value" id="totalCalculado">Bs 0.00</div>
                     <div class="total-usd" id="totalUsd">≈ $0.00 USD</div>
+                </div>
+
+                <!-- Efectivo Recibido -->
+                <div class="efectivo-section">
+                    <div class="efectivo-title">💵 Efectivo Recibido</div>
+                    <div class="efectivo-grid">
+                        <div class="efectivo-input-wrap">
+                            <label for="recibidoBs">Recibido en Bolívares</label>
+                            <span class="currency-prefix">Bs</span>
+                            <input type="number" id="recibidoBs" step="0.01" value="0" min="0" placeholder="0.00">
+                        </div>
+                        <div class="efectivo-input-wrap">
+                            <label for="recibidoUsd">Recibido en Dólares</label>
+                            <span class="currency-prefix">$</span>
+                            <input type="number" id="recibidoUsd" step="0.01" value="0" min="0" placeholder="0.00">
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -1596,6 +1685,8 @@
             const debito = parseFloat(document.getElementById('montoDebito').value) || 0;
             const pagoMovil = parseFloat(document.getElementById('pagoMovil').value) || 0;
             const total = credito + debito + pagoMovil;
+            const recibidoBs = parseFloat(document.getElementById('recibidoBs').value) || 0;
+            const recibidoUsd = parseFloat(document.getElementById('recibidoUsd').value) || 0;
 
             // Deshabilitar botón mientras guarda
             document.getElementById('guardarBtn').disabled = true;
@@ -1618,6 +1709,8 @@
                     total,
                     tasaBCV: tasaBCV || null,
                     totalUSD: totalUSD,
+                    recibidoBs,
+                    recibidoUsd,
                     imagen: imagenComprimida,
                     timestamp: firebase.firestore.FieldValue.serverTimestamp(),
                     verificado: false,
@@ -1670,6 +1763,8 @@
             document.getElementById('montoCredito').value = '0';
             document.getElementById('montoDebito').value = '0';
             document.getElementById('pagoMovil').value = '0';
+            document.getElementById('recibidoBs').value = '0';
+            document.getElementById('recibidoUsd').value = '0';
             uploadedImage = null;
             document.getElementById('previewArea').innerHTML = '';
             document.getElementById('usdCredito').innerHTML = '<span class="usd-icon">💲</span> $0.00';
