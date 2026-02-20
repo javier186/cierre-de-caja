@@ -542,6 +542,113 @@
                 width: 100%;
             }
         }
+
+        /* ===== STAT CARDS EFECTIVO ===== */
+        .stat-card.efectivo-bs {
+            background: linear-gradient(135deg, #1565C0 0%, #1976D2 100%);
+        }
+
+        .stat-card.efectivo-usd {
+            background: linear-gradient(135deg, #2e7d32 0%, #43a047 100%);
+        }
+
+        .stat-value-sm {
+            font-size: 1.35em;
+            font-weight: bold;
+            margin-bottom: 5px;
+            line-height: 1.2;
+        }
+
+        /* ===== FILA EXPANDIBLE ===== */
+        tr.main-row {
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        tr.main-row:hover {
+            background: var(--light-blue) !important;
+        }
+
+        .expand-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 26px;
+            height: 26px;
+            border-radius: 50%;
+            background: var(--light-blue);
+            border: 2px solid #b0d4da;
+            color: var(--primary-blue);
+            font-size: 0.75em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.25s;
+            flex-shrink: 0;
+            user-select: none;
+        }
+
+        .expand-btn.open {
+            background: var(--primary-blue);
+            color: white;
+            border-color: var(--primary-blue);
+            transform: rotate(180deg);
+        }
+
+        tr.detail-row td {
+            padding: 0;
+            background: #f7fbfc;
+            border-bottom: 2px solid #b0d4da;
+        }
+
+        .detail-panel {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            padding: 0 20px;
+            overflow: hidden;
+            max-height: 0;
+            transition: max-height 0.35s ease, padding 0.35s ease, opacity 0.3s ease;
+            opacity: 0;
+        }
+
+        .detail-panel.open {
+            max-height: 200px;
+            opacity: 1;
+            padding: 14px 20px;
+        }
+
+        .detail-chip {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: white;
+            border-radius: 10px;
+            padding: 12px 16px;
+            border: 2px solid #e0f0f3;
+            box-shadow: 0 2px 6px rgba(0,107,125,0.07);
+        }
+
+        .detail-chip .chip-icon { font-size: 1.6em; flex-shrink: 0; }
+        .detail-chip .chip-label {
+            font-size: 0.78em;
+            color: var(--text-light);
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .detail-chip .chip-value {
+            font-size: 1.05em;
+            font-weight: 700;
+            color: var(--text-dark);
+        }
+        .detail-chip.bs-chip { border-color: #bbdefb; }
+        .detail-chip.usd-chip { border-color: #c8e6c9; }
+        .detail-chip.bs-chip .chip-value { color: #1565C0; }
+        .detail-chip.usd-chip .chip-value { color: #2e7d32; }
+
+        @media (max-width: 600px) {
+            .detail-panel { grid-template-columns: 1fr; }
+        }
     </style>
 </head>
 
@@ -592,6 +699,14 @@
                     <div class="stat-card error">
                         <div class="stat-value" id="statNoCuadran">0</div>
                         <div class="stat-label">❌ No Cuadran</div>
+                    </div>
+                    <div class="stat-card efectivo-bs">
+                        <div class="stat-value-sm" id="statEfectivoBs">Bs 0.00</div>
+                        <div class="stat-label">💵 Efectivo Recibido Bs</div>
+                    </div>
+                    <div class="stat-card efectivo-usd">
+                        <div class="stat-value-sm" id="statEfectivoUsd">$ 0.00</div>
+                        <div class="stat-label">💲 Efectivo Recibido $</div>
                     </div>
                 </div>
             </div>
@@ -788,20 +903,35 @@
         // ===== GENERAR TABLAS =====
         function generarTablaSinSimplit(cierres) {
             let html = '<table><thead><tr>';
-            html += '<th>Tienda</th><th>Fecha</th><th>Crédito</th><th>Débito</th><th>Pago Móvil</th>';
+            html += '<th></th><th>Tienda</th><th>Fecha</th><th>Crédito</th><th>Débito</th><th>Pago Móvil</th>';
             html += '<th>Total</th><th>Foto</th>';
             html += '</tr></thead><tbody>';
 
-            cierres.forEach(cierre => {
-                html += '<tr>';
+            cierres.forEach((cierre, idx) => {
+                const recBs = (cierre.recibidoBs || 0).toFixed(2);
+                const recUsd = (cierre.recibidoUsd || 0).toFixed(2);
+                const tieneEfectivo = (cierre.recibidoBs || 0) > 0 || (cierre.recibidoUsd || 0) > 0;
+                const panelId = `panel-${idx}`;
+                const btnId = `btn-${idx}`;
+
+                html += `<tr class="main-row" onclick="toggleDetalle('${panelId}','${btnId}')">`;
+                html += `<td><span class="expand-btn" id="${btnId}">▼</span></td>`;
                 html += `<td>${cierre.kiosko || cierre.tienda || "Sin kiosko"}</td>`;
                 html += `<td>${cierre.fecha}</td>`;
                 html += `<td>Bs ${cierre.credito.toFixed(2)}</td>`;
                 html += `<td>Bs ${cierre.debito.toFixed(2)}</td>`;
                 html += `<td>Bs ${cierre.pagoMovil.toFixed(2)}</td>`;
                 html += `<td><strong>Bs ${cierre.total.toFixed(2)}</strong></td>`;
-                html += `<td><button onclick="abrirModal('${cierre.imagen}')" style="background: linear-gradient(135deg, #006B7D 0%, #004A5A 100%); color: white; border: none; padding: 8px 16px; border-radius: 8px; cursor: pointer; font-weight: 600;">Ver 📷</button></td>`;
+                html += `<td><button onclick="event.stopPropagation(); abrirModal('${cierre.imagen}')" style="background: linear-gradient(135deg, #006B7D 0%, #004A5A 100%); color: white; border: none; padding: 8px 16px; border-radius: 8px; cursor: pointer; font-weight: 600;">Ver 📷</button></td>`;
                 html += '</tr>';
+
+                // Fila de detalle efectivo
+                const colspan = 8;
+                html += `<tr class="detail-row"><td colspan="${colspan}">`;
+                html += `<div class="detail-panel" id="${panelId}">`;
+                html += `<div class="detail-chip bs-chip"><span class="chip-icon">💵</span><div><div class="chip-label">Efectivo Recibido Bs</div><div class="chip-value">Bs ${recBs}</div></div></div>`;
+                html += `<div class="detail-chip usd-chip"><span class="chip-icon">💲</span><div><div class="chip-label">Efectivo Recibido $</div><div class="chip-value">$ ${recUsd}</div></div></div>`;
+                html += `</div></td></tr>`;
             });
 
             html += '</tbody></table>';
@@ -810,11 +940,11 @@
 
         function generarTablaConSimplit(cierres) {
             let html = '<table><thead><tr>';
-            html += '<th>Tienda</th><th>Fecha</th><th>Crédito</th><th>Débito</th><th>Pago Móvil</th>';
+            html += '<th></th><th>Tienda</th><th>Fecha</th><th>Crédito</th><th>Débito</th><th>Pago Móvil</th>';
             html += '<th>Total Cierre</th><th>Total Simplit</th><th>Diferencia</th><th>Estado</th><th>Foto</th>';
             html += '</tr></thead><tbody>';
 
-            cierres.forEach(cierre => {
+            cierres.forEach((cierre, idx) => {
                 const simplitRecord = simplitData.find(s => {
                     const tiendaSimplit = (s.Tienda || s.tienda || '').trim();
                     const tiendaCierre = (cierre.kiosko || cierre.tienda || "").trim();
@@ -839,7 +969,13 @@
                 const diferencia = cierre.total - totalSimplit;
                 const estado = Math.abs(diferencia) <= 1 ? 'ok' : (Math.abs(diferencia) <= 10 ? 'pending' : 'error');
 
-                html += '<tr>';
+                const recBs = (cierre.recibidoBs || 0).toFixed(2);
+                const recUsd = (cierre.recibidoUsd || 0).toFixed(2);
+                const panelId = `panel-${idx}`;
+                const btnId = `btn-${idx}`;
+
+                html += `<tr class="main-row" onclick="toggleDetalle('${panelId}','${btnId}')">`;
+                html += `<td><span class="expand-btn" id="${btnId}">▼</span></td>`;
                 html += `<td>${cierre.kiosko || cierre.tienda || "Sin kiosko"}</td>`;
                 html += `<td>${cierre.fecha}</td>`;
                 html += `<td>Bs ${cierre.credito.toFixed(2)}</td>`;
@@ -851,8 +987,16 @@
 
                 let estadoTexto = estado === 'ok' ? '✅ CUADRA' : (estado === 'pending' ? '⚠️ DIF. MENOR' : '❌ NO CUADRA');
                 html += `<td><span class="status-${estado}">${estadoTexto}</span></td>`;
-                html += `<td><button onclick="abrirModal('${cierre.imagen}')" style="background: linear-gradient(135deg, #006B7D 0%, #004A5A 100%); color: white; border: none; padding: 8px 16px; border-radius: 8px; cursor: pointer; font-weight: 600;">Ver 📷</button></td>`;
+                html += `<td><button onclick="event.stopPropagation(); abrirModal('${cierre.imagen}')" style="background: linear-gradient(135deg, #006B7D 0%, #004A5A 100%); color: white; border: none; padding: 8px 16px; border-radius: 8px; cursor: pointer; font-weight: 600;">Ver 📷</button></td>`;
                 html += '</tr>';
+
+                // Fila de detalle efectivo
+                const colspan = 11;
+                html += `<tr class="detail-row"><td colspan="${colspan}">`;
+                html += `<div class="detail-panel" id="${panelId}">`;
+                html += `<div class="detail-chip bs-chip"><span class="chip-icon">💵</span><div><div class="chip-label">Efectivo Recibido Bs</div><div class="chip-value">Bs ${recBs}</div></div></div>`;
+                html += `<div class="detail-chip usd-chip"><span class="chip-icon">💲</span><div><div class="chip-label">Efectivo Recibido $</div><div class="chip-value">$ ${recUsd}</div></div></div>`;
+                html += `</div></td></tr>`;
             });
 
             html += '</tbody></table>';
@@ -861,6 +1005,12 @@
 
         // ===== ACTUALIZAR ESTADÍSTICAS =====
         function actualizarEstadisticas(cierres) {
+            // Calcular totales de efectivo siempre
+            const totalEfectivoBs = cierres.reduce((acc, c) => acc + (c.recibidoBs || 0), 0);
+            const totalEfectivoUsd = cierres.reduce((acc, c) => acc + (c.recibidoUsd || 0), 0);
+            document.getElementById('statEfectivoBs').textContent = `Bs ${totalEfectivoBs.toFixed(2)}`;
+            document.getElementById('statEfectivoUsd').textContent = `$ ${totalEfectivoUsd.toFixed(2)}`;
+
             if (simplitData.length === 0) {
                 document.getElementById('statTotal').textContent = cierres.length;
                 document.getElementById('statCuadran').textContent = '-';
@@ -902,6 +1052,16 @@
             document.getElementById('statCuadran').textContent = cuadran;
             document.getElementById('statDifMenor').textContent = difMenor;
             document.getElementById('statNoCuadran').textContent = noCuadran;
+        }
+
+        // ===== TOGGLE FILA EXPANDIBLE =====
+        function toggleDetalle(panelId, btnId) {
+            const panel = document.getElementById(panelId);
+            const btn = document.getElementById(btnId);
+            if (!panel) return;
+            const isOpen = panel.classList.contains('open');
+            panel.classList.toggle('open', !isOpen);
+            btn.classList.toggle('open', !isOpen);
         }
 
         // ===== FUNCIONES DE FILTRADO =====
