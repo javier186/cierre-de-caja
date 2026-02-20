@@ -816,6 +816,7 @@
             }
         }
 
+
         /* ===== EFECTIVO RECIBIDO ===== */
         .efectivo-section {
             background: linear-gradient(135deg, #f0faf0 0%, #e6f4e6 100%);
@@ -824,7 +825,6 @@
             padding: 20px;
             margin-top: 20px;
         }
-
         .efectivo-title {
             font-size: 1em;
             font-weight: 700;
@@ -834,17 +834,12 @@
             align-items: center;
             gap: 8px;
         }
-
         .efectivo-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 15px;
         }
-
-        .efectivo-input-wrap {
-            position: relative;
-        }
-
+        .efectivo-input-wrap { position: relative; }
         .efectivo-input-wrap label {
             display: block;
             font-weight: 600;
@@ -852,7 +847,6 @@
             color: #2e7d32;
             margin-bottom: 6px;
         }
-
         .efectivo-input-wrap .currency-prefix {
             position: absolute;
             left: 12px;
@@ -864,7 +858,6 @@
             pointer-events: none;
             margin-top: 11px;
         }
-
         .efectivo-input-wrap input {
             width: 100%;
             padding: 12px 12px 12px 42px;
@@ -875,19 +868,67 @@
             transition: all 0.3s;
             font-family: inherit;
         }
-
         .efectivo-input-wrap input:focus {
             outline: none;
             border-color: #2e7d32;
-            box-shadow: 0 0 0 4px rgba(46, 125, 50, 0.12);
+            box-shadow: 0 0 0 4px rgba(46,125,50,0.12);
         }
+        @media (max-width: 480px) { .efectivo-grid { grid-template-columns: 1fr; } }
 
-        @media (max-width: 480px) {
-            .efectivo-grid {
-                grid-template-columns: 1fr;
-            }
+        /* ===== MODAL DOBLE CIERRE ===== */
+        .dup-modal-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.65);
+            z-index: 20000;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(4px);
+            animation: fadeIn 0.25s ease;
         }
+        .dup-modal-overlay.active { display: flex; }
+        .dup-modal-box {
+            background: #fff;
+            border-radius: 20px;
+            padding: 36px 32px 28px;
+            max-width: 440px;
+            width: 92%;
+            box-shadow: 0 24px 60px rgba(0,0,0,0.4);
+            text-align: center;
+            animation: slideInScale 0.35s cubic-bezier(0.68,-0.55,0.265,1.55);
+        }
+        .dup-modal-icon  { font-size: 3.2em; margin-bottom: 12px; }
+        .dup-modal-title { font-size: 1.4em; font-weight: 700; color: var(--primary-blue); margin-bottom: 10px; }
+        .dup-modal-msg   { font-size: 0.97em; color: var(--text-dark); line-height: 1.55; margin-bottom: 24px; }
+        .dup-modal-msg strong { color: var(--primary-orange); }
+        .dup-btn-group   { display: flex; flex-direction: column; gap: 10px; }
+        .dup-btn {
+            padding: 13px 20px;
+            border: none;
+            border-radius: 12px;
+            font-size: 1em;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .dup-btn:hover { transform: translateY(-2px); }
+        .dup-btn-segundo   { background: linear-gradient(135deg,#2e7d32 0%,#43a047 100%); color:#fff; box-shadow:0 4px 14px rgba(46,125,50,0.35); }
+        .dup-btn-reemplazar{ background: linear-gradient(135deg,var(--primary-orange) 0%,#FFA500 100%); color:#fff; box-shadow:0 4px 14px rgba(255,140,66,0.35); }
+        .dup-btn-cancelar  { background:#f1f3f4; color:#555; border:2px solid #ddd; }
 
+        /* Badge autopago en header */
+        .autopago-badge {
+            display: inline-block;
+            background: linear-gradient(135deg,#2e7d32 0%,#43a047 100%);
+            color: #fff;
+            font-size: 0.75em;
+            font-weight: 700;
+            padding: 3px 10px;
+            border-radius: 20px;
+            margin-left: 10px;
+            vertical-align: middle;
+        }
         /* ===== MODAL DE TIMEOUT ===== */
         .timeout-modal {
             display: none;
@@ -1145,7 +1186,6 @@
                     <div class="value" id="totalCalculado">Bs 0.00</div>
                     <div class="total-usd" id="totalUsd">≈ $0.00 USD</div>
                 </div>
-
                 <!-- Efectivo Recibido -->
                 <div class="efectivo-section">
                     <div class="efectivo-title">💵 Efectivo Recibido</div>
@@ -1201,6 +1241,23 @@
         </div>
     </div>
 
+
+    <!-- Modal Doble Cierre -->
+    <div class="dup-modal-overlay" id="dupModal">
+        <div class="dup-modal-box">
+            <div class="dup-modal-icon">🏪</div>
+            <div class="dup-modal-title">Ya existe un cierre hoy</div>
+            <div class="dup-modal-msg">
+                Se encontró un cierre anterior para <strong id="dupKioskoNombre"></strong> en esta fecha. ¿Qué deseas hacer?
+            </div>
+            <div class="dup-btn-group">
+                <button class="dup-btn dup-btn-segundo"    onclick="resolverDuplicado('segundo')">🔄 2do Cierre del Día (Autopago)</button>
+                <button class="dup-btn dup-btn-reemplazar" onclick="resolverDuplicado('reemplazar')">♻️ Reemplazar cierre anterior</button>
+                <button class="dup-btn dup-btn-cancelar"   onclick="resolverDuplicado('cancelar')">✖ Cancelar</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Modal de Timeout/Inactividad -->
     <div class="timeout-modal" id="timeoutModal">
         <div class="timeout-content">
@@ -1241,8 +1298,11 @@
 
         let uploadedImage = null;
         let stream = null;
-        let tasaBCV = 0; // Tasa BCV actual
+        let tasaBCV = 0;
         let kioskoUsuario = null;
+        let esAutopago = false;
+        let _pendingCierreData = null;
+        let _pendingQueryDocs  = null;
 
 
         // ===== SISTEMA DE TIMEOUT DE INACTIVIDAD =====
@@ -1401,6 +1461,23 @@
                 }
 
                 console.log('✅ Usuario autenticado:', user.email, '| Rol: tienda');
+
+                // Verificar si el kiosko es autopago
+                try {
+                    const autopagosDoc = await db.collection('configuracion').doc('autopagos').get();
+                    if (autopagosDoc.exists) {
+                        const lista = autopagosDoc.data().kioscos || [];
+                        esAutopago = lista.includes(kioskoUsuario);
+                    }
+                } catch(e) { console.warn('No se pudo verificar autopago:', e); }
+
+                if (esAutopago) {
+                    const badge = document.createElement('span');
+                    badge.className = 'autopago-badge';
+                    badge.textContent = '🤖 Autopago';
+                    document.querySelector('.header h1').appendChild(badge);
+                }
+
                 // Establecer fecha actual por defecto
                 const hoy = new Date().toISOString().split('T')[0];
                 document.getElementById('fechaCierre').value = hoy;
@@ -1681,11 +1758,11 @@
         document.getElementById('guardarBtn').addEventListener('click', async () => {
             //const tienda = document.getElementById('tiendaSelect').value;
             const fecha = document.getElementById('fechaCierre').value;
-            const credito = parseFloat(document.getElementById('montoCredito').value) || 0;
-            const debito = parseFloat(document.getElementById('montoDebito').value) || 0;
-            const pagoMovil = parseFloat(document.getElementById('pagoMovil').value) || 0;
-            const total = credito + debito + pagoMovil;
-            const recibidoBs = parseFloat(document.getElementById('recibidoBs').value) || 0;
+            const credito    = parseFloat(document.getElementById('montoCredito').value) || 0;
+            const debito     = parseFloat(document.getElementById('montoDebito').value) || 0;
+            const pagoMovil  = parseFloat(document.getElementById('pagoMovil').value)   || 0;
+            const total      = credito + debito + pagoMovil;
+            const recibidoBs  = parseFloat(document.getElementById('recibidoBs').value)  || 0;
             const recibidoUsd = parseFloat(document.getElementById('recibidoUsd').value) || 0;
 
             // Deshabilitar botón mientras guarda
@@ -1718,37 +1795,30 @@
                     usuarioEmail: auth.currentUser.email
                 };
 
-                // Buscar si ya existe un cierre para esta tienda y fecha
+                // Buscar cierres existentes para esta tienda y fecha
                 const querySnapshot = await db.collection('cierres')
                     .where('kiosko', '==', kioskoUsuario)
                     .where('fecha', '==', fecha)
                     .get();
 
-                let docId;
                 if (!querySnapshot.empty) {
-                    // Ya existe, preguntar si quiere reemplazar
-                    if (confirm('Ya existe un cierre para esta tienda y fecha. ¿Deseas reemplazarlo?')) {
-                        docId = querySnapshot.docs[0].id;
-                        await db.collection('cierres').doc(docId).set(cierre);
-                        console.log('✅ Cierre actualizado:', docId);
-                    } else {
-                        document.getElementById('guardarBtn').disabled = false;
-                        document.getElementById('guardarBtn').textContent = '💾 Guardar Cierre';
-                        return;
-                    }
+                    // Guardar pendiente y mostrar modal
+                    _pendingCierreData = cierre;
+                    _pendingQueryDocs  = querySnapshot.docs;
+                    document.getElementById('dupKioskoNombre').textContent = kioskoUsuario;
+                    document.getElementById('dupModal').classList.add('active');
+                    document.getElementById('guardarBtn').disabled = false;
+                    document.getElementById('guardarBtn').textContent = '💾 Guardar Cierre';
+                    return;
                 } else {
-                    // No existe, crear nuevo
+                    cierre.numeroCierre = 1;
                     const docRef = await db.collection('cierres').add(cierre);
-                    docId = docRef.id;
-                    console.log('✅ Cierre guardado:', docId);
+                    console.log('✅ 1er cierre guardado:', docRef.id);
                 }
 
-                // Mostrar mensaje de éxito
                 const successMsg = document.getElementById('successMsg');
                 successMsg.style.display = 'flex';
                 setTimeout(() => successMsg.style.display = 'none', 3000);
-
-                // Limpiar formulario
                 limpiarFormulario();
 
             } catch (error) {
@@ -1759,11 +1829,50 @@
             document.getElementById('guardarBtn').textContent = '💾 Guardar Cierre';
         });
 
+        // ===== RESOLVER DUPLICADO =====
+        async function resolverDuplicado(accion) {
+            document.getElementById('dupModal').classList.remove('active');
+            if (accion === 'cancelar' || !_pendingCierreData) {
+                _pendingCierreData = null;
+                _pendingQueryDocs  = null;
+                return;
+            }
+            const cierre = _pendingCierreData;
+            _pendingCierreData = null;
+            try {
+                if (accion === 'segundo') {
+                    const hay2do = _pendingQueryDocs.some(d => (d.data().numeroCierre || 1) === 2);
+                    if (hay2do) {
+                        alert('⚠️ Ya existe un 2do cierre para este kiosko en esta fecha.');
+                        _pendingQueryDocs = null;
+                        return;
+                    }
+                    cierre.numeroCierre = 2;
+                    cierre.esSegundoCierre = true;
+                    await db.collection('cierres').add(cierre);
+                    console.log('✅ 2do cierre guardado');
+                } else if (accion === 'reemplazar') {
+                    const doc1 = _pendingQueryDocs.find(d => (d.data().numeroCierre || 1) === 1) || _pendingQueryDocs[0];
+                    cierre.numeroCierre = doc1.data().numeroCierre || 1;
+                    await db.collection('cierres').doc(doc1.id).set(cierre);
+                    console.log('✅ Cierre reemplazado');
+                }
+                _pendingQueryDocs = null;
+                const successMsg = document.getElementById('successMsg');
+                successMsg.style.display = 'flex';
+                setTimeout(() => successMsg.style.display = 'none', 3000);
+                limpiarFormulario();
+            } catch (error) {
+                console.error('❌ Error:', error);
+                alert('Error al guardar: ' + error.message);
+            }
+        }
+
         function limpiarFormulario() {
             document.getElementById('montoCredito').value = '0';
             document.getElementById('montoDebito').value = '0';
             document.getElementById('pagoMovil').value = '0';
-            document.getElementById('recibidoBs').value = '0';
+            document.getElementById('recibidoBs').value  = '0';
             document.getElementById('recibidoUsd').value = '0';
             uploadedImage = null;
             document.getElementById('previewArea').innerHTML = '';

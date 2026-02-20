@@ -645,7 +645,110 @@
         .detail-chip.usd-chip { border-color: #c8e6c9; }
         .detail-chip.bs-chip .chip-value { color: #1565C0; }
         .detail-chip.usd-chip .chip-value { color: #2e7d32; }
+        .detail-chip.total-chip { border-color: #ffe0b2; grid-column: 1 / -1; }
+        .detail-chip.total-chip .chip-value { color: #e65100; font-size: 1.15em; }
+        .total-con-efectivo { font-size: 0.72em; color: #2e7d32; font-weight: 600; display: block; margin-top: 2px; }
 
+
+        /* ===== DOBLE CIERRE / AUTOPAGO ===== */
+        .grupo-header {
+            background: linear-gradient(135deg, #1a3a4a 0%, #006B7D 100%);
+            color: #fff;
+            padding: 8px 16px;
+            font-size: 0.85em;
+            font-weight: 700;
+            letter-spacing: 0.4px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .grupo-header .g-kiosko { flex: 1; font-size: 1em; }
+        .grupo-header .g-fecha  { opacity: 0.75; font-size: 0.9em; }
+        .grupo-subtotal td {
+            background: linear-gradient(135deg, #fff8e1 0%, #fff3cd 100%) !important;
+            border-top: 2px solid #ffc107 !important;
+            border-bottom: 2px solid #ffc107 !important;
+            font-weight: 700;
+            font-size: 0.92em;
+            color: #5c3d00;
+        }
+        .badge-cierre {
+            display: inline-block;
+            font-size: 0.72em;
+            font-weight: 700;
+            padding: 2px 8px;
+            border-radius: 20px;
+            margin-left: 6px;
+            vertical-align: middle;
+            letter-spacing: 0.3px;
+        }
+        .badge-1 { background: #e3f2fd; color: #1565C0; border: 1px solid #bbdefb; }
+        .badge-2 { background: #e8f5e9; color: #2e7d32; border: 1px solid #c8e6c9; }
+
+        /* ===== GESTIÓN AUTOPAGOS ===== */
+        .autopago-section { background: #f0faf0; border: 2px solid #a8d5a8; }
+        .autopago-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 12px;
+            min-height: 44px;
+        }
+        .autopago-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: #fff;
+            border: 2px solid #a8d5a8;
+            border-radius: 20px;
+            padding: 6px 14px;
+            font-size: 0.9em;
+            font-weight: 600;
+            color: #2e7d32;
+        }
+        .autopago-tag .rm-tag {
+            cursor: pointer;
+            font-size: 1.1em;
+            color: #e53935;
+            line-height: 1;
+            transition: transform 0.2s;
+        }
+        .autopago-tag .rm-tag:hover { transform: scale(1.3); }
+        .autopago-add-row {
+            display: flex;
+            gap: 10px;
+            margin-top: 14px;
+            align-items: center;
+        }
+        .autopago-add-row input {
+            flex: 1;
+            padding: 10px 14px;
+            border: 2px solid #a8d5a8;
+            border-radius: 10px;
+            font-size: 0.95em;
+            font-family: inherit;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+        .autopago-add-row input:focus { border-color: #2e7d32; }
+        .autopago-add-row button {
+            padding: 10px 20px;
+            background: linear-gradient(135deg, #2e7d32 0%, #43a047 100%);
+            color: #fff;
+            border: none;
+            border-radius: 10px;
+            font-weight: 700;
+            cursor: pointer;
+            font-size: 0.95em;
+            transition: all 0.2s;
+        }
+        .autopago-add-row button:hover { transform: translateY(-2px); }
+        .autopago-empty {
+            color: #888;
+            font-style: italic;
+            font-size: 0.9em;
+            padding: 8px 0;
+        }
         @media (max-width: 600px) {
             .detail-panel { grid-template-columns: 1fr; }
         }
@@ -710,6 +813,7 @@
                     </div>
                 </div>
             </div>
+
 
             <!-- Acciones -->
             <div class="section">
@@ -890,6 +994,17 @@
             }
         }
 
+
+        // ===== TOTAL REAL (Cierre + Efectivo Bs + Efectivo $ convertido) =====
+        function calcularTotalReal(cierre) {
+            const base    = parseFloat(cierre.total      || 0);
+            const efBs    = parseFloat(cierre.recibidoBs  || 0);
+            const efUsd   = parseFloat(cierre.recibidoUsd || 0);
+            const tasa    = parseFloat(cierre.tasaBCV     || 0);
+            const usdEnBs = tasa > 0 ? efUsd * tasa : 0;
+            return base + efBs + usdEnBs;
+        }
+
         // ===== MOSTRAR CIERRES (con o sin filtros) =====
         function mostrarCierres(cierres) {
             const tablaHTML = simplitData.length > 0
@@ -901,37 +1016,71 @@
         }
 
         // ===== GENERAR TABLAS =====
+        // ===== AGRUPAR CIERRES (mismo kiosko + fecha) =====
+        function agruparCierres(cierres) {
+            const grupos = {};
+            cierres.forEach(c => {
+                const key = `${c.kiosko || c.tienda || ''}__${c.fecha || ''}`;
+                if (!grupos[key]) grupos[key] = [];
+                grupos[key].push(c);
+            });
+            // Ordenar cada grupo por numeroCierre
+            Object.values(grupos).forEach(g => g.sort((a,b) => (a.numeroCierre||1) - (b.numeroCierre||1)));
+            return grupos;
+        }
+
         function generarTablaSinSimplit(cierres) {
+            const grupos = agruparCierres(cierres);
             let html = '<table><thead><tr>';
-            html += '<th></th><th>Tienda</th><th>Fecha</th><th>Crédito</th><th>Débito</th><th>Pago Móvil</th>';
+            html += '<th>Tienda</th><th>Fecha</th><th>Crédito</th><th>Débito</th><th>Pago Móvil</th>';
             html += '<th>Total</th><th>Foto</th>';
             html += '</tr></thead><tbody>';
 
-            cierres.forEach((cierre, idx) => {
-                const recBs = (cierre.recibidoBs || 0).toFixed(2);
-                const recUsd = (cierre.recibidoUsd || 0).toFixed(2);
-                const tieneEfectivo = (cierre.recibidoBs || 0) > 0 || (cierre.recibidoUsd || 0) > 0;
-                const panelId = `panel-${idx}`;
-                const btnId = `btn-${idx}`;
+            let idx = 0;
+            Object.entries(grupos).forEach(([key, grupo]) => {
+                const esDoble = grupo.length > 1;
+                const kioskoNombre = grupo[0].kiosko || grupo[0].tienda || 'Sin kiosko';
+                const fecha = grupo[0].fecha || '';
 
-                html += `<tr class="main-row" onclick="toggleDetalle('${panelId}','${btnId}')">`;
-                html += `<td><span class="expand-btn" id="${btnId}">▼</span></td>`;
-                html += `<td>${cierre.kiosko || cierre.tienda || "Sin kiosko"}</td>`;
-                html += `<td>${cierre.fecha}</td>`;
-                html += `<td>Bs ${cierre.credito.toFixed(2)}</td>`;
-                html += `<td>Bs ${cierre.debito.toFixed(2)}</td>`;
-                html += `<td>Bs ${cierre.pagoMovil.toFixed(2)}</td>`;
-                html += `<td><strong>Bs ${cierre.total.toFixed(2)}</strong></td>`;
-                html += `<td><button onclick="event.stopPropagation(); abrirModal('${cierre.imagen}')" style="background: linear-gradient(135deg, #006B7D 0%, #004A5A 100%); color: white; border: none; padding: 8px 16px; border-radius: 8px; cursor: pointer; font-weight: 600;">Ver 📷</button></td>`;
-                html += '</tr>';
 
-                // Fila de detalle efectivo
-                const colspan = 8;
-                html += `<tr class="detail-row"><td colspan="${colspan}">`;
-                html += `<div class="detail-panel" id="${panelId}">`;
-                html += `<div class="detail-chip bs-chip"><span class="chip-icon">💵</span><div><div class="chip-label">Efectivo Recibido Bs</div><div class="chip-value">Bs ${recBs}</div></div></div>`;
-                html += `<div class="detail-chip usd-chip"><span class="chip-icon">💲</span><div><div class="chip-label">Efectivo Recibido $</div><div class="chip-value">$ ${recUsd}</div></div></div>`;
-                html += `</div></td></tr>`;
+
+                grupo.forEach(cierre => {
+                    const efBs      = parseFloat(cierre.recibidoBs  || 0);
+                    const efUsd     = parseFloat(cierre.recibidoUsd || 0);
+                    const tasa      = parseFloat(cierre.tasaBCV     || 0);
+                    const usdEnBs   = tasa > 0 ? efUsd * tasa : 0;
+                    const totalReal = calcularTotalReal(cierre);
+                    const tieneEfectivo = efBs > 0 || efUsd > 0;
+                    const numC = cierre.numeroCierre || 1;
+                    const panelId = `panel-${idx}`;
+                    const btnId   = `btn-${idx}`;
+                    idx++;
+
+                    const badgeHtml = esDoble ? `<span class="badge-cierre badge-${numC}">${numC === 1 ? '1er Cierre' : '2do Cierre'}</span>` : '';
+
+                    html += `<tr class="main-row" onclick="toggleDetalle('${panelId}','${btnId}')">`;
+                    html += `<td><span class="expand-btn" id="${btnId}">▼</span> ${kioskoNombre}${badgeHtml}</td>`;
+                    html += `<td>${fecha}</td>`;
+                    html += `<td>Bs ${parseFloat(cierre.credito||0).toFixed(2)}</td>`;
+                    html += `<td>Bs ${parseFloat(cierre.debito||0).toFixed(2)}</td>`;
+                    html += `<td>Bs ${parseFloat(cierre.pagoMovil||0).toFixed(2)}</td>`;
+                    html += `<td><strong>Bs ${totalReal.toFixed(2)}</strong>${tieneEfectivo ? '<span class="total-con-efectivo">+efectivo incluido</span>' : ''}</td>`;
+                    html += `<td><button onclick="event.stopPropagation(); abrirModal('${cierre.imagen}')" style="background:linear-gradient(135deg,#006B7D 0%,#004A5A 100%);color:white;border:none;padding:8px 16px;border-radius:8px;cursor:pointer;font-weight:600;">Ver 📷</button></td>`;
+                    html += '</tr>';
+                    // Panel expandible
+                    html += `<tr class="detail-row"><td colspan="7"><div class="detail-panel" id="${panelId}">`;
+                    html += `<div class="detail-chip bs-chip"><span class="chip-icon">💵</span><div><div class="chip-label">Efectivo Bs</div><div class="chip-value">Bs ${efBs.toFixed(2)}</div></div></div>`;
+                    if (efUsd > 0) {
+                        const convStr = tasa > 0 ? ` ($ ${efUsd.toFixed(2)} × ${tasa.toFixed(2)} = Bs ${usdEnBs.toFixed(2)})` : ' (sin tasa BCV)';
+                        html += `<div class="detail-chip usd-chip"><span class="chip-icon">💲</span><div><div class="chip-label">Efectivo $</div><div class="chip-value">$ ${efUsd.toFixed(2)}<span style="font-size:0.78em;font-weight:500;color:#555;">${convStr}</span></div></div></div>`;
+                    } else {
+                        html += `<div class="detail-chip usd-chip"><span class="chip-icon">💲</span><div><div class="chip-label">Efectivo $</div><div class="chip-value">$ 0.00</div></div></div>`;
+                    }
+                    html += `<div class="detail-chip total-chip"><span class="chip-icon">🧾</span><div><div class="chip-label">Total con Efectivo</div><div class="chip-value">Bs ${totalReal.toFixed(2)}</div></div></div>`;
+                    html += `</div></td></tr>`;
+                });
+
+
             });
 
             html += '</tbody></table>';
@@ -939,64 +1088,94 @@
         }
 
         function generarTablaConSimplit(cierres) {
+            const grupos = agruparCierres(cierres);
             let html = '<table><thead><tr>';
-            html += '<th></th><th>Tienda</th><th>Fecha</th><th>Crédito</th><th>Débito</th><th>Pago Móvil</th>';
+            html += '<th>Tienda</th><th>Fecha</th><th>Crédito</th><th>Débito</th><th>Pago Móvil</th>';
             html += '<th>Total Cierre</th><th>Total Simplit</th><th>Diferencia</th><th>Estado</th><th>Foto</th>';
             html += '</tr></thead><tbody>';
 
-            cierres.forEach((cierre, idx) => {
+            let idx = 0;
+            Object.entries(grupos).forEach(([key, grupo]) => {
+                const esDoble = grupo.length > 1;
+                const kioskoNombre = grupo[0].kiosko || grupo[0].tienda || 'Sin kiosko';
+                const fecha = String(grupo[0].fecha || '').trim();
+
+                // Buscar registro Simplit UNA VEZ por grupo
                 const simplitRecord = simplitData.find(s => {
-                    const tiendaSimplit = (s.Tienda || s.tienda || '').trim();
-                    const tiendaCierre = (cierre.kiosko || cierre.tienda || "").trim();
-                    const fechaSimplit = (s.Fecha || s.fecha || '').trim();
-                    const fechaCierre = cierre.fecha.trim();
+                    const tiendaSimplit = String(s.Tienda || s.tienda || '').trim();
+                    const fechaSimplit  = String(s.Fecha  || s.fecha  || '').trim();
+                    if (!fecha || !fechaSimplit) return false;
+                    const fechaOk = fechaSimplit.includes(fecha) || fecha.includes(fechaSimplit) || fechaSimplit === fecha;
+                    const exacta  = tiendaSimplit.toLowerCase() === kioskoNombre.toLowerCase();
+                    const cod1    = kioskoNombre.match(/^\d+/);
+                    const cod2    = tiendaSimplit.match(/^\d+/);
+                    const codOk   = cod1 && cod2 && cod1[0] === cod2[0];
+                    return fechaOk && (exacta || codOk);
+                });
+                const totalSimplit = simplitRecord ? parseFloat(simplitRecord.Total_Ventas || simplitRecord.total_ventas || 0) : 0;
 
-                    const fechaCoincide = fechaSimplit.includes(fechaCierre) ||
-                        fechaCierre.includes(fechaSimplit) ||
-                        fechaSimplit === fechaCierre;
 
-                    const tiendaCoincideExacta = tiendaSimplit.toLowerCase() === tiendaCierre.toLowerCase();
 
-                    const codigoTiendaCierre = tiendaCierre.match(/^\d+/);
-                    const codigoTiendaSimplit = tiendaSimplit.match(/^\d+/);
-                    const tiendaCoincideCodigo = codigoTiendaCierre && codigoTiendaSimplit &&
-                        codigoTiendaCierre[0] === codigoTiendaSimplit[0];
+                grupo.forEach(cierre => {
+                    const efBs      = parseFloat(cierre.recibidoBs  || 0);
+                    const efUsd     = parseFloat(cierre.recibidoUsd || 0);
+                    const tasa      = parseFloat(cierre.tasaBCV     || 0);
+                    const usdEnBs   = tasa > 0 ? efUsd * tasa : 0;
+                    const totalReal = calcularTotalReal(cierre);
+                    const tieneEfectivo = efBs > 0 || efUsd > 0;
+                    const numC = cierre.numeroCierre || 1;
+                    const panelId = `panel-${idx}`;
+                    const btnId   = `btn-${idx}`;
+                    idx++;
 
-                    return fechaCoincide && (tiendaCoincideExacta || tiendaCoincideCodigo);
+                    // Para la diferencia, solo el 1er cierre se compara con Simplit; el 2do muestra '-'
+                    let diferenciaHtml, estadoHtml;
+                    if (!esDoble || numC === 1) {
+                        const dif = totalReal - totalSimplit;
+                        const estado = Math.abs(dif) <= 1 ? 'ok' : (Math.abs(dif) <= 10 ? 'pending' : 'error');
+                        const color  = dif >= 0 ? '#2E7D32' : '#C62828';
+                        const estadoTexto = estado === 'ok' ? '✅ CUADRA' : (estado === 'pending' ? '⚠️ DIF. MENOR' : '❌ NO CUADRA');
+                        diferenciaHtml = `<td style="color:${color}"><strong>${dif >= 0 ? '+' : ''}Bs ${dif.toFixed(2)}</strong></td>`;
+                        estadoHtml     = `<td><span class="status-${estado}">${estadoTexto}</span></td>`;
+                    } else {
+                        // 2do cierre: diferencia acumulada del grupo vs Simplit
+                        const sumGrupo = grupo.reduce((a, c) => a + calcularTotalReal(c), 0);
+                        const dif = sumGrupo - totalSimplit;
+                        const estado = Math.abs(dif) <= 1 ? 'ok' : (Math.abs(dif) <= 10 ? 'pending' : 'error');
+                        const color  = dif >= 0 ? '#2E7D32' : '#C62828';
+                        const estadoTexto = estado === 'ok' ? '✅ CUADRA (total)' : (estado === 'pending' ? '⚠️ DIF. MENOR (total)' : '❌ NO CUADRA (total)');
+                        diferenciaHtml = `<td style="color:${color}"><strong>${dif >= 0 ? '+' : ''}Bs ${dif.toFixed(2)}</strong><br><small style="font-weight:400;opacity:0.7;">ambos cierres</small></td>`;
+                        estadoHtml     = `<td><span class="status-${estado}">${estadoTexto}</span></td>`;
+                    }
+
+                    const badgeHtml = esDoble ? `<span class="badge-cierre badge-${numC}">${numC === 1 ? '1er Cierre' : '2do Cierre'}</span>` : '';
+
+                    html += `<tr class="main-row" onclick="toggleDetalle('${panelId}','${btnId}')">`;
+                    html += `<td><span class="expand-btn" id="${btnId}">▼</span> ${kioskoNombre}${badgeHtml}</td>`;
+                    html += `<td>${fecha}</td>`;
+                    html += `<td>Bs ${parseFloat(cierre.credito||0).toFixed(2)}</td>`;
+                    html += `<td>Bs ${parseFloat(cierre.debito||0).toFixed(2)}</td>`;
+                    html += `<td>Bs ${parseFloat(cierre.pagoMovil||0).toFixed(2)}</td>`;
+                    html += `<td><strong>Bs ${totalReal.toFixed(2)}</strong>${tieneEfectivo ? '<span class="total-con-efectivo">+efectivo incluido</span>' : ''}</td>`;
+                    html += `<td><strong>Bs ${totalSimplit.toFixed(2)}</strong></td>`;
+                    html += diferenciaHtml;
+                    html += estadoHtml;
+                    html += `<td><button onclick="event.stopPropagation(); abrirModal('${cierre.imagen}')" style="background:linear-gradient(135deg,#006B7D 0%,#004A5A 100%);color:white;border:none;padding:8px 16px;border-radius:8px;cursor:pointer;font-weight:600;">Ver 📷</button></td>`;
+                    html += '</tr>';
+                    // Panel expandible
+                    html += `<tr class="detail-row"><td colspan="10"><div class="detail-panel" id="${panelId}">`;
+                    html += `<div class="detail-chip bs-chip"><span class="chip-icon">💵</span><div><div class="chip-label">Efectivo Bs</div><div class="chip-value">Bs ${efBs.toFixed(2)}</div></div></div>`;
+                    if (efUsd > 0) {
+                        const convStr = tasa > 0 ? ` ($ ${efUsd.toFixed(2)} × ${tasa.toFixed(2)} = Bs ${usdEnBs.toFixed(2)})` : ' (sin tasa BCV)';
+                        html += `<div class="detail-chip usd-chip"><span class="chip-icon">💲</span><div><div class="chip-label">Efectivo $</div><div class="chip-value">$ ${efUsd.toFixed(2)}<span style="font-size:0.78em;font-weight:500;color:#555;">${convStr}</span></div></div></div>`;
+                    } else {
+                        html += `<div class="detail-chip usd-chip"><span class="chip-icon">💲</span><div><div class="chip-label">Efectivo $</div><div class="chip-value">$ 0.00</div></div></div>`;
+                    }
+                    html += `<div class="detail-chip total-chip"><span class="chip-icon">🧾</span><div><div class="chip-label">Total con Efectivo</div><div class="chip-value">Bs ${totalReal.toFixed(2)}</div></div></div>`;
+                    html += `</div></td></tr>`;
                 });
 
-                const totalSimplit = simplitRecord ? parseFloat(simplitRecord.Total_Ventas || simplitRecord.total_ventas || 0) : 0;
-                const diferencia = cierre.total - totalSimplit;
-                const estado = Math.abs(diferencia) <= 1 ? 'ok' : (Math.abs(diferencia) <= 10 ? 'pending' : 'error');
 
-                const recBs = (cierre.recibidoBs || 0).toFixed(2);
-                const recUsd = (cierre.recibidoUsd || 0).toFixed(2);
-                const panelId = `panel-${idx}`;
-                const btnId = `btn-${idx}`;
-
-                html += `<tr class="main-row" onclick="toggleDetalle('${panelId}','${btnId}')">`;
-                html += `<td><span class="expand-btn" id="${btnId}">▼</span></td>`;
-                html += `<td>${cierre.kiosko || cierre.tienda || "Sin kiosko"}</td>`;
-                html += `<td>${cierre.fecha}</td>`;
-                html += `<td>Bs ${cierre.credito.toFixed(2)}</td>`;
-                html += `<td>Bs ${cierre.debito.toFixed(2)}</td>`;
-                html += `<td>Bs ${cierre.pagoMovil.toFixed(2)}</td>`;
-                html += `<td><strong>Bs ${cierre.total.toFixed(2)}</strong></td>`;
-                html += `<td><strong>Bs ${totalSimplit.toFixed(2)}</strong></td>`;
-                html += `<td style="color: ${diferencia >= 0 ? '#2E7D32' : '#C62828'}"><strong>${diferencia >= 0 ? '+' : ''}Bs ${diferencia.toFixed(2)}</strong></td>`;
-
-                let estadoTexto = estado === 'ok' ? '✅ CUADRA' : (estado === 'pending' ? '⚠️ DIF. MENOR' : '❌ NO CUADRA');
-                html += `<td><span class="status-${estado}">${estadoTexto}</span></td>`;
-                html += `<td><button onclick="event.stopPropagation(); abrirModal('${cierre.imagen}')" style="background: linear-gradient(135deg, #006B7D 0%, #004A5A 100%); color: white; border: none; padding: 8px 16px; border-radius: 8px; cursor: pointer; font-weight: 600;">Ver 📷</button></td>`;
-                html += '</tr>';
-
-                // Fila de detalle efectivo
-                const colspan = 11;
-                html += `<tr class="detail-row"><td colspan="${colspan}">`;
-                html += `<div class="detail-panel" id="${panelId}">`;
-                html += `<div class="detail-chip bs-chip"><span class="chip-icon">💵</span><div><div class="chip-label">Efectivo Recibido Bs</div><div class="chip-value">Bs ${recBs}</div></div></div>`;
-                html += `<div class="detail-chip usd-chip"><span class="chip-icon">💲</span><div><div class="chip-label">Efectivo Recibido $</div><div class="chip-value">$ ${recUsd}</div></div></div>`;
-                html += `</div></td></tr>`;
             });
 
             html += '</tbody></table>';
@@ -1328,6 +1507,8 @@
                 alert('Error: ' + error.message);
             }
         });
+
+
     </script>
 </body>
 

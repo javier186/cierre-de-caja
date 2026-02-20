@@ -246,6 +246,70 @@
             display: none;
         }
 
+
+        /* ── Toggle Autopago ── */
+        .autopago-toggle-wrap {
+            display: none;
+            grid-column: 1 / -1;
+            background: #f0faf0;
+            border: 2px solid #a8d5a8;
+            border-radius: 12px;
+            padding: 14px 18px;
+            align-items: center;
+            gap: 14px;
+            cursor: pointer;
+            transition: background 0.2s;
+            user-select: none;
+        }
+        .autopago-toggle-wrap:hover { background: #e2f5e2; }
+        .autopago-toggle-wrap.active-wrap { display: flex; }
+
+        .toggle-switch {
+            position: relative;
+            width: 46px;
+            height: 26px;
+            flex-shrink: 0;
+        }
+        .toggle-switch input { opacity: 0; width: 0; height: 0; }
+        .toggle-slider {
+            position: absolute;
+            inset: 0;
+            background: #ccc;
+            border-radius: 26px;
+            transition: 0.3s;
+        }
+        .toggle-slider::before {
+            content: '';
+            position: absolute;
+            width: 20px; height: 20px;
+            left: 3px; bottom: 3px;
+            background: white;
+            border-radius: 50%;
+            transition: 0.3s;
+        }
+        .toggle-switch input:checked + .toggle-slider { background: #2e7d32; }
+        .toggle-switch input:checked + .toggle-slider::before { transform: translateX(20px); }
+
+        .toggle-label {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+        .toggle-label strong { color: #2e7d32; font-size: 0.97em; }
+        .toggle-label small  { color: #666; font-size: 0.82em; }
+
+        /* Badge en tabla */
+        .badge-autopago {
+            display: inline-block;
+            background: #e8f5e9;
+            color: #2e7d32;
+            border: 1px solid #c8e6c9;
+            padding: 2px 8px;
+            border-radius: 20px;
+            font-size: 0.78em;
+            font-weight: 700;
+            margin-left: 5px;
+        }
         @media(max-width: 600px) {
             .form-grid { grid-template-columns: 1fr; }
             .form-group.full { grid-column: 1; }
@@ -326,7 +390,7 @@
                 </div>
                 <div class="form-group" id="campoKiosko">
                     <label>Kiosko asignado</label>
-                    <select id="nuKiosko">
+                    <select id="nuKiosko" onchange="actualizarToggleAutopago()">
                         <option value="">— Selecciona kiosko —</option>
                         <option value="004 IBM">004 IBM</option>
                         <option value="017 Leti Guarenas">017 Leti Guarenas</option>
@@ -352,6 +416,17 @@
                 </div>
             </div>
 
+                <div class="autopago-toggle-wrap" id="campoAutopago" onclick="toggleAutopago()">
+                    <label class="toggle-switch" onclick="event.stopPropagation()">
+                        <input type="checkbox" id="nuAutopago" onchange="toggleAutopago()">
+                        <span class="toggle-slider"></span>
+                    </label>
+                    <div class="toggle-label">
+                        <strong>🤖 Kiosko Autopago</strong>
+                        <small>Permite registrar un 2do cierre del día cuando la empleada se retira</small>
+                    </div>
+                </div>
+
             <button class="btn-guardar" id="btnCrear" onclick="crearUsuario()">➕ Crear Usuario</button>
 
             <hr>
@@ -366,6 +441,7 @@
                                 <th>Nombre / Email</th>
                                 <th>Rol</th>
                                 <th>Kiosko</th>
+                                <th>Autopago</th>
                                 <th>Creado</th>
                                 <th>Acción</th>
                             </tr>
@@ -443,10 +519,21 @@
         }
     }
 
+    let autopagosSet = new Set(); // kioscos marcados como autopago
+
     function mostrarPanel(email) {
         document.getElementById('loginAdmin').style.display = 'none';
         document.getElementById('panelAdmin').style.display = 'block';
         document.getElementById('adminEmailLabel').textContent = '👤 ' + email;
+        cargarAutopagosYUsuarios();
+    }
+
+    async function cargarAutopagosYUsuarios() {
+        try {
+            const doc = await db.collection('configuracion').doc('autopagos').get();
+            const lista = doc.exists ? (doc.data().kioscos || []) : [];
+            autopagosSet = new Set(lista);
+        } catch(e) { autopagosSet = new Set(); }
         cargarUsuarios();
     }
 
@@ -464,6 +551,7 @@
         const password = document.getElementById('nuPassword').value;
         const rol      = document.getElementById('nuRol').value;
         const kiosko   = document.getElementById('nuKiosko').value;
+        const esAutopago = rol === 'tienda' && kiosko && document.getElementById('nuAutopago').checked;
 
         // Validación
         if (!nombre || !email || !password || !rol) {
@@ -502,6 +590,22 @@
             // 3️⃣ Cerrar sesión en la app secundaria (limpiar)
             await authSecundaria.signOut();
 
+            // 4️⃣ Actualizar lista de autopagos si aplica
+            if (rol === 'tienda' && kiosko) {
+                const docRef = db.collection('configuracion').doc('autopagos');
+                const snap   = await docRef.get();
+                let lista    = snap.exists ? (snap.data().kioscos || []) : [];
+                if (esAutopago && !lista.includes(kiosko)) {
+                    lista.push(kiosko);
+                    await docRef.set({ kioscos: lista });
+                    autopagosSet.add(kiosko);
+                } else if (!esAutopago && lista.includes(kiosko)) {
+                    lista = lista.filter(k => k !== kiosko);
+                    await docRef.set({ kioscos: lista });
+                    autopagosSet.delete(kiosko);
+                }
+            }
+
             mostrarAlerta('ok', `Usuario "${nombre}" (${email}) creado con rol "${rol}".`);
             limpiarFormulario();
             cargarUsuarios();
@@ -526,7 +630,7 @@
             document.getElementById('totalUsuarios').textContent = `(${snap.size} usuarios)`;
 
             if (snap.empty) {
-                tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:#888;padding:20px;">No hay usuarios aún.</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#888;padding:20px;">No hay usuarios aún.</td></tr>';
                 return;
             }
 
@@ -537,6 +641,11 @@
                 const badgeClass = u.rol === 'tienda' ? 'badge-tienda' : u.rol === 'supervisor' ? 'badge-supervisor' : 'badge-admin';
                 const kioskoCell = u.kiosko || '<span style="color:#bbb;">—</span>';
 
+                const esAuto = u.rol === 'tienda' && u.kiosko && autopagosSet.has(u.kiosko);
+                const autoCell = esAuto
+                    ? '<span class="badge-autopago">🤖 Sí</span>'
+                    : '<span style="color:#bbb;font-size:0.85em;">—</span>';
+
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
                     <td>
@@ -545,6 +654,7 @@
                     </td>
                     <td><span class="badge-rol ${badgeClass}">${u.rol}</span></td>
                     <td>${kioskoCell}</td>
+                    <td>${autoCell}</td>
                     <td>${fecha}</td>
                     <td>
                         <button class="btn-eliminar" onclick="eliminarUsuario('${doc.id}', '${u.nombre || u.email}')">
@@ -579,14 +689,41 @@
     // ═══════════════════════════════════════════
     function onRolChange() {
         const rol = document.getElementById('nuRol').value;
-        document.getElementById('campoKiosko').style.display = rol === 'tienda' ? 'flex' : 'none';
+        const esT = rol === 'tienda';
+        document.getElementById('campoKiosko').style.display  = esT ? 'flex' : 'none';
+        if (!esT) {
+            document.getElementById('campoAutopago').classList.remove('active-wrap');
+            document.getElementById('nuAutopago').checked = false;
+        } else {
+            actualizarToggleAutopago();
+        }
+    }
+
+    function actualizarToggleAutopago() {
+        const rol    = document.getElementById('nuRol').value;
+        const kiosko = document.getElementById('nuKiosko').value;
+        const wrap   = document.getElementById('campoAutopago');
+        if (rol === 'tienda' && kiosko) {
+            wrap.classList.add('active-wrap');
+            // Pre-marcar si el kiosko ya está en la lista
+            document.getElementById('nuAutopago').checked = autopagosSet.has(kiosko);
+        } else {
+            wrap.classList.remove('active-wrap');
+            document.getElementById('nuAutopago').checked = false;
+        }
+    }
+
+    function toggleAutopago() {
+        // Llamado también al hacer click en el div wrapper
     }
 
     function limpiarFormulario() {
         ['nuNombre','nuEmail','nuPassword'].forEach(id => document.getElementById(id).value = '');
         document.getElementById('nuRol').value = '';
         document.getElementById('nuKiosko').value = '';
+        document.getElementById('nuAutopago').checked = false;
         document.getElementById('campoKiosko').style.display = 'none';
+        document.getElementById('campoAutopago').classList.remove('active-wrap');
     }
 
     function mostrarAlerta(tipo, msg) {
