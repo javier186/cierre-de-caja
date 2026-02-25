@@ -1220,7 +1220,7 @@
                 });
 
                 const totalSimplit = simplitRecord ? parseFloat(simplitRecord.Total_Ventas || simplitRecord.total_ventas || 0) : 0;
-                const dif = calcularTotalReal(cierre) - totalSimplit;
+                const diferencia = Math.abs(cierre.total - totalSimplit);
 
                 const dif = cierre.total - totalSimplit;
                 const margen = totalSimplit * 0.0001;
