@@ -1132,7 +1132,7 @@
                     let diferenciaHtml, estadoHtml;
                     if (!esDoble || numC === 1) {
                         const dif = totalReal - totalSimplit;
-                        const estado = Math.abs(dif) <= 1 ? 'ok' : (Math.abs(dif) <= 10 ? 'pending' : 'error');
+                        const estado = Math.abs(dif) === 0 ? 'ok' : (Math.abs(dif) <= totalSimplit * 0.0001 ? 'pending' : 'error');
                         const color  = dif >= 0 ? '#2E7D32' : '#C62828';
                         const estadoTexto = estado === 'ok' ? '✅ CUADRA' : (estado === 'pending' ? '⚠️ DIF. MENOR' : '❌ NO CUADRA');
                         diferenciaHtml = `<td style="color:${color}"><strong>${dif >= 0 ? '+' : ''}Bs ${dif.toFixed(2)}</strong></td>`;
