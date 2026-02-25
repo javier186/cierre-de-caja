@@ -1128,23 +1128,14 @@
                     const btnId   = `btn-${idx}`;
                     idx++;
 
-                    // Para la diferencia, solo el 1er cierre se compara con Simplit; el 2do muestra '-'
+                    // Cada cierre se compara individualmente con Simplit
                     let diferenciaHtml, estadoHtml;
-                    if (!esDoble || numC === 1) {
+                    {
                         const dif = totalReal - totalSimplit;
                         const estado = Math.abs(dif) === 0 ? 'ok' : (Math.abs(dif) <= totalSimplit * 0.0001 ? 'pending' : 'error');
                         const color  = dif >= 0 ? '#2E7D32' : '#C62828';
                         const estadoTexto = estado === 'ok' ? '✅ CUADRA' : (estado === 'pending' ? '⚠️ DIF. MENOR' : '❌ NO CUADRA');
                         diferenciaHtml = `<td style="color:${color}"><strong>${dif >= 0 ? '+' : ''}Bs ${dif.toFixed(2)}</strong></td>`;
-                        estadoHtml     = `<td><span class="status-${estado}">${estadoTexto}</span></td>`;
-                    } else {
-                        // 2do cierre: diferencia acumulada del grupo vs Simplit
-                        const sumGrupo = grupo.reduce((a, c) => a + calcularTotalReal(c), 0);
-                        const dif = sumGrupo - totalSimplit;
-                        const estado = Math.abs(dif) <= 1 ? 'ok' : (Math.abs(dif) <= 10 ? 'pending' : 'error');
-                        const color  = dif >= 0 ? '#2E7D32' : '#C62828';
-                        const estadoTexto = estado === 'ok' ? '✅ CUADRA (total)' : (estado === 'pending' ? '⚠️ DIF. MENOR (total)' : '❌ NO CUADRA (total)');
-                        diferenciaHtml = `<td style="color:${color}"><strong>${dif >= 0 ? '+' : ''}Bs ${dif.toFixed(2)}</strong><br><small style="font-weight:400;opacity:0.7;">ambos cierres</small></td>`;
                         estadoHtml     = `<td><span class="status-${estado}">${estadoTexto}</span></td>`;
                     }
 
@@ -1220,9 +1211,9 @@
                 });
 
                 const totalSimplit = simplitRecord ? parseFloat(simplitRecord.Total_Ventas || simplitRecord.total_ventas || 0) : 0;
-                const diferencia = Math.abs(cierre.total - totalSimplit);
 
-                const dif = cierre.total - totalSimplit;
+                const totalReal = calcularTotalReal(cierre);
+                const dif = totalReal - totalSimplit;
                 const margen = totalSimplit * 0.0001;
 
                 if (Math.abs(dif) === 0) cuadran++;
