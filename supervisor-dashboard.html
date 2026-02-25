@@ -1222,8 +1222,11 @@
                 const totalSimplit = simplitRecord ? parseFloat(simplitRecord.Total_Ventas || simplitRecord.total_ventas || 0) : 0;
                 const diferencia = Math.abs(cierre.total - totalSimplit);
 
-                if (diferencia <= 1) cuadran++;
-                else if (diferencia <= 10) difMenor++;
+                const dif = cierre.total - totalSimplit;
+                const margen = totalSimplit * 0.0001;
+
+                if (Math.abs(dif) === 0) cuadran++;
+                else if (Math.abs(dif) <= margen) difMenor++;
                 else noCuadran++;
             });
 
