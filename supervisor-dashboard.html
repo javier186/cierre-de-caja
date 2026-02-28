@@ -758,61 +758,44 @@
             display: none;
             position: fixed;
             inset: 0;
-            background: rgba(0, 74, 90, 0.88);
+            background: rgba(0, 74, 90, 0.90);
             z-index: 99999;
             align-items: center;
             justify-content: center;
-            backdrop-filter: blur(8px);
+            backdrop-filter: blur(6px);
         }
         .loading-overlay.active { display: flex; }
         .loading-box {
             background: #fff;
             border-radius: 24px;
             padding: 48px 44px 40px;
-            max-width: 400px;
+            max-width: 380px;
             width: 90%;
             text-align: center;
             box-shadow: 0 30px 80px rgba(0,0,0,0.5);
         }
         .loading-spinner {
-            width: 64px;
-            height: 64px;
+            width: 64px; height: 64px;
             border: 6px solid #E8F4F6;
             border-top-color: #006B7D;
             border-radius: 50%;
-            animation: spin 0.9s linear infinite;
+            animation: spin 0.85s linear infinite;
             margin: 0 auto 20px;
         }
         @keyframes spin { to { transform: rotate(360deg); } }
-        .loading-title {
-            font-size: 1.4em;
-            font-weight: 700;
-            color: #006B7D;
-            margin-bottom: 8px;
-        }
-        .loading-sub {
-            font-size: 0.95em;
-            color: #7F8C8D;
-            margin-bottom: 20px;
-        }
-        .loading-bar-wrap {
-            background: #E8F4F6;
-            border-radius: 10px;
-            height: 8px;
-            overflow: hidden;
-        }
+        .loading-title { font-size: 1.4em; font-weight: 700; color: #006B7D; margin-bottom: 8px; }
+        .loading-sub { font-size: 0.95em; color: #7F8C8D; margin-bottom: 20px; }
+        .loading-bar-wrap { background: #E8F4F6; border-radius: 10px; height: 8px; overflow: hidden; }
         .loading-bar-fill {
             height: 100%;
             background: linear-gradient(90deg, #006B7D, #FF8C42);
             border-radius: 10px;
-            width: 0%;
-            transition: width 0.4s ease;
-            animation: loadPulse 1.5s ease-in-out infinite;
+            animation: loadPulse 1.4s ease-in-out infinite;
         }
         @keyframes loadPulse {
-            0% { width: 15%; }
-            50% { width: 75%; }
-            100% { width: 15%; }
+            0%   { width: 10%; margin-left: 0%; }
+            50%  { width: 60%; margin-left: 20%; }
+            100% { width: 10%; margin-left: 90%; }
         }
     </style>
 </head>
@@ -882,7 +865,7 @@
                 <div class="section-title">🔧 Acciones</div>
 
                 <button class="btn btn-success" id="exportBtn">📥 Exportar a Excel</button>
-                <button class="btn btn-orange" onclick="cargarCierresDesdeFirebase()">🔄 Actualizar</button>
+                <button class="btn btn-orange" onclick="invalidarCacheYRecargar()">🔄 Actualizar</button>
                 <button class="btn btn-danger" id="clearDataBtn">🗑️ Limpiar Datos</button>
             </div>
 
@@ -946,15 +929,14 @@
         </div>
     </div>
 
+
     <!-- ===== LOADING OVERLAY ===== -->
     <div class="loading-overlay" id="loadingOverlay">
         <div class="loading-box">
             <div class="loading-spinner"></div>
-            <div class="loading-title" id="loadingTitle">Cargando datos...</div>
-            <div class="loading-sub" id="loadingSub">Conectando con Firebase</div>
-            <div class="loading-bar-wrap">
-                <div class="loading-bar-fill" id="loadingBarFill"></div>
-            </div>
+            <div class="loading-title" id="loadingTitle">Cargando...</div>
+            <div class="loading-sub" id="loadingSub">Por favor espera</div>
+            <div class="loading-bar-wrap"><div class="loading-bar-fill"></div></div>
         </div>
     </div>
 
@@ -982,25 +964,43 @@
         const auth = firebase.auth();
 
         let simplitData = [];
-        let cierresGlobal = []; // Variable global para almacenar todos los cierres
+        let cierresGlobal = [];
+        let _cacheKey = 'cierres_cache';
+        let _cacheFechaKey = 'cierres_cache_ts';
+        let _CACHE_TTL = 5 * 60 * 1000; // 5 minutos de caché válido
 
         // ===== LOADING OVERLAY =====
+        let _loadingFallback = null;
         function mostrarLoading(titulo, sub) {
             const ov = document.getElementById('loadingOverlay');
-            document.getElementById('loadingTitle').textContent = titulo || 'Cargando datos...';
-            document.getElementById('loadingSub').textContent = sub || 'Por favor espera...';
+            if (!ov) return;
+            document.getElementById('loadingTitle').textContent = titulo || 'Cargando...';
+            document.getElementById('loadingSub').textContent = sub || 'Por favor espera';
             ov.classList.add('active');
+            clearTimeout(_loadingFallback);
+            _loadingFallback = setTimeout(ocultarLoading, 12000);
         }
         function ocultarLoading() {
-            document.getElementById('loadingOverlay').classList.remove('active');
+            clearTimeout(_loadingFallback);
+            const ov = document.getElementById('loadingOverlay');
+            if (ov) ov.classList.remove('active');
         }
 
-        // ===== VERIFICAR AUTENTICACIÓN =====
-        // Mostrar loading inmediatamente al entrar
-        mostrarLoading('Verificando sesión...', 'Conectando con el sistema');
+        // ===== FIX BUG RECARGA: Persistencia explícita de Auth =====
+        // Esto evita que el token se corrompa al recargar
+        auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL).catch(e => {
+            console.warn('Persistence error:', e);
+        });
 
+        // ===== VERIFICAR AUTENTICACIÓN =====
+        let _authResolved = false;
         auth.onAuthStateChanged(user => {
+            if (_authResolved) return; // Evitar doble disparo
+            _authResolved = true;
             if (!user) {
+                // Limpiar caché al cerrar sesión
+                sessionStorage.removeItem(_cacheKey);
+                sessionStorage.removeItem(_cacheFechaKey);
                 window.location.href = 'login.html';
             } else {
                 console.log('✅ Usuario autenticado:', user.email);
@@ -1019,11 +1019,10 @@
             const file = e.target.files[0];
             if (!file) return;
 
-            mostrarLoading('Procesando archivo...', 'Leyendo ' + file.name);
-
             const reader = new FileReader();
             const extension = file.name.split('.').pop().toLowerCase();
 
+            mostrarLoading('Procesando archivo...', 'Leyendo ' + file.name);
             reader.onload = (event) => {
                 try {
                     if (extension === 'csv') {
@@ -1033,7 +1032,13 @@
                                 simplitData = results.data;
                                 console.log('📊 Datos Simplit cargados (CSV):', simplitData.length);
                                 mostrarAlerta('✅ Archivo CSV cargado correctamente', 'success');
-                                cargarCierresDesdeFirebase();
+                                // Al subir Simplit, usar datos en caché si existen (no re-leer Firebase)
+                                if (cierresGlobal.length > 0) {
+                                    ocultarLoading();
+                                    mostrarCierres(cierresGlobal);
+                                } else {
+                                    cargarCierresDesdeFirebase(true);
+                                }
                             }
                         });
                     } else {
@@ -1042,7 +1047,13 @@
                         simplitData = XLSX.utils.sheet_to_json(firstSheet);
                         console.log('📊 Datos Simplit cargados (Excel):', simplitData.length);
                         mostrarAlerta('✅ Archivo Excel cargado correctamente', 'success');
-                        cargarCierresDesdeFirebase();
+                        // Al subir Simplit, usar datos en caché si existen
+                        if (cierresGlobal.length > 0) {
+                            ocultarLoading();
+                            mostrarCierres(cierresGlobal);
+                        } else {
+                            cargarCierresDesdeFirebase(true);
+                        }
                     }
                 } catch (error) {
                     console.error('Error al procesar archivo:', error);
@@ -1064,30 +1075,63 @@
             alert.textContent = mensaje;
         }
 
-        // ===== CARGAR CIERRES DESDE FIREBASE =====
-        async function cargarCierresDesdeFirebase() {
+        // ===== CARGAR CIERRES DESDE FIREBASE (con caché + límite 60 días) =====
+        async function cargarCierresDesdeFirebase(forzar = false) {
+            // 1. Intentar usar caché de sessionStorage (evita lecturas en recarga)
+            if (!forzar) {
+                const cacheTS = parseInt(sessionStorage.getItem(_cacheFechaKey) || '0');
+                const cacheData = sessionStorage.getItem(_cacheKey);
+                if (cacheData && (Date.now() - cacheTS) < _CACHE_TTL) {
+                    try {
+                        cierresGlobal = JSON.parse(cacheData);
+                        console.log('⚡ Cierres desde caché:', cierresGlobal.length, '(sin lectura Firebase)');
+                        mostrarCierres(cierresGlobal);
+                        mostrarAlerta('⚡ Datos desde caché local (actualizado hace ' + Math.round((Date.now()-cacheTS)/1000) + 's)', 'info');
+                        return;
+                    } catch(e) { /* caché corrupta, ignorar */ }
+                }
+            }
+
+            // 2. Pedir solo los últimos 60 días → reduce lecturas drásticamente
             mostrarLoading('Cargando cierres...', 'Obteniendo registros desde Firebase');
             try {
-                const snapshot = await db.collection('cierres').orderBy('fecha', 'desc').get();
-                cierresGlobal = []; // Limpiar array global
+                const hace60dias = new Date();
+                hace60dias.setDate(hace60dias.getDate() - 60);
+                const fechaLimite = hace60dias.toISOString().split('T')[0];
 
-                snapshot.forEach(doc => {
-                    cierresGlobal.push(doc.data());
-                });
+                const snapshot = await db.collection('cierres')
+                    .where('fecha', '>=', fechaLimite)
+                    .orderBy('fecha', 'desc')
+                    .get();
 
-                console.log('📦 Cierres cargados:', cierresGlobal.length);
+                cierresGlobal = [];
+                snapshot.forEach(doc => { cierresGlobal.push(doc.data()); });
 
-                // Mostrar todos los cierres inicialmente
+                // Guardar en caché
+                try {
+                    sessionStorage.setItem(_cacheKey, JSON.stringify(cierresGlobal));
+                    sessionStorage.setItem(_cacheFechaKey, Date.now().toString());
+                } catch(e) { console.warn('No se pudo guardar caché:', e); }
+
+                console.log('📦 Cierres cargados desde Firebase:', cierresGlobal.length,
+                    '| Lecturas usadas:', cierresGlobal.length);
                 mostrarCierres(cierresGlobal);
 
             } catch (error) {
                 console.error('Error al cargar cierres:', error);
-                mostrarAlerta('❌ Error al cargar datos', 'warning');
+                mostrarAlerta('❌ Error al cargar datos de Firebase', 'warning');
             } finally {
                 ocultarLoading();
             }
         }
 
+
+        // Forzar recarga limpiando caché
+        function invalidarCacheYRecargar() {
+            sessionStorage.removeItem(_cacheKey);
+            sessionStorage.removeItem(_cacheFechaKey);
+            cargarCierresDesdeFirebase(true);
+        }
 
         // ===== TOTAL REAL (Cierre + Efectivo Bs + Efectivo $ convertido) =====
         function calcularTotalReal(cierre) {
@@ -1482,12 +1526,11 @@
         // ===== EXPORTAR A EXCEL =====
         document.getElementById('exportBtn').addEventListener('click', async () => {
             try {
-                const snapshot = await db.collection('cierres').get();
-                const cierres = [];
-
-                snapshot.forEach(doc => {
-                    cierres.push(doc.data());
-                });
+                // Usar datos ya en memoria — 0 lecturas de Firebase extra
+                const cierres = cierresGlobal.length > 0
+                    ? cierresGlobal
+                    : (() => { mostrarAlerta('⚠️ No hay datos cargados, presiona Actualizar primero', 'warning'); return null; })();
+                if (!cierres) return;
 
                 const datos = [];
                 datos.push([
