@@ -572,6 +572,68 @@
             animation: pulse-dot 1.2s ease-in-out infinite;
         }
 
+        /* ===== MODAL DE ÉXITO GRANDE ===== */
+        .success-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.75);
+            z-index: 99999;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(6px);
+            animation: fadeIn 0.3s ease;
+        }
+        .success-overlay.active { display: flex; }
+        .success-modal-box {
+            background: #fff;
+            border-radius: 28px;
+            padding: 50px 40px 40px;
+            max-width: 460px;
+            width: 92%;
+            text-align: center;
+            box-shadow: 0 30px 80px rgba(0,0,0,0.5);
+            animation: slideInScale 0.4s cubic-bezier(0.68,-0.55,0.265,1.55);
+            border-top: 8px solid #2E7D32;
+        }
+        .success-modal-icon {
+            font-size: 5em;
+            margin-bottom: 16px;
+            animation: bounceIn 0.6s ease;
+        }
+        .success-modal-title {
+            font-size: 2em;
+            font-weight: 800;
+            color: #2E7D32;
+            margin-bottom: 12px;
+            letter-spacing: -0.5px;
+        }
+        .success-modal-msg {
+            font-size: 1.05em;
+            color: #555;
+            line-height: 1.6;
+            margin-bottom: 28px;
+        }
+        .success-modal-close {
+            background: linear-gradient(135deg, #2E7D32, #43a047);
+            color: #fff;
+            border: none;
+            padding: 16px 40px;
+            border-radius: 14px;
+            font-size: 1.1em;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 6px 20px rgba(46,125,50,0.4);
+            width: 100%;
+        }
+        .success-modal-close:hover { transform: translateY(-2px); box-shadow: 0 10px 28px rgba(46,125,50,0.5); }
+        @keyframes bounceIn {
+            0% { transform: scale(0); }
+            60% { transform: scale(1.2); }
+            100% { transform: scale(1); }
+        }
+
         /* ===== RESPONSIVE DESIGN ===== */
         @media (max-width: 768px) {
             body {
@@ -1088,10 +1150,8 @@
         </div>
 
         <div class="content">
-            <!-- Mensaje de Éxito -->
-            <div id="successMsg" class="success-message">
-                ✅ <strong>¡Cierre guardado exitosamente!</strong>
-            </div>
+            <!-- Mensaje de Éxito (pequeño, por compatibilidad) -->
+            <div id="successMsg" class="success-message" style="display:none;"></div>
 
             <!-- Información de Tienda y Fecha -->
             <div class="section">
@@ -1132,6 +1192,22 @@
                 <div class="input-group">
                     <label for="fechaCierre">Fecha del Cierre</label>
                     <input type="date" id="fechaCierre" required>
+                </div>
+
+                <div class="three-columns" style="margin-top: 0;">
+                    <div class="input-group" style="margin-bottom:0;">
+                        <label for="loteCierre">🎫 Lote de Cierre <span style="color:#C62828;">*</span></label>
+                        <input type="text" id="loteCierre" placeholder="Ej: 000123" required>
+                    </div>
+                    <div class="input-group" style="margin-bottom:0;">
+                        <label for="horaTicket">🕐 Hora del Ticket <span style="color:#C62828;">*</span></label>
+                        <input type="time" id="horaTicket" required>
+                    </div>
+                    <div class="input-group" style="margin-bottom:0;">
+                        <div style="background:#fff3e0; border:1px solid #FFB74D; border-radius:8px; padding:10px; font-size:0.82em; color:#E65100; line-height:1.4; margin-top:24px;">
+                            💡 Ingresa el lote y la hora exacta del ticket físico de cierre.
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -1228,6 +1304,21 @@
 
             <!-- Botón Guardar -->
             <button class="btn btn-success" id="guardarBtn" disabled>💾 Guardar Cierre</button>
+        </div>
+    </div>
+
+    <!-- ===== MODAL ÉXITO GRANDE ===== -->
+    <div class="success-overlay" id="successOverlay">
+        <div class="success-modal-box">
+            <div class="success-modal-icon">✅</div>
+            <div class="success-modal-title">¡Cierre Enviado!</div>
+            <div class="success-modal-msg" id="successOverlayMsg">
+                El cierre de caja fue <strong>guardado exitosamente</strong>.<br>
+                Ya el supervisor puede verlo en el sistema.
+            </div>
+            <button class="success-modal-close" onclick="cerrarSuccessOverlay()">
+                👍 Entendido
+            </button>
         </div>
     </div>
 
@@ -1538,6 +1629,22 @@
             const autoSection = document.getElementById('bcvRateSection');
             const manualSection = document.getElementById('bcvManualSection');
 
+            // 🔒 TASA FIJA DEL DÍA: si ya se guardó la tasa de hoy, usarla siempre
+            const hoy = new Date().toISOString().split('T')[0];
+            const tasaGuardada = localStorage.getItem('tasaBCV_valor');
+            const fechaGuardada = localStorage.getItem('tasaBCV_fecha');
+
+            if (tasaGuardada && fechaGuardada === hoy) {
+                const tasa = parseFloat(tasaGuardada);
+                tasaBCV = tasa;
+                badge.textContent = `Bs ${tasa.toFixed(2)} / $1`;
+                status.innerHTML = '🔒 Tasa fija del día (guardada)';
+                manualSection.style.display = 'none';
+                calcularTotal();
+                console.log('🔒 Tasa BCV del día (desde localStorage):', tasa);
+                return;
+            }
+
             try {
                 // Intentar obtener la tasa desde la API de DolarApi Venezuela
                 const response = await fetch('https://ve.dolarapi.com/v1/dolares/oficial');
@@ -1549,11 +1656,15 @@
                 if (!tasa || tasa <= 0) throw new Error('Tasa inválida');
 
                 tasaBCV = tasa;
+                // 💾 Guardar tasa del día en localStorage para que no cambie
+                localStorage.setItem('tasaBCV_valor', tasa.toString());
+                localStorage.setItem('tasaBCV_fecha', hoy);
+
                 badge.textContent = `Bs ${tasa.toFixed(2)} / $1`;
-                status.innerHTML = '🟢 Tasa obtenida automáticamente';
+                status.innerHTML = '🟢 Tasa obtenida y fijada para hoy';
                 manualSection.style.display = 'none';
                 calcularTotal();
-                console.log('✅ Tasa BCV obtenida:', tasa);
+                console.log('✅ Tasa BCV obtenida y guardada:', tasa);
             } catch (error) {
                 console.warn('⚠️ No se pudo obtener la tasa BCV:', error.message);
                 badge.textContent = '⚠️ No disponible';
@@ -1741,23 +1852,26 @@
 
         // ===== VALIDACIÓN =====
         function validarFormulario() {
-            //const tienda = document.getElementById('tiendaSelect').value;
             const fecha = document.getElementById('fechaCierre').value;
+            const lote = document.getElementById('loteCierre').value.trim();
+            const hora = document.getElementById('horaTicket').value;
             const hayImagen = uploadedImage !== null;
             const total = parseFloat(document.getElementById('totalCalculado').textContent.replace('Bs ', ''));
 
-            //const isValid = tienda && fecha && hayImagen && total > 0;
-            const isValid = kioskoUsuario && fecha && hayImagen && total > 0;
-
+            const isValid = kioskoUsuario && fecha && lote && hora && hayImagen && total > 0;
             document.getElementById('guardarBtn').disabled = !isValid;
         }
 
         document.getElementById('fechaCierre').addEventListener('change', validarFormulario);
+        document.getElementById('loteCierre').addEventListener('input', validarFormulario);
+        document.getElementById('horaTicket').addEventListener('change', validarFormulario);
 
         // ===== GUARDAR CIERRE EN FIREBASE =====
         document.getElementById('guardarBtn').addEventListener('click', async () => {
             //const tienda = document.getElementById('tiendaSelect').value;
             const fecha = document.getElementById('fechaCierre').value;
+            const loteCierre = document.getElementById('loteCierre').value.trim();
+            const horaTicket = document.getElementById('horaTicket').value;
             const credito    = parseFloat(document.getElementById('montoCredito').value) || 0;
             const debito     = parseFloat(document.getElementById('montoDebito').value) || 0;
             const pagoMovil  = parseFloat(document.getElementById('pagoMovil').value)   || 0;
@@ -1788,6 +1902,8 @@
                     totalUSD: totalUSD,
                     recibidoBs,
                     recibidoUsd,
+                    loteCierre,
+                    horaTicket,
                     imagen: imagenComprimida,
                     timestamp: firebase.firestore.FieldValue.serverTimestamp(),
                     verificado: false,
@@ -1816,9 +1932,7 @@
                     console.log('✅ 1er cierre guardado:', docRef.id);
                 }
 
-                const successMsg = document.getElementById('successMsg');
-                successMsg.style.display = 'flex';
-                setTimeout(() => successMsg.style.display = 'none', 3000);
+                mostrarSuccessOverlay();
                 limpiarFormulario();
 
             } catch (error) {
@@ -1858,9 +1972,7 @@
                     console.log('✅ Cierre reemplazado');
                 }
                 _pendingQueryDocs = null;
-                const successMsg = document.getElementById('successMsg');
-                successMsg.style.display = 'flex';
-                setTimeout(() => successMsg.style.display = 'none', 3000);
+                mostrarSuccessOverlay();
                 limpiarFormulario();
             } catch (error) {
                 console.error('❌ Error:', error);
@@ -1868,7 +1980,21 @@
             }
         }
 
+        // ===== ÉXITO OVERLAY =====
+        function mostrarSuccessOverlay(msg) {
+            const overlay = document.getElementById('successOverlay');
+            if (msg) document.getElementById('successOverlayMsg').innerHTML = msg;
+            overlay.classList.add('active');
+            // Auto-cerrar después de 8 segundos si no presionan
+            setTimeout(() => cerrarSuccessOverlay(), 8000);
+        }
+        function cerrarSuccessOverlay() {
+            document.getElementById('successOverlay').classList.remove('active');
+        }
+
         function limpiarFormulario() {
+            document.getElementById('loteCierre').value = '';
+            document.getElementById('horaTicket').value = '';
             document.getElementById('montoCredito').value = '0';
             document.getElementById('montoDebito').value = '0';
             document.getElementById('pagoMovil').value = '0';

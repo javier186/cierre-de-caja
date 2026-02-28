@@ -752,6 +752,68 @@
         @media (max-width: 600px) {
             .detail-panel { grid-template-columns: 1fr; }
         }
+
+        /* ===== LOADING OVERLAY ===== */
+        .loading-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 74, 90, 0.88);
+            z-index: 99999;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(8px);
+        }
+        .loading-overlay.active { display: flex; }
+        .loading-box {
+            background: #fff;
+            border-radius: 24px;
+            padding: 48px 44px 40px;
+            max-width: 400px;
+            width: 90%;
+            text-align: center;
+            box-shadow: 0 30px 80px rgba(0,0,0,0.5);
+        }
+        .loading-spinner {
+            width: 64px;
+            height: 64px;
+            border: 6px solid #E8F4F6;
+            border-top-color: #006B7D;
+            border-radius: 50%;
+            animation: spin 0.9s linear infinite;
+            margin: 0 auto 20px;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .loading-title {
+            font-size: 1.4em;
+            font-weight: 700;
+            color: #006B7D;
+            margin-bottom: 8px;
+        }
+        .loading-sub {
+            font-size: 0.95em;
+            color: #7F8C8D;
+            margin-bottom: 20px;
+        }
+        .loading-bar-wrap {
+            background: #E8F4F6;
+            border-radius: 10px;
+            height: 8px;
+            overflow: hidden;
+        }
+        .loading-bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #006B7D, #FF8C42);
+            border-radius: 10px;
+            width: 0%;
+            transition: width 0.4s ease;
+            animation: loadPulse 1.5s ease-in-out infinite;
+        }
+        @keyframes loadPulse {
+            0% { width: 15%; }
+            50% { width: 75%; }
+            100% { width: 15%; }
+        }
     </style>
 </head>
 
@@ -884,6 +946,18 @@
         </div>
     </div>
 
+    <!-- ===== LOADING OVERLAY ===== -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="loading-box">
+            <div class="loading-spinner"></div>
+            <div class="loading-title" id="loadingTitle">Cargando datos...</div>
+            <div class="loading-sub" id="loadingSub">Conectando con Firebase</div>
+            <div class="loading-bar-wrap">
+                <div class="loading-bar-fill" id="loadingBarFill"></div>
+            </div>
+        </div>
+    </div>
+
     <!-- Modal para ver imagen -->
     <div id="imageModal" class="modal" onclick="cerrarModal()">
         <div class="modal-content" onclick="event.stopPropagation()">
@@ -910,7 +984,21 @@
         let simplitData = [];
         let cierresGlobal = []; // Variable global para almacenar todos los cierres
 
+        // ===== LOADING OVERLAY =====
+        function mostrarLoading(titulo, sub) {
+            const ov = document.getElementById('loadingOverlay');
+            document.getElementById('loadingTitle').textContent = titulo || 'Cargando datos...';
+            document.getElementById('loadingSub').textContent = sub || 'Por favor espera...';
+            ov.classList.add('active');
+        }
+        function ocultarLoading() {
+            document.getElementById('loadingOverlay').classList.remove('active');
+        }
+
         // ===== VERIFICAR AUTENTICACIÓN =====
+        // Mostrar loading inmediatamente al entrar
+        mostrarLoading('Verificando sesión...', 'Conectando con el sistema');
+
         auth.onAuthStateChanged(user => {
             if (!user) {
                 window.location.href = 'login.html';
@@ -930,6 +1018,8 @@
         document.getElementById('simplitFile').addEventListener('change', (e) => {
             const file = e.target.files[0];
             if (!file) return;
+
+            mostrarLoading('Procesando archivo...', 'Leyendo ' + file.name);
 
             const reader = new FileReader();
             const extension = file.name.split('.').pop().toLowerCase();
@@ -957,6 +1047,7 @@
                 } catch (error) {
                     console.error('Error al procesar archivo:', error);
                     mostrarAlerta('❌ Error al procesar el archivo', 'warning');
+                    ocultarLoading();
                 }
             };
 
@@ -975,6 +1066,7 @@
 
         // ===== CARGAR CIERRES DESDE FIREBASE =====
         async function cargarCierresDesdeFirebase() {
+            mostrarLoading('Cargando cierres...', 'Obteniendo registros desde Firebase');
             try {
                 const snapshot = await db.collection('cierres').orderBy('fecha', 'desc').get();
                 cierresGlobal = []; // Limpiar array global
@@ -991,6 +1083,8 @@
             } catch (error) {
                 console.error('Error al cargar cierres:', error);
                 mostrarAlerta('❌ Error al cargar datos', 'warning');
+            } finally {
+                ocultarLoading();
             }
         }
 
