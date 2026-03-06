@@ -945,6 +945,119 @@
             50%  { width: 60%; margin-left: 20%; }
             100% { width: 10%; margin-left: 90%; }
         }
+
+        /* ===== MODAL DE EDICIÓN ===== */
+        .edit-modal-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.7);
+            z-index: 10000;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(4px);
+        }
+        .edit-modal-overlay.active { display: flex; }
+        .edit-modal-box {
+            background: #fff;
+            border-radius: 20px;
+            padding: 36px 32px 28px;
+            max-width: 540px;
+            width: 94%;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+            position: relative;
+            animation: slideDown 0.3s ease;
+        }
+        .edit-modal-box h3 {
+            color: #E65100;
+            font-size: 1.3em;
+            margin-bottom: 6px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .edit-modal-info {
+            background: #FFF3E0;
+            border: 1px solid #FFCC80;
+            border-radius: 10px;
+            padding: 10px 16px;
+            margin: 12px 0;
+            font-size: 0.92em;
+            color: #2c3e50;
+        }
+        .edit-modal-info strong { color: #E65100; }
+        .edit-form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 14px;
+            margin: 16px 0;
+        }
+        .edit-field {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+        .edit-field label {
+            font-weight: 700;
+            color: #2c3e50;
+            font-size: 0.88em;
+        }
+        .edit-field input {
+            padding: 10px 12px;
+            border: 2px solid #FFCC80;
+            border-radius: 8px;
+            font-size: 0.95em;
+            font-family: inherit;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+        .edit-field input:focus { border-color: #E65100; box-shadow: 0 0 0 3px rgba(230,81,0,0.1); }
+        .edit-modal-actions {
+            display: flex;
+            gap: 12px;
+            margin-top: 18px;
+            justify-content: flex-end;
+        }
+        .btn-edit {
+            background: linear-gradient(135deg, #E65100 0%, #F57C00 100%);
+            color: #fff;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 7px;
+            cursor: pointer;
+            font-size: 0.82em;
+            font-weight: 700;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            box-shadow: 0 2px 6px rgba(230,81,0,0.25);
+        }
+        .btn-edit:hover { transform: translateY(-1px); box-shadow: 0 4px 10px rgba(230,81,0,0.35); }
+        .btn-modal-save {
+            background: linear-gradient(135deg, #E65100 0%, #F57C00 100%);
+            color: #fff;
+            border: none;
+            padding: 10px 22px;
+            border-radius: 10px;
+            font-weight: 700;
+            cursor: pointer;
+            font-size: 0.95em;
+            box-shadow: 0 4px 12px rgba(230,81,0,0.3);
+            transition: all 0.2s;
+        }
+        .btn-modal-save:hover { transform: translateY(-1px); }
+        .edit-subtotal {
+            grid-column: 1 / -1;
+            background: #FFF3E0;
+            border: 2px solid #FFCC80;
+            border-radius: 10px;
+            padding: 10px 16px;
+            text-align: center;
+            font-size: 1em;
+            font-weight: 700;
+            color: #E65100;
+        }
     </style>
 </head>
 
@@ -1118,6 +1231,47 @@
         </div>
     </div>
 
+    <!-- ===== MODAL DE EDICIÓN ===== -->
+    <div class="edit-modal-overlay" id="editModal">
+        <div class="edit-modal-box">
+            <h3>✏️ Editar Cierre</h3>
+            <p style="color:#7F8C8D; font-size:0.88em; margin-bottom:4px;">Corrige los montos del cierre. El Total se recalculará automáticamente.</p>
+            <div class="edit-modal-info" id="editModalInfo"></div>
+            <div class="edit-form-grid">
+                <div class="edit-field">
+                    <label>💳 Crédito (Bs)</label>
+                    <input type="number" id="editCredito" step="0.01" min="0" oninput="recalcularTotalEdicion()">
+                </div>
+                <div class="edit-field">
+                    <label>🏦 Débito (Bs)</label>
+                    <input type="number" id="editDebito" step="0.01" min="0" oninput="recalcularTotalEdicion()">
+                </div>
+                <div class="edit-field">
+                    <label>📱 Pago Móvil (Bs)</label>
+                    <input type="number" id="editPagoMovil" step="0.01" min="0" oninput="recalcularTotalEdicion()">
+                </div>
+                <div class="edit-field">
+                    <label>💵 Efectivo Bs</label>
+                    <input type="number" id="editEfectivoBs" step="0.01" min="0" oninput="recalcularTotalEdicion()">
+                </div>
+                <div class="edit-field">
+                    <label>💲 Efectivo $</label>
+                    <input type="number" id="editEfectivoUsd" step="0.01" min="0" oninput="recalcularTotalEdicion()">
+                </div>
+                <div class="edit-field">
+                    <label>📊 Tasa BCV</label>
+                    <input type="number" id="editTasaBCV" step="0.01" min="0" oninput="recalcularTotalEdicion()">
+                </div>
+                <div class="edit-subtotal" id="editTotalPreview">🧾 Total: Bs 0.00</div>
+            </div>
+            <div id="editError" style="display:none; color:#C62828; background:#FFEBEE; border:1px solid #FFCDD2; border-radius:8px; padding:10px 14px; margin-top:8px; font-size:0.9em; font-weight:600;"></div>
+            <div class="edit-modal-actions">
+                <button class="btn-modal-cancel" onclick="cerrarEditModal()">Cancelar</button>
+                <button class="btn-modal-save" onclick="guardarEdicion()">💾 Guardar Cambios</button>
+            </div>
+        </div>
+    </div>
+
     <script>
         // ===== CONFIGURACIÓN DE FIREBASE =====
         const firebaseConfig = {
@@ -1277,7 +1431,7 @@
                     .get();
 
                 cierresGlobal = [];
-                snapshot.forEach(doc => { cierresGlobal.push(doc.data()); });
+                snapshot.forEach(doc => { cierresGlobal.push({ ...doc.data(), _docId: doc.id }); });
 
                 // Cargar aprobaciones
                 await cargarAprobaciones();
@@ -1425,7 +1579,7 @@
             const grupos = agruparCierres(cierres);
             let html = '<table><thead><tr>';
             html += '<th>Tienda</th><th>Fecha</th><th>Crédito</th><th>Débito</th><th>Pago Móvil</th>';
-            html += '<th>Total</th><th>Foto</th>';
+            html += '<th>Total</th><th>Foto</th><th>Editar</th>';
             html += '</tr></thead><tbody>';
 
             let idx = 0;
@@ -1458,9 +1612,10 @@
                     html += `<td>Bs ${parseFloat(cierre.pagoMovil||0).toFixed(2)}</td>`;
                     html += `<td><strong>Bs ${totalReal.toFixed(2)}</strong>${tieneEfectivo ? '<span class="total-con-efectivo">+efectivo incluido</span>' : ''}</td>`;
                     html += `<td><button onclick="event.stopPropagation(); abrirModal('${cierre.imagen}')" style="background:linear-gradient(135deg,#006B7D 0%,#004A5A 100%);color:white;border:none;padding:8px 16px;border-radius:8px;cursor:pointer;font-weight:600;">Ver 📷</button></td>`;
+                    html += `<td><button class="btn-edit" onclick="event.stopPropagation(); abrirEditModal('${cierre._docId}','${kioskoNombre.replace(/'/g,"\\'")}','${fecha}',${parseFloat(cierre.credito||0)},${parseFloat(cierre.debito||0)},${parseFloat(cierre.pagoMovil||0)},${efBs},${efUsd},${tasa})">✏️ Editar</button></td>`;
                     html += '</tr>';
                     // Panel expandible
-                    html += `<tr class="detail-row"><td colspan="7"><div class="detail-panel" id="${panelId}">`;
+                    html += `<tr class="detail-row"><td colspan="8"><div class="detail-panel" id="${panelId}">`;
                     html += `<div class="detail-chip bs-chip"><span class="chip-icon">💵</span><div><div class="chip-label">Efectivo Bs</div><div class="chip-value">Bs ${efBs.toFixed(2)}</div></div></div>`;
                     if (efUsd > 0) {
                         const convStr = tasa > 0 ? ` ($ ${efUsd.toFixed(2)} × ${tasa.toFixed(2)} = Bs ${usdEnBs.toFixed(2)})` : ' (sin tasa BCV)';
@@ -1483,7 +1638,7 @@
             const grupos = agruparCierres(cierres);
             let html = '<table><thead><tr>';
             html += '<th>Tienda</th><th>Fecha</th><th>Crédito</th><th>Débito</th><th>Pago Móvil</th>';
-            html += '<th>Total Cierre</th><th>Total Simplit</th><th>Diferencia</th><th>Estado</th><th>Foto</th>';
+            html += '<th>Total Cierre</th><th>Total Simplit</th><th>Diferencia</th><th>Estado</th><th>Foto</th><th>Editar</th>';
             html += '</tr></thead><tbody>';
 
             let idx = 0;
@@ -1572,9 +1727,10 @@
                     html += diferenciaHtml;
                     html += estadoHtml;
                     html += `<td><button onclick="event.stopPropagation(); abrirModal('${cierre.imagen}')" style="background:linear-gradient(135deg,#006B7D 0%,#004A5A 100%);color:white;border:none;padding:8px 16px;border-radius:8px;cursor:pointer;font-weight:600;">Ver 📷</button></td>`;
+                    html += `<td><button class="btn-edit" onclick="event.stopPropagation(); abrirEditModal('${cierre._docId}','${kioskoNombre.replace(/'/g,"\\'")}','${fecha}',${parseFloat(cierre.credito||0)},${parseFloat(cierre.debito||0)},${parseFloat(cierre.pagoMovil||0)},${efBs},${efUsd},${tasa})">✏️ Editar</button></td>`;
                     html += '</tr>';
                     // Panel expandible
-                    html += `<tr class="detail-row"><td colspan="10"><div class="detail-panel" id="${panelId}">`;
+                    html += `<tr class="detail-row"><td colspan="11"><div class="detail-panel" id="${panelId}">`;
                     html += `<div class="detail-chip bs-chip"><span class="chip-icon">💵</span><div><div class="chip-label">Efectivo Bs</div><div class="chip-value">Bs ${efBs.toFixed(2)}</div></div></div>`;
                     if (efUsd > 0) {
                         const convStr = tasa > 0 ? ` ($ ${efUsd.toFixed(2)} × ${tasa.toFixed(2)} = Bs ${usdEnBs.toFixed(2)})` : ' (sin tasa BCV)';
@@ -1811,6 +1967,94 @@
                 }
             });
         });
+
+        // ===== MODAL DE EDICIÓN =====
+        let _editDocId = null;
+
+        function abrirEditModal(docId, kiosko, fecha, credito, debito, pagoMovil, efBs, efUsd, tasa) {
+            _editDocId = docId;
+            document.getElementById('editModalInfo').innerHTML =
+                `<strong>🏪 Tienda:</strong> ${kiosko} &nbsp;|&nbsp; <strong>📅 Fecha:</strong> ${fecha}`;
+            document.getElementById('editCredito').value     = credito;
+            document.getElementById('editDebito').value      = debito;
+            document.getElementById('editPagoMovil').value   = pagoMovil;
+            document.getElementById('editEfectivoBs').value  = efBs;
+            document.getElementById('editEfectivoUsd').value = efUsd;
+            document.getElementById('editTasaBCV').value     = tasa;
+            document.getElementById('editError').style.display = 'none';
+            recalcularTotalEdicion();
+            document.getElementById('editModal').classList.add('active');
+        }
+
+        function cerrarEditModal() {
+            document.getElementById('editModal').classList.remove('active');
+            _editDocId = null;
+        }
+
+        function recalcularTotalEdicion() {
+            const credito   = parseFloat(document.getElementById('editCredito').value   || 0);
+            const debito    = parseFloat(document.getElementById('editDebito').value    || 0);
+            const pagoMovil = parseFloat(document.getElementById('editPagoMovil').value || 0);
+            const efBs      = parseFloat(document.getElementById('editEfectivoBs').value || 0);
+            const efUsd     = parseFloat(document.getElementById('editEfectivoUsd').value || 0);
+            const tasa      = parseFloat(document.getElementById('editTasaBCV').value   || 0);
+            const usdEnBs   = tasa > 0 ? efUsd * tasa : 0;
+            const total     = credito + debito + pagoMovil + efBs + usdEnBs;
+            document.getElementById('editTotalPreview').textContent = `🧾 Total estimado: Bs ${total.toFixed(2)}`;
+        }
+
+        async function guardarEdicion() {
+            if (!_editDocId) return;
+            const saveBtn = document.querySelector('.btn-modal-save');
+            saveBtn.disabled = true;
+            saveBtn.textContent = '⏳ Guardando...';
+            try {
+                const credito   = parseFloat(document.getElementById('editCredito').value   || 0);
+                const debito    = parseFloat(document.getElementById('editDebito').value    || 0);
+                const pagoMovil = parseFloat(document.getElementById('editPagoMovil').value || 0);
+                const efBs      = parseFloat(document.getElementById('editEfectivoBs').value || 0);
+                const efUsd     = parseFloat(document.getElementById('editEfectivoUsd').value || 0);
+                const tasa      = parseFloat(document.getElementById('editTasaBCV').value   || 0);
+                const total     = credito + debito + pagoMovil;
+
+                await db.collection('cierres').doc(_editDocId).update({
+                    credito, debito, pagoMovil, total,
+                    recibidoBs: efBs,
+                    recibidoUsd: efUsd,
+                    tasaBCV: tasa,
+                    editadoPor: auth.currentUser ? auth.currentUser.email : 'supervisor',
+                    editadoEn: new Date().toISOString()
+                });
+
+                // Actualizar objeto en memoria
+                const idx = cierresGlobal.findIndex(c => c._docId === _editDocId);
+                if (idx !== -1) {
+                    cierresGlobal[idx] = {
+                        ...cierresGlobal[idx],
+                        credito, debito, pagoMovil, total,
+                        recibidoBs: efBs,
+                        recibidoUsd: efUsd,
+                        tasaBCV: tasa
+                    };
+                }
+
+                // Invalidar caché local
+                sessionStorage.removeItem(_cacheKey);
+                sessionStorage.removeItem(_cacheFechaKey);
+
+                cerrarEditModal();
+                mostrarAlerta('✅ Cierre corregido correctamente', 'success');
+                mostrarCierres(cierresGlobal);
+            } catch(e) {
+                console.error('Error al guardar edición:', e);
+                const errDiv = document.getElementById('editError');
+                errDiv.style.display = 'block';
+                errDiv.textContent = '⚠️ Error al guardar: ' + e.message;
+            } finally {
+                saveBtn.disabled = false;
+                saveBtn.textContent = '💾 Guardar Cambios';
+            }
+        }
 
         // ===== MODAL DE IMAGEN =====
         function abrirModal(imagenBase64) {
