@@ -753,6 +753,154 @@
             .detail-panel { grid-template-columns: 1fr; }
         }
 
+        /* ===== ESTADO APROBADO ===== */
+        .status-approved {
+            background: #E8F5E9;
+            color: #1B5E20;
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-weight: 600;
+            border: 1px solid #A5D6A7;
+        }
+        .stat-card.approved {
+            background: linear-gradient(135deg, #1B5E20 0%, #2E7D32 100%);
+        }
+        .btn-approve {
+            background: linear-gradient(135deg, #1B5E20 0%, #2E7D32 100%);
+            color: #fff;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 7px;
+            cursor: pointer;
+            font-size: 0.82em;
+            font-weight: 700;
+            transition: all 0.2s;
+            margin-top: 4px;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            box-shadow: 0 2px 6px rgba(27,94,32,0.25);
+        }
+        .btn-approve:hover { transform: translateY(-1px); box-shadow: 0 4px 10px rgba(27,94,32,0.3); }
+        .btn-revoke {
+            background: linear-gradient(135deg, #6D4C41 0%, #795548 100%);
+            color: #fff;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 7px;
+            cursor: pointer;
+            font-size: 0.78em;
+            font-weight: 600;
+            transition: all 0.2s;
+            margin-top: 4px;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .btn-revoke:hover { transform: translateY(-1px); }
+
+        /* ===== MODAL DE APROBACIÓN ===== */
+        .approval-modal-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.7);
+            z-index: 10000;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(4px);
+        }
+        .approval-modal-overlay.active { display: flex; }
+        .approval-modal-box {
+            background: #fff;
+            border-radius: 20px;
+            padding: 36px 32px 28px;
+            max-width: 460px;
+            width: 92%;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+            position: relative;
+            animation: slideDown 0.3s ease;
+        }
+        .approval-modal-box h3 {
+            color: #1B5E20;
+            font-size: 1.3em;
+            margin-bottom: 6px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .approval-modal-info {
+            background: #f0faf0;
+            border: 1px solid #a5d6a7;
+            border-radius: 10px;
+            padding: 12px 16px;
+            margin: 14px 0;
+            font-size: 0.92em;
+            color: #2c3e50;
+        }
+        .approval-modal-info strong { color: #1B5E20; }
+        .approval-modal-box label {
+            font-weight: 700;
+            color: #2c3e50;
+            font-size: 0.95em;
+            display: block;
+            margin-bottom: 6px;
+        }
+        .approval-modal-box textarea {
+            width: 100%;
+            border: 2px solid #a5d6a7;
+            border-radius: 10px;
+            padding: 12px;
+            font-size: 0.95em;
+            font-family: inherit;
+            resize: vertical;
+            min-height: 90px;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+        .approval-modal-box textarea:focus { border-color: #2E7D32; }
+        .approval-modal-actions {
+            display: flex;
+            gap: 12px;
+            margin-top: 18px;
+            justify-content: flex-end;
+        }
+        .btn-modal-cancel {
+            background: #eee;
+            color: #555;
+            border: none;
+            padding: 10px 22px;
+            border-radius: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            font-size: 0.95em;
+            transition: all 0.2s;
+        }
+        .btn-modal-cancel:hover { background: #ddd; }
+        .btn-modal-confirm {
+            background: linear-gradient(135deg, #1B5E20 0%, #2E7D32 100%);
+            color: #fff;
+            border: none;
+            padding: 10px 22px;
+            border-radius: 10px;
+            font-weight: 700;
+            cursor: pointer;
+            font-size: 0.95em;
+            box-shadow: 0 4px 12px rgba(27,94,32,0.3);
+            transition: all 0.2s;
+        }
+        .btn-modal-confirm:hover { transform: translateY(-1px); }
+        .approved-chip {
+            font-size: 0.78em;
+            color: #1B5E20;
+            background: #e8f5e9;
+            border: 1px solid #a5d6a7;
+            border-radius: 10px;
+            padding: 4px 10px;
+            margin-top: 4px;
+            display: inline-block;
+        }
+
         /* ===== LOADING OVERLAY ===== */
         .loading-overlay {
             display: none;
@@ -848,6 +996,10 @@
                         <div class="stat-value" id="statNoCuadran">0</div>
                         <div class="stat-label">❌ No Cuadran</div>
                     </div>
+                    <div class="stat-card approved">
+                        <div class="stat-value" id="statAprobados">0</div>
+                        <div class="stat-label">✔️ Aprobados</div>
+                    </div>
                     <div class="stat-card efectivo-bs">
                         <div class="stat-value-sm" id="statEfectivoBs">Bs 0.00</div>
                         <div class="stat-label">💵 Efectivo Recibido Bs</div>
@@ -906,6 +1058,7 @@
                                 <option value="cuadra">✅ Cuadra</option>
                                 <option value="no-cuadra">❌ No Cuadra</option>
                                 <option value="pendiente">⏳ Pendiente (Sin Simplit)</option>
+                                <option value="aprobado">✔️ Aprobado</option>
                             </select>
                         </div>
                     </div>
@@ -948,6 +1101,23 @@
         </div>
     </div>
 
+    <!-- Modal de Aprobación -->
+    <div class="approval-modal-overlay" id="approvalModal">
+        <div class="approval-modal-box">
+            <h3>✔️ Aprobar Diferencia</h3>
+            <div class="approval-modal-info" id="approvalInfo"></div>
+            <label for="approvalJustificacion">Justificación <span style="color:#C62828">*</span></label>
+            <textarea id="approvalJustificacion" placeholder="Describe el motivo de la aprobación..."></textarea>
+            <div id="approvalError" style="display:none; color:#C62828; background:#FFEBEE; border:1px solid #FFCDD2; border-radius:8px; padding:10px 14px; margin-top:12px; font-size:0.9em; font-weight:600;">
+                ⚠️ La justificación es obligatoria para aprobar.
+            </div>
+            <div class="approval-modal-actions">
+                <button class="btn-modal-cancel" onclick="cerrarApprovalModal()">Cancelar</button>
+                <button class="btn-modal-confirm" onclick="confirmarAprobacion()">✔️ Confirmar Aprobación</button>
+            </div>
+        </div>
+    </div>
+
     <script>
         // ===== CONFIGURACIÓN DE FIREBASE =====
         const firebaseConfig = {
@@ -965,6 +1135,8 @@
 
         let simplitData = [];
         let cierresGlobal = [];
+        let aprobacionesGlobal = {}; // key -> {justificacion, aprobadoPor, timestamp}
+        let _pendingApprovalKey = null;
         let _cacheKey = 'cierres_cache';
         let _cacheFechaKey = 'cierres_cache_ts';
         let _CACHE_TTL = 5 * 60 * 1000; // 5 minutos de caché válido
@@ -1107,6 +1279,9 @@
                 cierresGlobal = [];
                 snapshot.forEach(doc => { cierresGlobal.push(doc.data()); });
 
+                // Cargar aprobaciones
+                await cargarAprobaciones();
+
                 // Guardar en caché
                 try {
                     sessionStorage.setItem(_cacheKey, JSON.stringify(cierresGlobal));
@@ -1142,6 +1317,85 @@
             const usdEnBs = tasa > 0 ? efUsd * tasa : 0;
             return base + efBs + usdEnBs;
         }
+
+        // ===== APROBACIONES =====
+        function claveAprobacion(kiosko, fecha, numCierre) {
+            return `${(kiosko||'').replace(/[^a-zA-Z0-9]/g,'_')}__${(fecha||'').replace(/[^a-zA-Z0-9]/g,'_')}__${numCierre||1}`;
+        }
+
+        async function cargarAprobaciones() {
+            try {
+                const snap = await db.collection('aprobaciones').get();
+                aprobacionesGlobal = {};
+                snap.forEach(doc => { aprobacionesGlobal[doc.id] = doc.data(); });
+                console.log('✔️ Aprobaciones cargadas:', Object.keys(aprobacionesGlobal).length);
+            } catch(e) {
+                console.warn('No se pudieron cargar aprobaciones:', e);
+            }
+        }
+
+        function abrirApprovalModal(key, kiosko, fecha, numCierre, difTexto) {
+            _pendingApprovalKey = key;
+            document.getElementById('approvalInfo').innerHTML =
+                `<strong>🏪 Tienda:</strong> ${kiosko}<br>
+                 <strong>📅 Fecha:</strong> ${fecha}<br>
+                 <strong>⚠️ Diferencia:</strong> ${difTexto}`;
+            document.getElementById('approvalJustificacion').value = '';
+            document.getElementById('approvalModal').classList.add('active');
+            setTimeout(() => document.getElementById('approvalJustificacion').focus(), 200);
+        }
+
+        function cerrarApprovalModal() {
+            document.getElementById('approvalModal').classList.remove('active');
+            document.getElementById('approvalError').style.display = 'none';
+            document.getElementById('approvalJustificacion').style.borderColor = '#a5d6a7';
+            _pendingApprovalKey = null;
+        }
+
+        async function confirmarAprobacion() {
+            const justif = document.getElementById('approvalJustificacion').value.trim();
+            if (!justif) {
+                document.getElementById('approvalJustificacion').style.borderColor = '#C62828';
+                document.getElementById('approvalError').style.display = 'block';
+                document.getElementById('approvalJustificacion').focus();
+                return;
+            }
+            document.getElementById('approvalJustificacion').style.borderColor = '#a5d6a7';
+            document.getElementById('approvalError').style.display = 'none';
+            const key = _pendingApprovalKey;
+            if (!key) return;
+
+            try {
+                const user = auth.currentUser;
+                const data = {
+                    justificacion: justif,
+                    aprobadoPor: user ? user.email : 'supervisor',
+                    timestamp: new Date().toISOString()
+                };
+                await db.collection('aprobaciones').doc(key).set(data);
+                aprobacionesGlobal[key] = data;
+                cerrarApprovalModal();
+                mostrarAlerta('✔️ Diferencia aprobada correctamente', 'success');
+                mostrarCierres(cierresGlobal);
+            } catch(e) {
+                console.error('Error al guardar aprobación:', e);
+                mostrarAlerta('❌ Error al guardar la aprobación', 'warning');
+            }
+        }
+
+        async function revocarAprobacion(key) {
+            if (!confirm('¿Revocar esta aprobación?')) return;
+            try {
+                await db.collection('aprobaciones').doc(key).delete();
+                delete aprobacionesGlobal[key];
+                mostrarAlerta('🗑️ Aprobación revocada', 'info');
+                mostrarCierres(cierresGlobal);
+            } catch(e) {
+                console.error('Error al revocar:', e);
+                mostrarAlerta('❌ Error al revocar la aprobación', 'warning');
+            }
+        }
+
 
         // ===== MOSTRAR CIERRES (con o sin filtros) =====
         function mostrarCierres(cierres) {
@@ -1270,11 +1524,39 @@
                     let diferenciaHtml, estadoHtml;
                     {
                         const dif = totalReal - totalSimplit;
-                        const estado = Math.abs(dif) === 0 ? 'ok' : (Math.abs(dif) <= totalSimplit * 0.0001 ? 'pending' : 'error');
-                        const color  = dif >= 0 ? '#2E7D32' : '#C62828';
-                        const estadoTexto = estado === 'ok' ? '✅ CUADRA' : (estado === 'pending' ? '⚠️ DIF. MENOR' : '❌ NO CUADRA');
+                        const absDif = Math.abs(dif);
+                        const margen = totalSimplit * 0.0001;
+                        const cierreKey = claveAprobacion(kioskoNombre, fecha, numC);
+                        const aprobacion = aprobacionesGlobal[cierreKey];
+
+                        let estado, estadoTexto;
+                        if (aprobacion) {
+                            estado = 'approved';
+                            estadoTexto = '✔️ APROBADO';
+                        } else if (absDif === 0) {
+                            estado = 'ok';
+                            estadoTexto = '✅ CUADRA';
+                        } else if (absDif <= margen) {
+                            estado = 'pending';
+                            estadoTexto = '⚠️ DIF. MENOR';
+                        } else {
+                            estado = 'error';
+                            estadoTexto = '❌ NO CUADRA';
+                        }
+
+                        const color = dif >= 0 ? '#2E7D32' : '#C62828';
                         diferenciaHtml = `<td style="color:${color}"><strong>${dif >= 0 ? '+' : ''}Bs ${dif.toFixed(2)}</strong></td>`;
-                        estadoHtml     = `<td><span class="status-${estado}">${estadoTexto}</span></td>`;
+
+                        let accionHtml = '';
+                        if (aprobacion) {
+                            accionHtml = `<br><button class="btn-revoke" onclick="event.stopPropagation(); revocarAprobacion('${cierreKey}')">🗑️ Revocar</button>
+                                <span class="approved-chip" title="${aprobacion.justificacion}">📝 ${aprobacion.justificacion.substring(0,40)}${aprobacion.justificacion.length>40?'…':''}</span>`;
+                        } else if (estado === 'pending' || estado === 'error') {
+                            const difTexto = `${dif >= 0 ? '+' : ''}Bs ${dif.toFixed(2)}`;
+                            accionHtml = `<br><button class="btn-approve" onclick="event.stopPropagation(); abrirApprovalModal('${cierreKey}','${kioskoNombre.replace(/'/g,"\\'")}','${fecha}',${numC},'${difTexto}')">✔️ Aprobar</button>`;
+                        }
+
+                        estadoHtml = `<td><span class="status-${estado}">${estadoTexto}</span>${accionHtml}</td>`;
                     }
 
                     const badgeHtml = esDoble ? `<span class="badge-cierre badge-${numC}">${numC === 1 ? '1er Cierre' : '2do Cierre'}</span>` : '';
@@ -1330,6 +1612,7 @@
             let cuadran = 0;
             let difMenor = 0;
             let noCuadran = 0;
+            let aprobados = 0;
 
             cierres.forEach(cierre => {
                 const simplitRecord = simplitData.find(s => {
@@ -1353,8 +1636,13 @@
                 const totalReal = calcularTotalReal(cierre);
                 const dif = totalReal - totalSimplit;
                 const margen = totalSimplit * 0.0001;
+                const numC = cierre.numeroCierre || 1;
+                const kiosko = (cierre.kiosko || cierre.tienda || '').trim();
+                const fecha = (cierre.fecha || '').trim();
+                const key = claveAprobacion(kiosko, fecha, numC);
 
-                if (Math.abs(dif) === 0) cuadran++;
+                if (aprobacionesGlobal[key]) aprobados++;
+                else if (Math.abs(dif) === 0) cuadran++;
                 else if (Math.abs(dif) <= margen) difMenor++;
                 else noCuadran++;
             });
@@ -1363,6 +1651,7 @@
             document.getElementById('statCuadran').textContent = cuadran;
             document.getElementById('statDifMenor').textContent = difMenor;
             document.getElementById('statNoCuadran').textContent = noCuadran;
+            document.getElementById('statAprobados').textContent = aprobados;
         }
 
         // ===== TOGGLE FILA EXPANDIBLE =====
@@ -1418,40 +1707,52 @@
 
                 // Filtro por estado (solo si hay datos de Simplit)
                 if (filterEstado !== 'todos' && simplitData.length > 0) {
-                    const simplitRecord = simplitData.find(s => {
-                        const tiendaSimplit = (s.Tienda || s.tienda || '').trim();
-                        const tiendaCierre = (cierre.kiosko || cierre.tienda || "").trim();
-                        const fechaSimplit = (s.Fecha || s.fecha || '').trim();
-                        const fechaCierre = cierre.fecha.trim();
+                    const tiendaCierre = (cierre.kiosko || cierre.tienda || "").trim();
+                    const fechaCierre = cierre.fecha.trim();
+                    const numC = cierre.numeroCierre || 1;
+                    const key = claveAprobacion(tiendaCierre, fechaCierre, numC);
+                    const estaAprobado = !!aprobacionesGlobal[key];
 
-                        const fechaCoincide = fechaSimplit.includes(fechaCierre) ||
-                            fechaCierre.includes(fechaSimplit) ||
-                            fechaSimplit === fechaCierre;
-                        const tiendaCoincideExacta = tiendaSimplit.toLowerCase() === tiendaCierre.toLowerCase();
-
-                        const codigoTiendaCierre = tiendaCierre.match(/^\d+/);
-                        const codigoTiendaSimplit = tiendaSimplit.match(/^\d+/);
-                        const tiendaCoincideCodigo = codigoTiendaCierre && codigoTiendaSimplit &&
-                            codigoTiendaCierre[0] === codigoTiendaSimplit[0];
-
-                        return fechaCoincide && (tiendaCoincideExacta || tiendaCoincideCodigo);
-                    });
-
-                    const totalSimplit = simplitRecord ? parseFloat(simplitRecord.Total_Ventas || simplitRecord.total_ventas || 0) : 0;
-                    const diferencia = Math.abs(cierre.total - totalSimplit);
-
-                    let estado;
-                    if (!simplitRecord) {
-                        estado = 'pendiente';
-                    } else if (diferencia <= 1) {
-                        estado = 'cuadra';
+                    if (filterEstado === 'aprobado') {
+                        if (!estaAprobado) return false;
                     } else {
-                        estado = 'no-cuadra';
-                    }
+                        if (estaAprobado) return false; // aprobados no aparecen en otros filtros
+                        const simplitRecord = simplitData.find(s => {
+                            const tiendaSimplit = (s.Tienda || s.tienda || '').trim();
+                            const fechaSimplit = (s.Fecha || s.fecha || '').trim();
 
-                    if (filterEstado !== estado) {
-                        return false;
+                            const fechaCoincide = fechaSimplit.includes(fechaCierre) ||
+                                fechaCierre.includes(fechaSimplit) ||
+                                fechaSimplit === fechaCierre;
+                            const tiendaCoincideExacta = tiendaSimplit.toLowerCase() === tiendaCierre.toLowerCase();
+
+                            const codigoTiendaCierre = tiendaCierre.match(/^\d+/);
+                            const codigoTiendaSimplit = tiendaSimplit.match(/^\d+/);
+                            const tiendaCoincideCodigo = codigoTiendaCierre && codigoTiendaSimplit &&
+                                codigoTiendaCierre[0] === codigoTiendaSimplit[0];
+
+                            return fechaCoincide && (tiendaCoincideExacta || tiendaCoincideCodigo);
+                        });
+
+                        const totalSimplit = simplitRecord ? parseFloat(simplitRecord.Total_Ventas || simplitRecord.total_ventas || 0) : 0;
+                        const diferencia = Math.abs(cierre.total - totalSimplit);
+
+                        let estado;
+                        if (!simplitRecord) {
+                            estado = 'pendiente';
+                        } else if (diferencia <= 1) {
+                            estado = 'cuadra';
+                        } else {
+                            estado = 'no-cuadra';
+                        }
+
+                        if (filterEstado !== estado) {
+                            return false;
+                        }
                     }
+                } else if (filterEstado === 'aprobado' && simplitData.length === 0) {
+                    // Sin Simplit no hay aprobaciones visibles
+                    return false;
                 } else if (filterEstado === 'pendiente' && simplitData.length === 0) {
                     // Si no hay Simplit cargado, todos son "pendientes"
                     return true;
@@ -1577,8 +1878,12 @@
                     }
 
                     const diferencia = total - totalSimplit;
-                    const estado = Math.abs(diferencia) <= 1 ? 'CUADRA'
-                        : (Math.abs(diferencia) <= 10 ? 'DIF_MENOR' : 'NO_CUADRA');
+                    const numC = cierre.numeroCierre || 1;
+                    const exportKey = claveAprobacion(tiendaCierre, fechaCierre, numC);
+                    const estaAprobado = !!aprobacionesGlobal[exportKey];
+                    const estado = estaAprobado ? 'APROBADO'
+                        : (Math.abs(diferencia) <= 1 ? 'CUADRA'
+                        : (Math.abs(diferencia) <= 10 ? 'DIF_MENOR' : 'NO_CUADRA'));
 
                     datos.push([
                         tiendaCierre,
