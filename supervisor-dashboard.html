@@ -1678,7 +1678,7 @@
                     // Cada cierre se compara individualmente con Simplit
                     let diferenciaHtml, estadoHtml;
                     {
-                        const dif = totalReal - totalSimplit;
+                        const dif = Math.round((totalReal - totalSimplit) * 100) / 100;
                         const absDif = Math.abs(dif);
                         const margen = totalSimplit * 0.0001;
                         const cierreKey = claveAprobacion(kioskoNombre, fecha, numC);
@@ -1790,7 +1790,7 @@
                 const totalSimplit = simplitRecord ? parseFloat(simplitRecord.Total_Ventas || simplitRecord.total_ventas || 0) : 0;
 
                 const totalReal = calcularTotalReal(cierre);
-                const dif = totalReal - totalSimplit;
+                const dif = Math.round((totalReal - totalSimplit) * 100) / 100;
                 const margen = totalSimplit * 0.0001;
                 const numC = cierre.numeroCierre || 1;
                 const kiosko = (cierre.kiosko || cierre.tienda || '').trim();
