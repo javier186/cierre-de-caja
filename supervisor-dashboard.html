@@ -612,7 +612,7 @@
         }
 
         .detail-panel.open {
-            max-height: 200px;
+            max-height: 260px;
             opacity: 1;
             padding: 14px 20px;
         }
@@ -1258,9 +1258,12 @@
                     <label>💲 Efectivo $</label>
                     <input type="number" id="editEfectivoUsd" step="0.01" min="0" oninput="recalcularTotalEdicion()">
                 </div>
-                <div class="edit-field">
-                    <label>📊 Tasa BCV</label>
-                    <input type="number" id="editTasaBCV" step="0.01" min="0" oninput="recalcularTotalEdicion()">
+                <div class="edit-field" style="grid-column:1 / -1; background:#fff8e1; border:2px solid #ffc107; border-radius:10px; padding:12px 14px;">
+                    <label style="color:#e65100; font-size:0.93em;">⚠️ Tasa BCV &nbsp;<span style="font-weight:400; color:#795548; font-size:0.87em;">— corrige aquí si la muchacha usó una tasa desactualizada</span></label>
+                    <input type="number" id="editTasaBCV" step="0.01" min="0" oninput="recalcularTotalEdicion()"
+                           style="border-color:#ffc107; font-size:1.05em; font-weight:700; color:#e65100;"
+                           placeholder="Ej: 92.50">
+                    <span style="font-size:0.8em; color:#795548; margin-top:3px; display:block;">Al cambiar la tasa se recalcula automáticamente el equivalente Bs del efectivo en $</span>
                 </div>
                 <div class="edit-subtotal" id="editTotalPreview">🧾 Total: Bs 0.00</div>
             </div>
@@ -1579,7 +1582,7 @@
             const grupos = agruparCierres(cierres);
             let html = '<table><thead><tr>';
             html += '<th>Tienda</th><th>Fecha</th><th>Crédito</th><th>Débito</th><th>Pago Móvil</th>';
-            html += '<th>Total</th><th>Foto</th><th>Editar</th>';
+            html += '<th>Total Bs</th><th>Total $</th><th>Foto</th><th>Editar</th>';
             html += '</tr></thead><tbody>';
 
             let idx = 0;
@@ -1611,11 +1614,13 @@
                     html += `<td>Bs ${parseFloat(cierre.debito||0).toFixed(2)}</td>`;
                     html += `<td>Bs ${parseFloat(cierre.pagoMovil||0).toFixed(2)}</td>`;
                     html += `<td><strong>Bs ${totalReal.toFixed(2)}</strong>${tieneEfectivo ? '<span class="total-con-efectivo">+efectivo incluido</span>' : ''}</td>`;
+                    const totalUsd = tasa > 0 ? (totalReal / tasa) : null;
+                    html += `<td><strong style="color:#2e7d32;">${totalUsd !== null ? '$ ' + totalUsd.toFixed(2) : '<span style="color:#aaa;font-size:0.85em;">sin tasa</span>'}</strong></td>`;
                     html += `<td><button onclick="event.stopPropagation(); abrirModal('${cierre.imagen}')" style="background:linear-gradient(135deg,#006B7D 0%,#004A5A 100%);color:white;border:none;padding:8px 16px;border-radius:8px;cursor:pointer;font-weight:600;">Ver 📷</button></td>`;
                     html += `<td><button class="btn-edit" onclick="event.stopPropagation(); abrirEditModal('${cierre._docId}','${kioskoNombre.replace(/'/g,"\\'")}','${fecha}',${parseFloat(cierre.credito||0)},${parseFloat(cierre.debito||0)},${parseFloat(cierre.pagoMovil||0)},${efBs},${efUsd},${tasa})">✏️ Editar</button></td>`;
                     html += '</tr>';
                     // Panel expandible
-                    html += `<tr class="detail-row"><td colspan="8"><div class="detail-panel" id="${panelId}">`;
+                    html += `<tr class="detail-row"><td colspan="9"><div class="detail-panel" id="${panelId}">`;
                     html += `<div class="detail-chip bs-chip"><span class="chip-icon">💵</span><div><div class="chip-label">Efectivo Bs</div><div class="chip-value">Bs ${efBs.toFixed(2)}</div></div></div>`;
                     if (efUsd > 0) {
                         const convStr = tasa > 0 ? ` ($ ${efUsd.toFixed(2)} × ${tasa.toFixed(2)} = Bs ${usdEnBs.toFixed(2)})` : ' (sin tasa BCV)';
@@ -1623,6 +1628,7 @@
                     } else {
                         html += `<div class="detail-chip usd-chip"><span class="chip-icon">💲</span><div><div class="chip-label">Efectivo $</div><div class="chip-value">$ 0.00</div></div></div>`;
                     }
+                    html += `<div class="detail-chip" style="border-color:#ffe082;"><span class="chip-icon">📊</span><div><div class="chip-label">Tasa BCV usada</div><div class="chip-value" style="color:#e65100;">${tasa > 0 ? tasa.toFixed(2) : '—'}</div></div></div>`;
                     html += `<div class="detail-chip total-chip"><span class="chip-icon">🧾</span><div><div class="chip-label">Total con Efectivo</div><div class="chip-value">Bs ${totalReal.toFixed(2)}</div></div></div>`;
                     html += `</div></td></tr>`;
                 });
@@ -1638,7 +1644,7 @@
             const grupos = agruparCierres(cierres);
             let html = '<table><thead><tr>';
             html += '<th>Tienda</th><th>Fecha</th><th>Crédito</th><th>Débito</th><th>Pago Móvil</th>';
-            html += '<th>Total Cierre</th><th>Total Simplit</th><th>Diferencia</th><th>Estado</th><th>Foto</th><th>Editar</th>';
+            html += '<th>Total Cierre</th><th>Total $</th><th>Total Simplit</th><th>Diferencia</th><th>Estado</th><th>Foto</th><th>Editar</th>';
             html += '</tr></thead><tbody>';
 
             let idx = 0;
@@ -1723,6 +1729,8 @@
                     html += `<td>Bs ${parseFloat(cierre.debito||0).toFixed(2)}</td>`;
                     html += `<td>Bs ${parseFloat(cierre.pagoMovil||0).toFixed(2)}</td>`;
                     html += `<td><strong>Bs ${totalReal.toFixed(2)}</strong>${tieneEfectivo ? '<span class="total-con-efectivo">+efectivo incluido</span>' : ''}</td>`;
+                    const totalUsd = tasa > 0 ? (totalReal / tasa) : null;
+                    html += `<td><strong style="color:#2e7d32;">${totalUsd !== null ? '$ ' + totalUsd.toFixed(2) : '<span style="color:#aaa;font-size:0.85em;">sin tasa</span>'}</strong></td>`;
                     html += `<td><strong>Bs ${totalSimplit.toFixed(2)}</strong></td>`;
                     html += diferenciaHtml;
                     html += estadoHtml;
@@ -1730,7 +1738,7 @@
                     html += `<td><button class="btn-edit" onclick="event.stopPropagation(); abrirEditModal('${cierre._docId}','${kioskoNombre.replace(/'/g,"\\'")}','${fecha}',${parseFloat(cierre.credito||0)},${parseFloat(cierre.debito||0)},${parseFloat(cierre.pagoMovil||0)},${efBs},${efUsd},${tasa})">✏️ Editar</button></td>`;
                     html += '</tr>';
                     // Panel expandible
-                    html += `<tr class="detail-row"><td colspan="11"><div class="detail-panel" id="${panelId}">`;
+                    html += `<tr class="detail-row"><td colspan="12"><div class="detail-panel" id="${panelId}">`;
                     html += `<div class="detail-chip bs-chip"><span class="chip-icon">💵</span><div><div class="chip-label">Efectivo Bs</div><div class="chip-value">Bs ${efBs.toFixed(2)}</div></div></div>`;
                     if (efUsd > 0) {
                         const convStr = tasa > 0 ? ` ($ ${efUsd.toFixed(2)} × ${tasa.toFixed(2)} = Bs ${usdEnBs.toFixed(2)})` : ' (sin tasa BCV)';
@@ -1738,6 +1746,7 @@
                     } else {
                         html += `<div class="detail-chip usd-chip"><span class="chip-icon">💲</span><div><div class="chip-label">Efectivo $</div><div class="chip-value">$ 0.00</div></div></div>`;
                     }
+                    html += `<div class="detail-chip" style="border-color:#ffe082;"><span class="chip-icon">📊</span><div><div class="chip-label">Tasa BCV usada</div><div class="chip-value" style="color:#e65100;">${tasa > 0 ? tasa.toFixed(2) : '—'}</div></div></div>`;
                     html += `<div class="detail-chip total-chip"><span class="chip-icon">🧾</span><div><div class="chip-label">Total con Efectivo</div><div class="chip-value">Bs ${totalReal.toFixed(2)}</div></div></div>`;
                     html += `</div></td></tr>`;
                 });
@@ -1756,6 +1765,14 @@
             const totalEfectivoUsd = cierres.reduce((acc, c) => acc + (c.recibidoUsd || 0), 0);
             document.getElementById('statEfectivoBs').textContent = `Bs ${totalEfectivoBs.toFixed(2)}`;
             document.getElementById('statEfectivoUsd').textContent = `$ ${totalEfectivoUsd.toFixed(2)}`;
+
+            // Total General en USD: suma de (totalReal / tasaBCV) por cierre con tasa válida
+            const totalEnUsd = cierres.reduce((acc, c) => {
+                const tasa = parseFloat(c.tasaBCV || 0);
+                if (tasa <= 0) return acc;
+                return acc + (calcularTotalReal(c) / tasa);
+            }, 0);
+            // (totalEnUsd disponible si se necesita en el futuro)
 
             if (simplitData.length === 0) {
                 document.getElementById('statTotal').textContent = cierres.length;
@@ -2015,6 +2032,7 @@
                 const efBs      = parseFloat(document.getElementById('editEfectivoBs').value || 0);
                 const efUsd     = parseFloat(document.getElementById('editEfectivoUsd').value || 0);
                 const tasa      = parseFloat(document.getElementById('editTasaBCV').value   || 0);
+                // total = solo pagos electrónicos (como lo registra la app de la muchacha)
                 const total     = credito + debito + pagoMovil;
 
                 await db.collection('cierres').doc(_editDocId).update({
