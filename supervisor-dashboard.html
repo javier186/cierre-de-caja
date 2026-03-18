@@ -518,6 +518,137 @@
             background: #e9ecef;
         }
 
+        /* ===== FILTRO SUCURSALES ESTILO EXCEL ===== */
+        .excel-filter-wrapper {
+            position: relative;
+        }
+        .excel-filter-btn {
+            width: 100%;
+            padding: 10px 12px;
+            border: 2px solid #D0E8EC;
+            border-radius: 8px;
+            font-size: 0.95em;
+            background: var(--white);
+            cursor: pointer;
+            text-align: left;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-family: inherit;
+            color: var(--text-dark);
+            transition: all 0.3s;
+        }
+        .excel-filter-btn:hover, .excel-filter-btn.open {
+            border-color: var(--primary-blue);
+            box-shadow: 0 0 0 3px rgba(0,107,125,0.1);
+        }
+        .excel-filter-btn .ef-arrow {
+            transition: transform 0.2s;
+            font-size: 0.7em;
+            color: var(--text-light);
+        }
+        .excel-filter-btn.open .ef-arrow { transform: rotate(180deg); }
+        .excel-dropdown {
+            display: none;
+            position: absolute;
+            top: calc(100% + 4px);
+            left: 0;
+            min-width: 260px;
+            max-width: 340px;
+            background: var(--white);
+            border: 2px solid #D0E8EC;
+            border-radius: 10px;
+            box-shadow: 0 8px 30px rgba(0,107,125,0.18);
+            z-index: 9999;
+            overflow: hidden;
+        }
+        .excel-dropdown.open { display: block; }
+        .excel-search-box {
+            padding: 10px 12px 6px;
+            border-bottom: 1px solid #e0ecef;
+        }
+        .excel-search-box input {
+            width: 100%;
+            padding: 7px 10px;
+            border: 1.5px solid #D0E8EC;
+            border-radius: 7px;
+            font-size: 0.9em;
+            font-family: inherit;
+            outline: none;
+        }
+        .excel-search-box input:focus { border-color: var(--primary-blue); }
+        .excel-select-all {
+            padding: 8px 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: #f5fafc;
+            border-bottom: 2px solid #D0E8EC;
+            cursor: pointer;
+            font-weight: 700;
+            font-size: 0.88em;
+            color: var(--primary-blue);
+        }
+        .excel-select-all:hover { background: var(--light-blue); }
+        .excel-options-list {
+            max-height: 220px;
+            overflow-y: auto;
+            padding: 4px 0;
+        }
+        .excel-option {
+            padding: 7px 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            font-size: 0.9em;
+            transition: background 0.15s;
+        }
+        .excel-option:hover { background: var(--light-blue); }
+        .excel-option input[type="checkbox"] {
+            width: 16px;
+            height: 16px;
+            accent-color: var(--primary-blue);
+            cursor: pointer;
+            flex-shrink: 0;
+        }
+        .excel-option label {
+            cursor: pointer;
+            flex: 1;
+            font-weight: 500;
+            color: var(--text-dark);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .excel-dropdown-footer {
+            padding: 8px 12px;
+            border-top: 1px solid #e0ecef;
+            display: flex;
+            gap: 8px;
+            justify-content: flex-end;
+        }
+        .ef-btn-ok {
+            background: linear-gradient(135deg, var(--primary-blue), var(--dark-blue));
+            color: #fff;
+            border: none;
+            padding: 6px 18px;
+            border-radius: 7px;
+            font-weight: 700;
+            cursor: pointer;
+            font-size: 0.88em;
+        }
+        .ef-btn-cancel {
+            background: #eee;
+            color: #555;
+            border: none;
+            padding: 6px 14px;
+            border-radius: 7px;
+            font-weight: 600;
+            cursor: pointer;
+            font-size: 0.88em;
+        }
+
         .filter-results-info {
             text-align: center;
             padding: 12px;
@@ -1140,8 +1271,27 @@
                 <div class="filters-container">
                     <div class="filters-grid">
                         <div class="filter-group">
-                            <label for="filterTienda">🏪 Tienda</label>
-                            <input type="text" id="filterTienda" placeholder="Buscar por nombre...">
+                            <label>🏪 Sucursales</label>
+                            <div class="excel-filter-wrapper" id="sucursalFilterWrapper">
+                                <button type="button" class="excel-filter-btn" id="sucursalFilterBtn" onclick="toggleExcelDropdown()">
+                                    <span id="sucursalFilterLabel">Todas las sucursales</span>
+                                    <span class="ef-arrow">▼</span>
+                                </button>
+                                <div class="excel-dropdown" id="sucursalDropdown">
+                                    <div class="excel-search-box">
+                                        <input type="text" id="excelSearchInput" placeholder="🔍 Buscar sucursal..." oninput="filtrarOpcionesSucursal(this.value)">
+                                    </div>
+                                    <div class="excel-select-all" onclick="toggleSelectAll()">
+                                        <input type="checkbox" id="checkSelectAll" checked>
+                                        <span>Seleccionar todo</span>
+                                    </div>
+                                    <div class="excel-options-list" id="sucursalOptionsList"></div>
+                                    <div class="excel-dropdown-footer">
+                                        <button class="ef-btn-cancel" onclick="cancelarDropdown()">Cancelar</button>
+                                        <button class="ef-btn-ok" onclick="aplicarDropdownSucursal()">✔ Aceptar</button>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
 
                         <div class="filter-group">
@@ -1414,6 +1564,7 @@
                     try {
                         cierresGlobal = JSON.parse(cacheData);
                         console.log('⚡ Cierres desde caché:', cierresGlobal.length, '(sin lectura Firebase)');
+                        poblarFiltroSucursales();
                         mostrarCierres(cierresGlobal);
                         mostrarAlerta('⚡ Datos desde caché local (actualizado hace ' + Math.round((Date.now()-cacheTS)/1000) + 's)', 'info');
                         return;
@@ -1447,6 +1598,7 @@
 
                 console.log('📦 Cierres cargados desde Firebase:', cierresGlobal.length,
                     '| Lecturas usadas:', cierresGlobal.length);
+                poblarFiltroSucursales();
                 mostrarCierres(cierresGlobal);
 
             } catch (error) {
@@ -1553,6 +1705,115 @@
             }
         }
 
+
+        // ===== DROPDOWN EXCEL SUCURSALES =====
+        let _sucursalesSnapshot = []; // estado antes de abrir el dropdown
+
+        function poblarFiltroSucursales() {
+            const names = [...new Set(
+                cierresGlobal.map(c => (c.kiosko || c.tienda || '').trim()).filter(Boolean)
+            )].sort();
+
+            const list = document.getElementById('sucursalOptionsList');
+            list.innerHTML = names.map(n =>
+                `<div class="excel-option">
+                    <input type="checkbox" id="opt_${CSS.escape(n)}" value="${n.replace(/"/g,'&quot;')}" checked>
+                    <label for="opt_${CSS.escape(n)}">${n}</label>
+                </div>`
+            ).join('');
+
+            // Sincronizar el "Seleccionar todo"
+            list.querySelectorAll('input[type="checkbox"]').forEach(cb => {
+                cb.addEventListener('change', sincronizarSelectAll);
+            });
+            actualizarLabelSucursal();
+        }
+
+        function toggleExcelDropdown() {
+            const btn  = document.getElementById('sucursalFilterBtn');
+            const drop = document.getElementById('sucursalDropdown');
+            const isOpen = drop.classList.contains('open');
+            if (!isOpen) {
+                // Guardar estado para cancelar
+                _sucursalesSnapshot = Array.from(
+                    document.querySelectorAll('#sucursalOptionsList input[type="checkbox"]')
+                ).map(cb => ({ value: cb.value, checked: cb.checked }));
+                document.getElementById('excelSearchInput').value = '';
+                filtrarOpcionesSucursal('');
+            }
+            drop.classList.toggle('open', !isOpen);
+            btn.classList.toggle('open', !isOpen);
+        }
+
+        function cerrarDropdown() {
+            document.getElementById('sucursalDropdown').classList.remove('open');
+            document.getElementById('sucursalFilterBtn').classList.remove('open');
+        }
+
+        function cancelarDropdown() {
+            // Restaurar estado previo
+            _sucursalesSnapshot.forEach(({ value, checked }) => {
+                const cb = document.querySelector(`#sucursalOptionsList input[value="${CSS.escape(value)}"]`);
+                if (cb) cb.checked = checked;
+            });
+            sincronizarSelectAll();
+            cerrarDropdown();
+        }
+
+        function aplicarDropdownSucursal() {
+            cerrarDropdown();
+            actualizarLabelSucursal();
+            aplicarFiltros();
+        }
+
+        function toggleSelectAll() {
+            const master = document.getElementById('checkSelectAll');
+            const allChecked = master.checked;
+            document.querySelectorAll('#sucursalOptionsList input[type="checkbox"]:not([style*="display:none"])').forEach(cb => {
+                // Solo afecta opciones visibles
+                const opt = cb.closest('.excel-option');
+                if (!opt || opt.style.display !== 'none') cb.checked = allChecked;
+            });
+        }
+
+        function sincronizarSelectAll() {
+            const all = document.querySelectorAll('#sucursalOptionsList input[type="checkbox"]');
+            const checked = document.querySelectorAll('#sucursalOptionsList input[type="checkbox"]:checked');
+            const master = document.getElementById('checkSelectAll');
+            if (master) master.checked = all.length === checked.length;
+        }
+
+        function filtrarOpcionesSucursal(query) {
+            const q = query.toLowerCase().trim();
+            document.querySelectorAll('#sucursalOptionsList .excel-option').forEach(opt => {
+                const label = opt.querySelector('label').textContent.toLowerCase();
+                opt.style.display = (!q || label.includes(q)) ? '' : 'none';
+            });
+        }
+
+        function actualizarLabelSucursal() {
+            const all     = document.querySelectorAll('#sucursalOptionsList input[type="checkbox"]');
+            const checked = document.querySelectorAll('#sucursalOptionsList input[type="checkbox"]:checked');
+            const label   = document.getElementById('sucursalFilterLabel');
+            if (!label) return;
+            if (all.length === 0 || all.length === checked.length) {
+                label.textContent = 'Todas las sucursales';
+            } else if (checked.length === 0) {
+                label.textContent = 'Ninguna seleccionada';
+            } else if (checked.length === 1) {
+                label.textContent = checked[0].value;
+            } else {
+                label.textContent = `${checked.length} sucursales seleccionadas`;
+            }
+        }
+
+        // Cerrar dropdown al hacer clic fuera
+        document.addEventListener('click', e => {
+            const wrapper = document.getElementById('sucursalFilterWrapper');
+            if (wrapper && !wrapper.contains(e.target)) {
+                cerrarDropdown();
+            }
+        });
 
         // ===== MOSTRAR CIERRES (con o sin filtros) =====
         function mostrarCierres(cierres) {
@@ -1840,26 +2101,21 @@
         // ===== FUNCIONES DE FILTRADO =====
         function aplicarFiltros() {
             // Obtener valores de los filtros
-            const filterTienda = document.getElementById('filterTienda').value.toLowerCase().trim();
             const filterFechaDesde = document.getElementById('filterFechaDesde').value;
             const filterFechaHasta = document.getElementById('filterFechaHasta').value;
             const filterMontoMin = parseFloat(document.getElementById('filterMontoMin').value) || 0;
             const filterMontoMax = parseFloat(document.getElementById('filterMontoMax').value) || Infinity;
             const filterEstado = document.getElementById('filterEstado').value;
 
-            console.log('🔍 Aplicando filtros:', {
-                tienda: filterTienda,
-                fechaDesde: filterFechaDesde,
-                fechaHasta: filterFechaHasta,
-                montoMin: filterMontoMin,
-                montoMax: filterMontoMax,
-                estado: filterEstado
-            });
+            // Sucursales seleccionadas via dropdown Excel
+            const checkboxes = document.querySelectorAll('#sucursalOptionsList input[type="checkbox"]:checked');
+            const sucursalesSeleccionadas = new Set(Array.from(checkboxes).map(cb => cb.value));
 
             // Aplicar filtros
             let cierresFiltrados = cierresGlobal.filter(cierre => {
-                // Filtro por tienda
-                if (filterTienda && !(cierre.kiosko || cierre.tienda || "").toLowerCase().includes(filterTienda)) {
+                // Filtro por sucursal (dropdown Excel)
+                const nombreTienda = (cierre.kiosko || cierre.tienda || '').trim();
+                if (sucursalesSeleccionadas.size > 0 && !sucursalesSeleccionadas.has(nombreTienda)) {
                     return false;
                 }
 
@@ -1954,12 +2210,17 @@
 
         function limpiarFiltros() {
             // Limpiar campos
-            document.getElementById('filterTienda').value = '';
             document.getElementById('filterFechaDesde').value = '';
             document.getElementById('filterFechaHasta').value = '';
             document.getElementById('filterMontoMin').value = '';
             document.getElementById('filterMontoMax').value = '';
             document.getElementById('filterEstado').value = 'todos';
+
+            // Resetear dropdown de sucursales (marcar todas)
+            document.querySelectorAll('#sucursalOptionsList input[type="checkbox"]').forEach(cb => cb.checked = true);
+            const selectAll = document.getElementById('checkSelectAll');
+            if (selectAll) selectAll.checked = true;
+            actualizarLabelSucursal();
 
             // Ocultar info de resultados
             document.getElementById('filterResultsInfo').style.display = 'none';
@@ -1972,7 +2233,7 @@
 
         // Aplicar filtros al presionar Enter en los campos de texto
         document.addEventListener('DOMContentLoaded', () => {
-            const filterInputs = ['filterTienda', 'filterFechaDesde', 'filterFechaHasta', 'filterMontoMin', 'filterMontoMax'];
+            const filterInputs = ['filterFechaDesde', 'filterFechaHasta', 'filterMontoMin', 'filterMontoMax'];
             filterInputs.forEach(id => {
                 const element = document.getElementById(id);
                 if (element) {
