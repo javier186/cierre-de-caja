@@ -930,6 +930,129 @@
         }
         .btn-revoke:hover { transform: translateY(-1px); }
 
+        /* ===== BOTÓN ELIMINAR FILA ===== */
+        .btn-delete-row {
+            background: linear-gradient(135deg, #B71C1C 0%, #C62828 100%);
+            color: #fff;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 7px;
+            cursor: pointer;
+            font-size: 0.82em;
+            font-weight: 700;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            box-shadow: 0 2px 6px rgba(183,28,28,0.3);
+        }
+        .btn-delete-row:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(183,28,28,0.4); }
+
+        /* ===== MODAL ELIMINAR POR FECHA ===== */
+        .delete-date-modal-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.7);
+            z-index: 10000;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(4px);
+        }
+        .delete-date-modal-overlay.active { display: flex; }
+        .delete-date-modal-box {
+            background: #fff;
+            border-radius: 20px;
+            padding: 36px 32px 28px;
+            max-width: 480px;
+            width: 92%;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+            animation: slideDown 0.3s ease;
+        }
+        .delete-date-modal-box h3 {
+            color: #B71C1C;
+            font-size: 1.3em;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .delete-date-modal-box .ddm-info {
+            background: #FFEBEE;
+            border: 1px solid #FFCDD2;
+            border-radius: 10px;
+            padding: 12px 16px;
+            margin: 14px 0;
+            font-size: 0.92em;
+            color: #B71C1C;
+            font-weight: 600;
+        }
+        .delete-date-fields {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 14px;
+            margin: 16px 0;
+        }
+        .delete-date-fields label {
+            font-weight: 700;
+            font-size: 0.88em;
+            color: #2c3e50;
+            display: block;
+            margin-bottom: 5px;
+        }
+        .delete-date-fields input[type="date"] {
+            width: 100%;
+            padding: 10px 12px;
+            border: 2px solid #FFCDD2;
+            border-radius: 8px;
+            font-size: 0.95em;
+            font-family: inherit;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+        .delete-date-fields input[type="date"]:focus { border-color: #C62828; }
+        .ddm-preview {
+            background: #f5f5f5;
+            border-radius: 8px;
+            padding: 10px 14px;
+            font-size: 0.9em;
+            color: #555;
+            min-height: 36px;
+            margin-bottom: 14px;
+        }
+        .ddm-actions {
+            display: flex;
+            gap: 12px;
+            justify-content: flex-end;
+            margin-top: 6px;
+        }
+        .ddm-btn-cancel {
+            background: #eee;
+            color: #555;
+            border: none;
+            padding: 10px 22px;
+            border-radius: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            font-size: 0.95em;
+            transition: background 0.2s;
+        }
+        .ddm-btn-cancel:hover { background: #ddd; }
+        .ddm-btn-confirm {
+            background: linear-gradient(135deg, #B71C1C 0%, #C62828 100%);
+            color: #fff;
+            border: none;
+            padding: 10px 22px;
+            border-radius: 10px;
+            font-weight: 700;
+            cursor: pointer;
+            font-size: 0.95em;
+            transition: all 0.2s;
+            box-shadow: 0 3px 10px rgba(183,28,28,0.3);
+        }
+        .ddm-btn-confirm:hover { transform: translateY(-1px); box-shadow: 0 5px 14px rgba(183,28,28,0.4); }
+        .ddm-btn-confirm:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+
         /* ===== MODAL DE APROBACIÓN ===== */
         .approval-modal-overlay {
             display: none;
@@ -1262,7 +1385,8 @@
 
                 <button class="btn btn-success" id="exportBtn">📥 Exportar a Excel</button>
                 <button class="btn btn-orange" onclick="invalidarCacheYRecargar()">🔄 Actualizar</button>
-                <button class="btn btn-danger" id="clearDataBtn">🗑️ Limpiar Datos</button>
+                <button class="btn btn-danger" onclick="abrirEliminarPorFecha()">📅 Eliminar por Fecha</button>
+                <button class="btn btn-danger" id="clearDataBtn">🗑️ Limpiar Todos</button>
             </div>
 
             <!-- Filtros -->
@@ -1377,6 +1501,29 @@
             <div class="approval-modal-actions">
                 <button class="btn-modal-cancel" onclick="cerrarApprovalModal()">Cancelar</button>
                 <button class="btn-modal-confirm" onclick="confirmarAprobacion()">✔️ Confirmar Aprobación</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== MODAL ELIMINAR POR FECHA ===== -->
+    <div class="delete-date-modal-overlay" id="deleteDateModal">
+        <div class="delete-date-modal-box">
+            <h3>📅 Eliminar Cierres por Fecha</h3>
+            <div class="ddm-info">⚠️ Esta acción eliminará permanentemente todos los cierres del rango de fechas seleccionado. No se puede deshacer.</div>
+            <div class="delete-date-fields">
+                <div>
+                    <label>📅 Fecha Desde</label>
+                    <input type="date" id="deleteFechaDesde">
+                </div>
+                <div>
+                    <label>📅 Fecha Hasta</label>
+                    <input type="date" id="deleteFechaHasta">
+                </div>
+            </div>
+            <div class="ddm-preview" id="ddmPreview">Selecciona un rango de fechas para ver cuántos registros se eliminarán.</div>
+            <div class="ddm-actions">
+                <button class="ddm-btn-cancel" onclick="cerrarEliminarPorFecha()">Cancelar</button>
+                <button class="ddm-btn-confirm" id="ddmConfirmBtn" onclick="confirmarEliminarPorFecha()">🗑️ Eliminar</button>
             </div>
         </div>
     </div>
@@ -1556,21 +1703,8 @@
 
         // ===== CARGAR CIERRES DESDE FIREBASE (con caché + límite 60 días) =====
         async function cargarCierresDesdeFirebase(forzar = false) {
-            // 1. Intentar usar caché de sessionStorage (evita lecturas en recarga)
-            if (!forzar) {
-                const cacheTS = parseInt(sessionStorage.getItem(_cacheFechaKey) || '0');
-                const cacheData = sessionStorage.getItem(_cacheKey);
-                if (cacheData && (Date.now() - cacheTS) < _CACHE_TTL) {
-                    try {
-                        cierresGlobal = JSON.parse(cacheData);
-                        console.log('⚡ Cierres desde caché:', cierresGlobal.length, '(sin lectura Firebase)');
-                        poblarFiltroSucursales();
-                        mostrarCierres(cierresGlobal);
-                        mostrarAlerta('⚡ Datos desde caché local (actualizado hace ' + Math.round((Date.now()-cacheTS)/1000) + 's)', 'info');
-                        return;
-                    } catch(e) { /* caché corrupta, ignorar */ }
-                }
-            }
+            // Nota: la caché no guarda imágenes, por lo que siempre se recarga desde Firebase
+            // para que el botón "Ver 📷" funcione correctamente.
 
             // 2. Pedir solo los últimos 60 días → reduce lecturas drásticamente
             mostrarLoading('Cargando cierres...', 'Obteniendo registros desde Firebase');
@@ -1590,9 +1724,10 @@
                 // Cargar aprobaciones
                 await cargarAprobaciones();
 
-                // Guardar en caché
+                // Guardar en caché SIN imágenes para evitar QuotaExceededError
                 try {
-                    sessionStorage.setItem(_cacheKey, JSON.stringify(cierresGlobal));
+                    const cacheData = cierresGlobal.map(({ imagen, ...resto }) => resto);
+                    sessionStorage.setItem(_cacheKey, JSON.stringify(cacheData));
                     sessionStorage.setItem(_cacheFechaKey, Date.now().toString());
                 } catch(e) { console.warn('No se pudo guardar caché:', e); }
 
@@ -1817,12 +1952,20 @@
 
         // ===== MOSTRAR CIERRES (con o sin filtros) =====
         function mostrarCierres(cierres) {
-            const tablaHTML = simplitData.length > 0
-                ? generarTablaConSimplit(cierres)
-                : generarTablaSinSimplit(cierres);
-
-            document.getElementById('tablaResultados').innerHTML = tablaHTML;
-            actualizarEstadisticas(cierres);
+            try {
+                const tablaHTML = simplitData.length > 0
+                    ? generarTablaConSimplit(cierres)
+                    : generarTablaSinSimplit(cierres);
+                document.getElementById('tablaResultados').innerHTML = tablaHTML;
+                actualizarEstadisticas(cierres);
+            } catch(e) {
+                console.error('Error al generar tabla:', e);
+                document.getElementById('tablaResultados').innerHTML =
+                    `<div style="padding:20px;background:#FFEBEE;border-radius:10px;color:#C62828;font-weight:600;">
+                        ⚠️ Error al mostrar registros: ${e.message}
+                        <br><br><button class="btn" onclick="invalidarCacheYRecargar()">🔄 Reintentar</button>
+                    </div>`;
+            }
         }
 
         // ===== GENERAR TABLAS =====
@@ -1843,7 +1986,7 @@
             const grupos = agruparCierres(cierres);
             let html = '<table><thead><tr>';
             html += '<th>Tienda</th><th>Fecha</th><th>Crédito</th><th>Débito</th><th>Pago Móvil</th>';
-            html += '<th>Total Bs</th><th>Total $</th><th>Foto</th><th>Editar</th>';
+            html += '<th>Total Bs</th><th>Total $</th><th>Foto</th><th>Editar</th><th>Eliminar</th>';
             html += '</tr></thead><tbody>';
 
             let idx = 0;
@@ -1879,9 +2022,10 @@
                     html += `<td><strong style="color:#2e7d32;">${totalUsd !== null ? '$ ' + totalUsd.toFixed(2) : '<span style="color:#aaa;font-size:0.85em;">sin tasa</span>'}</strong></td>`;
                     html += `<td><button onclick="event.stopPropagation(); abrirModal('${cierre.imagen}')" style="background:linear-gradient(135deg,#006B7D 0%,#004A5A 100%);color:white;border:none;padding:8px 16px;border-radius:8px;cursor:pointer;font-weight:600;">Ver 📷</button></td>`;
                     html += `<td><button class="btn-edit" onclick="event.stopPropagation(); abrirEditModal('${cierre._docId}','${kioskoNombre.replace(/'/g,"\\'")}','${fecha}',${parseFloat(cierre.credito||0)},${parseFloat(cierre.debito||0)},${parseFloat(cierre.pagoMovil||0)},${efBs},${efUsd},${tasa})">✏️ Editar</button></td>`;
+                    html += `<td><button class="btn-delete-row" onclick="event.stopPropagation(); eliminarCierreIndividual('${cierre._docId}','${kioskoNombre.replace(/'/g,"\\'")}','${fecha}')">🗑️ Eliminar</button></td>`;
                     html += '</tr>';
                     // Panel expandible
-                    html += `<tr class="detail-row"><td colspan="9"><div class="detail-panel" id="${panelId}">`;
+                    html += `<tr class="detail-row"><td colspan="10"><div class="detail-panel" id="${panelId}">`;
                     html += `<div class="detail-chip bs-chip"><span class="chip-icon">💵</span><div><div class="chip-label">Efectivo Bs</div><div class="chip-value">Bs ${efBs.toFixed(2)}</div></div></div>`;
                     if (efUsd > 0) {
                         const convStr = tasa > 0 ? ` ($ ${efUsd.toFixed(2)} × ${tasa.toFixed(2)} = Bs ${usdEnBs.toFixed(2)})` : ' (sin tasa BCV)';
@@ -1905,7 +2049,7 @@
             const grupos = agruparCierres(cierres);
             let html = '<table><thead><tr>';
             html += '<th>Tienda</th><th>Fecha</th><th>Crédito</th><th>Débito</th><th>Pago Móvil</th>';
-            html += '<th>Total Cierre</th><th>Total $</th><th>Total Simplit</th><th>Diferencia</th><th>Estado</th><th>Foto</th><th>Editar</th>';
+            html += '<th>Total Cierre</th><th>Total $</th><th>Total Simplit</th><th>Diferencia</th><th>Estado</th><th>Foto</th><th>Editar</th><th>Eliminar</th>';
             html += '</tr></thead><tbody>';
 
             let idx = 0;
@@ -1997,9 +2141,10 @@
                     html += estadoHtml;
                     html += `<td><button onclick="event.stopPropagation(); abrirModal('${cierre.imagen}')" style="background:linear-gradient(135deg,#006B7D 0%,#004A5A 100%);color:white;border:none;padding:8px 16px;border-radius:8px;cursor:pointer;font-weight:600;">Ver 📷</button></td>`;
                     html += `<td><button class="btn-edit" onclick="event.stopPropagation(); abrirEditModal('${cierre._docId}','${kioskoNombre.replace(/'/g,"\\'")}','${fecha}',${parseFloat(cierre.credito||0)},${parseFloat(cierre.debito||0)},${parseFloat(cierre.pagoMovil||0)},${efBs},${efUsd},${tasa})">✏️ Editar</button></td>`;
+                    html += `<td><button class="btn-delete-row" onclick="event.stopPropagation(); eliminarCierreIndividual('${cierre._docId}','${kioskoNombre.replace(/'/g,"\\'")}','${fecha}')">🗑️ Eliminar</button></td>`;
                     html += '</tr>';
                     // Panel expandible
-                    html += `<tr class="detail-row"><td colspan="12"><div class="detail-panel" id="${panelId}">`;
+                    html += `<tr class="detail-row"><td colspan="13"><div class="detail-panel" id="${panelId}">`;
                     html += `<div class="detail-chip bs-chip"><span class="chip-icon">💵</span><div><div class="chip-label">Efectivo Bs</div><div class="chip-value">Bs ${efBs.toFixed(2)}</div></div></div>`;
                     if (efUsd > 0) {
                         const convStr = tasa > 0 ? ` ($ ${efUsd.toFixed(2)} × ${tasa.toFixed(2)} = Bs ${usdEnBs.toFixed(2)})` : ' (sin tasa BCV)';
@@ -2468,7 +2613,124 @@
         });
 
 
+        // ===== ELIMINAR CIERRE INDIVIDUAL =====
+        async function eliminarCierreIndividual(docId, tienda, fecha) {
+            if (!docId) { mostrarAlerta('⚠️ No se pudo identificar el registro', 'warning'); return; }
+            const confirmacion = confirm(`¿Eliminar el cierre de "${tienda}" del ${fecha}?\n\nEsta acción NO se puede deshacer.`);
+            if (!confirmacion) return;
+            try {
+                await db.collection('cierres').doc(docId).delete();
+                // Quitar del array en memoria
+                cierresGlobal = cierresGlobal.filter(c => c._docId !== docId);
+                sessionStorage.removeItem(_cacheKey);
+                sessionStorage.removeItem(_cacheFechaKey);
+                mostrarAlerta(`✅ Cierre de "${tienda}" (${fecha}) eliminado correctamente`, 'success');
+                mostrarCierres(cierresGlobal);
+            } catch(e) {
+                console.error('Error al eliminar cierre:', e);
+                mostrarAlerta('❌ Error al eliminar: ' + e.message, 'warning');
+            }
+        }
+
+        // ===== MODAL ELIMINAR POR FECHA =====
+        function abrirEliminarPorFecha() {
+            document.getElementById('deleteFechaDesde').value = '';
+            document.getElementById('deleteFechaHasta').value = '';
+            document.getElementById('ddmPreview').textContent = 'Selecciona un rango de fechas para ver cuántos registros se eliminarán.';
+            document.getElementById('ddmConfirmBtn').disabled = true;
+            document.getElementById('deleteDateModal').classList.add('active');
+
+            // Listeners para preview en tiempo real
+            document.getElementById('deleteFechaDesde').oninput = actualizarPreviewEliminar;
+            document.getElementById('deleteFechaHasta').oninput = actualizarPreviewEliminar;
+        }
+
+        function cerrarEliminarPorFecha() {
+            document.getElementById('deleteDateModal').classList.remove('active');
+        }
+
+        function actualizarPreviewEliminar() {
+            const desde = document.getElementById('deleteFechaDesde').value;
+            const hasta = document.getElementById('deleteFechaHasta').value;
+            const btn = document.getElementById('ddmConfirmBtn');
+            const preview = document.getElementById('ddmPreview');
+
+            if (!desde && !hasta) {
+                preview.textContent = 'Selecciona al menos una fecha.';
+                btn.disabled = true;
+                return;
+            }
+
+            const afectados = cierresGlobal.filter(c => {
+                const f = (c.fecha || '').trim();
+                if (!f) return false;
+                if (desde && hasta) return f >= desde && f <= hasta;
+                if (desde) return f >= desde;
+                if (hasta) return f <= hasta;
+                return false;
+            });
+
+            if (afectados.length === 0) {
+                preview.textContent = '⚠️ No hay cierres en ese rango de fechas.';
+                btn.disabled = true;
+            } else {
+                preview.textContent = `🗑️ Se eliminarán ${afectados.length} cierre(s) entre ${desde || '—'} y ${hasta || '—'}.`;
+                btn.disabled = false;
+            }
+        }
+
+        async function confirmarEliminarPorFecha() {
+            const desde = document.getElementById('deleteFechaDesde').value;
+            const hasta = document.getElementById('deleteFechaHasta').value;
+
+            const afectados = cierresGlobal.filter(c => {
+                const f = (c.fecha || '').trim();
+                if (!f) return false;
+                if (desde && hasta) return f >= desde && f <= hasta;
+                if (desde) return f >= desde;
+                if (hasta) return f <= hasta;
+                return false;
+            });
+
+            if (afectados.length === 0) { mostrarAlerta('⚠️ No hay cierres en ese rango', 'warning'); return; }
+
+            const ok = confirm(`¿CONFIRMAR eliminación de ${afectados.length} cierre(s) del ${desde || '—'} al ${hasta || '—'}?\n\nEsta acción NO se puede deshacer.`);
+            if (!ok) return;
+
+            const btn = document.getElementById('ddmConfirmBtn');
+            btn.disabled = true;
+            btn.textContent = '⏳ Eliminando...';
+
+            try {
+                // Eliminar en lotes de 500 (límite Firestore)
+                const BATCH_SIZE = 500;
+                for (let i = 0; i < afectados.length; i += BATCH_SIZE) {
+                    const lote = db.batch();
+                    afectados.slice(i, i + BATCH_SIZE).forEach(c => {
+                        if (c._docId) lote.delete(db.collection('cierres').doc(c._docId));
+                    });
+                    await lote.commit();
+                }
+
+                // Actualizar memoria
+                const idsEliminados = new Set(afectados.map(c => c._docId));
+                cierresGlobal = cierresGlobal.filter(c => !idsEliminados.has(c._docId));
+                sessionStorage.removeItem(_cacheKey);
+                sessionStorage.removeItem(_cacheFechaKey);
+
+                cerrarEliminarPorFecha();
+                mostrarAlerta(`✅ ${afectados.length} cierre(s) eliminados correctamente`, 'success');
+                mostrarCierres(cierresGlobal);
+            } catch(e) {
+                console.error('Error al eliminar por fecha:', e);
+                mostrarAlerta('❌ Error al eliminar: ' + e.message, 'warning');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = '🗑️ Eliminar';
+            }
+        }
+
+
     </script>
-</body>
 
 </html>
