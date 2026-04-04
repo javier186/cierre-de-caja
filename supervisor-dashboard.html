@@ -518,6 +518,137 @@
             background: #e9ecef;
         }
 
+        /* ===== FILTRO SUCURSALES ESTILO EXCEL ===== */
+        .excel-filter-wrapper {
+            position: relative;
+        }
+        .excel-filter-btn {
+            width: 100%;
+            padding: 10px 12px;
+            border: 2px solid #D0E8EC;
+            border-radius: 8px;
+            font-size: 0.95em;
+            background: var(--white);
+            cursor: pointer;
+            text-align: left;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-family: inherit;
+            color: var(--text-dark);
+            transition: all 0.3s;
+        }
+        .excel-filter-btn:hover, .excel-filter-btn.open {
+            border-color: var(--primary-blue);
+            box-shadow: 0 0 0 3px rgba(0,107,125,0.1);
+        }
+        .excel-filter-btn .ef-arrow {
+            transition: transform 0.2s;
+            font-size: 0.7em;
+            color: var(--text-light);
+        }
+        .excel-filter-btn.open .ef-arrow { transform: rotate(180deg); }
+        .excel-dropdown {
+            display: none;
+            position: absolute;
+            top: calc(100% + 4px);
+            left: 0;
+            min-width: 260px;
+            max-width: 340px;
+            background: var(--white);
+            border: 2px solid #D0E8EC;
+            border-radius: 10px;
+            box-shadow: 0 8px 30px rgba(0,107,125,0.18);
+            z-index: 9999;
+            overflow: hidden;
+        }
+        .excel-dropdown.open { display: block; }
+        .excel-search-box {
+            padding: 10px 12px 6px;
+            border-bottom: 1px solid #e0ecef;
+        }
+        .excel-search-box input {
+            width: 100%;
+            padding: 7px 10px;
+            border: 1.5px solid #D0E8EC;
+            border-radius: 7px;
+            font-size: 0.9em;
+            font-family: inherit;
+            outline: none;
+        }
+        .excel-search-box input:focus { border-color: var(--primary-blue); }
+        .excel-select-all {
+            padding: 8px 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: #f5fafc;
+            border-bottom: 2px solid #D0E8EC;
+            cursor: pointer;
+            font-weight: 700;
+            font-size: 0.88em;
+            color: var(--primary-blue);
+        }
+        .excel-select-all:hover { background: var(--light-blue); }
+        .excel-options-list {
+            max-height: 220px;
+            overflow-y: auto;
+            padding: 4px 0;
+        }
+        .excel-option {
+            padding: 7px 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            font-size: 0.9em;
+            transition: background 0.15s;
+        }
+        .excel-option:hover { background: var(--light-blue); }
+        .excel-option input[type="checkbox"] {
+            width: 16px;
+            height: 16px;
+            accent-color: var(--primary-blue);
+            cursor: pointer;
+            flex-shrink: 0;
+        }
+        .excel-option label {
+            cursor: pointer;
+            flex: 1;
+            font-weight: 500;
+            color: var(--text-dark);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .excel-dropdown-footer {
+            padding: 8px 12px;
+            border-top: 1px solid #e0ecef;
+            display: flex;
+            gap: 8px;
+            justify-content: flex-end;
+        }
+        .ef-btn-ok {
+            background: linear-gradient(135deg, var(--primary-blue), var(--dark-blue));
+            color: #fff;
+            border: none;
+            padding: 6px 18px;
+            border-radius: 7px;
+            font-weight: 700;
+            cursor: pointer;
+            font-size: 0.88em;
+        }
+        .ef-btn-cancel {
+            background: #eee;
+            color: #555;
+            border: none;
+            padding: 6px 14px;
+            border-radius: 7px;
+            font-weight: 600;
+            cursor: pointer;
+            font-size: 0.88em;
+        }
+
         .filter-results-info {
             text-align: center;
             padding: 12px;
@@ -798,6 +929,129 @@
             gap: 4px;
         }
         .btn-revoke:hover { transform: translateY(-1px); }
+
+        /* ===== BOTÓN ELIMINAR FILA ===== */
+        .btn-delete-row {
+            background: linear-gradient(135deg, #B71C1C 0%, #C62828 100%);
+            color: #fff;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 7px;
+            cursor: pointer;
+            font-size: 0.82em;
+            font-weight: 700;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            box-shadow: 0 2px 6px rgba(183,28,28,0.3);
+        }
+        .btn-delete-row:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(183,28,28,0.4); }
+
+        /* ===== MODAL ELIMINAR POR FECHA ===== */
+        .delete-date-modal-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.7);
+            z-index: 10000;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(4px);
+        }
+        .delete-date-modal-overlay.active { display: flex; }
+        .delete-date-modal-box {
+            background: #fff;
+            border-radius: 20px;
+            padding: 36px 32px 28px;
+            max-width: 480px;
+            width: 92%;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+            animation: slideDown 0.3s ease;
+        }
+        .delete-date-modal-box h3 {
+            color: #B71C1C;
+            font-size: 1.3em;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .delete-date-modal-box .ddm-info {
+            background: #FFEBEE;
+            border: 1px solid #FFCDD2;
+            border-radius: 10px;
+            padding: 12px 16px;
+            margin: 14px 0;
+            font-size: 0.92em;
+            color: #B71C1C;
+            font-weight: 600;
+        }
+        .delete-date-fields {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 14px;
+            margin: 16px 0;
+        }
+        .delete-date-fields label {
+            font-weight: 700;
+            font-size: 0.88em;
+            color: #2c3e50;
+            display: block;
+            margin-bottom: 5px;
+        }
+        .delete-date-fields input[type="date"] {
+            width: 100%;
+            padding: 10px 12px;
+            border: 2px solid #FFCDD2;
+            border-radius: 8px;
+            font-size: 0.95em;
+            font-family: inherit;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+        .delete-date-fields input[type="date"]:focus { border-color: #C62828; }
+        .ddm-preview {
+            background: #f5f5f5;
+            border-radius: 8px;
+            padding: 10px 14px;
+            font-size: 0.9em;
+            color: #555;
+            min-height: 36px;
+            margin-bottom: 14px;
+        }
+        .ddm-actions {
+            display: flex;
+            gap: 12px;
+            justify-content: flex-end;
+            margin-top: 6px;
+        }
+        .ddm-btn-cancel {
+            background: #eee;
+            color: #555;
+            border: none;
+            padding: 10px 22px;
+            border-radius: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            font-size: 0.95em;
+            transition: background 0.2s;
+        }
+        .ddm-btn-cancel:hover { background: #ddd; }
+        .ddm-btn-confirm {
+            background: linear-gradient(135deg, #B71C1C 0%, #C62828 100%);
+            color: #fff;
+            border: none;
+            padding: 10px 22px;
+            border-radius: 10px;
+            font-weight: 700;
+            cursor: pointer;
+            font-size: 0.95em;
+            transition: all 0.2s;
+            box-shadow: 0 3px 10px rgba(183,28,28,0.3);
+        }
+        .ddm-btn-confirm:hover { transform: translateY(-1px); box-shadow: 0 5px 14px rgba(183,28,28,0.4); }
+        .ddm-btn-confirm:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
 
         /* ===== MODAL DE APROBACIÓN ===== */
         .approval-modal-overlay {
@@ -1131,7 +1385,8 @@
 
                 <button class="btn btn-success" id="exportBtn">📥 Exportar a Excel</button>
                 <button class="btn btn-orange" onclick="invalidarCacheYRecargar()">🔄 Actualizar</button>
-                <button class="btn btn-danger" id="clearDataBtn">🗑️ Limpiar Datos</button>
+                <button class="btn btn-danger" onclick="abrirEliminarPorFecha()">📅 Eliminar por Fecha</button>
+                <button class="btn btn-danger" id="clearDataBtn">🗑️ Limpiar Todos</button>
             </div>
 
             <!-- Filtros -->
@@ -1140,8 +1395,27 @@
                 <div class="filters-container">
                     <div class="filters-grid">
                         <div class="filter-group">
-                            <label for="filterTienda">🏪 Tienda</label>
-                            <input type="text" id="filterTienda" placeholder="Buscar por nombre...">
+                            <label>🏪 Sucursales</label>
+                            <div class="excel-filter-wrapper" id="sucursalFilterWrapper">
+                                <button type="button" class="excel-filter-btn" id="sucursalFilterBtn" onclick="toggleExcelDropdown()">
+                                    <span id="sucursalFilterLabel">Todas las sucursales</span>
+                                    <span class="ef-arrow">▼</span>
+                                </button>
+                                <div class="excel-dropdown" id="sucursalDropdown">
+                                    <div class="excel-search-box">
+                                        <input type="text" id="excelSearchInput" placeholder="🔍 Buscar sucursal..." oninput="filtrarOpcionesSucursal(this.value)">
+                                    </div>
+                                    <div class="excel-select-all" onclick="toggleSelectAll()">
+                                        <input type="checkbox" id="checkSelectAll" checked>
+                                        <span>Seleccionar todo</span>
+                                    </div>
+                                    <div class="excel-options-list" id="sucursalOptionsList"></div>
+                                    <div class="excel-dropdown-footer">
+                                        <button class="ef-btn-cancel" onclick="cancelarDropdown()">Cancelar</button>
+                                        <button class="ef-btn-ok" onclick="aplicarDropdownSucursal()">✔ Aceptar</button>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
 
                         <div class="filter-group">
@@ -1227,6 +1501,29 @@
             <div class="approval-modal-actions">
                 <button class="btn-modal-cancel" onclick="cerrarApprovalModal()">Cancelar</button>
                 <button class="btn-modal-confirm" onclick="confirmarAprobacion()">✔️ Confirmar Aprobación</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== MODAL ELIMINAR POR FECHA ===== -->
+    <div class="delete-date-modal-overlay" id="deleteDateModal">
+        <div class="delete-date-modal-box">
+            <h3>📅 Eliminar Cierres por Fecha</h3>
+            <div class="ddm-info">⚠️ Esta acción eliminará permanentemente todos los cierres del rango de fechas seleccionado. No se puede deshacer.</div>
+            <div class="delete-date-fields">
+                <div>
+                    <label>📅 Fecha Desde</label>
+                    <input type="date" id="deleteFechaDesde">
+                </div>
+                <div>
+                    <label>📅 Fecha Hasta</label>
+                    <input type="date" id="deleteFechaHasta">
+                </div>
+            </div>
+            <div class="ddm-preview" id="ddmPreview">Selecciona un rango de fechas para ver cuántos registros se eliminarán.</div>
+            <div class="ddm-actions">
+                <button class="ddm-btn-cancel" onclick="cerrarEliminarPorFecha()">Cancelar</button>
+                <button class="ddm-btn-confirm" id="ddmConfirmBtn" onclick="confirmarEliminarPorFecha()">🗑️ Eliminar</button>
             </div>
         </div>
     </div>
@@ -1406,20 +1703,8 @@
 
         // ===== CARGAR CIERRES DESDE FIREBASE (con caché + límite 60 días) =====
         async function cargarCierresDesdeFirebase(forzar = false) {
-            // 1. Intentar usar caché de sessionStorage (evita lecturas en recarga)
-            if (!forzar) {
-                const cacheTS = parseInt(sessionStorage.getItem(_cacheFechaKey) || '0');
-                const cacheData = sessionStorage.getItem(_cacheKey);
-                if (cacheData && (Date.now() - cacheTS) < _CACHE_TTL) {
-                    try {
-                        cierresGlobal = JSON.parse(cacheData);
-                        console.log('⚡ Cierres desde caché:', cierresGlobal.length, '(sin lectura Firebase)');
-                        mostrarCierres(cierresGlobal);
-                        mostrarAlerta('⚡ Datos desde caché local (actualizado hace ' + Math.round((Date.now()-cacheTS)/1000) + 's)', 'info');
-                        return;
-                    } catch(e) { /* caché corrupta, ignorar */ }
-                }
-            }
+            // Nota: la caché no guarda imágenes, por lo que siempre se recarga desde Firebase
+            // para que el botón "Ver 📷" funcione correctamente.
 
             // 2. Pedir solo los últimos 60 días → reduce lecturas drásticamente
             mostrarLoading('Cargando cierres...', 'Obteniendo registros desde Firebase');
@@ -1439,14 +1724,16 @@
                 // Cargar aprobaciones
                 await cargarAprobaciones();
 
-                // Guardar en caché
+                // Guardar en caché SIN imágenes para evitar QuotaExceededError
                 try {
-                    sessionStorage.setItem(_cacheKey, JSON.stringify(cierresGlobal));
+                    const cacheData = cierresGlobal.map(({ imagen, ...resto }) => resto);
+                    sessionStorage.setItem(_cacheKey, JSON.stringify(cacheData));
                     sessionStorage.setItem(_cacheFechaKey, Date.now().toString());
                 } catch(e) { console.warn('No se pudo guardar caché:', e); }
 
                 console.log('📦 Cierres cargados desde Firebase:', cierresGlobal.length,
                     '| Lecturas usadas:', cierresGlobal.length);
+                poblarFiltroSucursales();
                 mostrarCierres(cierresGlobal);
 
             } catch (error) {
@@ -1554,14 +1841,131 @@
         }
 
 
+        // ===== DROPDOWN EXCEL SUCURSALES =====
+        let _sucursalesSnapshot = []; // estado antes de abrir el dropdown
+
+        function poblarFiltroSucursales() {
+            const names = [...new Set(
+                cierresGlobal.map(c => (c.kiosko || c.tienda || '').trim()).filter(Boolean)
+            )].sort();
+
+            const list = document.getElementById('sucursalOptionsList');
+            list.innerHTML = names.map(n =>
+                `<div class="excel-option">
+                    <input type="checkbox" id="opt_${CSS.escape(n)}" value="${n.replace(/"/g,'&quot;')}" checked>
+                    <label for="opt_${CSS.escape(n)}">${n}</label>
+                </div>`
+            ).join('');
+
+            // Sincronizar el "Seleccionar todo"
+            list.querySelectorAll('input[type="checkbox"]').forEach(cb => {
+                cb.addEventListener('change', sincronizarSelectAll);
+            });
+            actualizarLabelSucursal();
+        }
+
+        function toggleExcelDropdown() {
+            const btn  = document.getElementById('sucursalFilterBtn');
+            const drop = document.getElementById('sucursalDropdown');
+            const isOpen = drop.classList.contains('open');
+            if (!isOpen) {
+                // Guardar estado para cancelar
+                _sucursalesSnapshot = Array.from(
+                    document.querySelectorAll('#sucursalOptionsList input[type="checkbox"]')
+                ).map(cb => ({ value: cb.value, checked: cb.checked }));
+                document.getElementById('excelSearchInput').value = '';
+                filtrarOpcionesSucursal('');
+            }
+            drop.classList.toggle('open', !isOpen);
+            btn.classList.toggle('open', !isOpen);
+        }
+
+        function cerrarDropdown() {
+            document.getElementById('sucursalDropdown').classList.remove('open');
+            document.getElementById('sucursalFilterBtn').classList.remove('open');
+        }
+
+        function cancelarDropdown() {
+            // Restaurar estado previo
+            _sucursalesSnapshot.forEach(({ value, checked }) => {
+                const cb = document.querySelector(`#sucursalOptionsList input[value="${CSS.escape(value)}"]`);
+                if (cb) cb.checked = checked;
+            });
+            sincronizarSelectAll();
+            cerrarDropdown();
+        }
+
+        function aplicarDropdownSucursal() {
+            cerrarDropdown();
+            actualizarLabelSucursal();
+            aplicarFiltros();
+        }
+
+        function toggleSelectAll() {
+            const master = document.getElementById('checkSelectAll');
+            const allChecked = master.checked;
+            document.querySelectorAll('#sucursalOptionsList input[type="checkbox"]:not([style*="display:none"])').forEach(cb => {
+                // Solo afecta opciones visibles
+                const opt = cb.closest('.excel-option');
+                if (!opt || opt.style.display !== 'none') cb.checked = allChecked;
+            });
+        }
+
+        function sincronizarSelectAll() {
+            const all = document.querySelectorAll('#sucursalOptionsList input[type="checkbox"]');
+            const checked = document.querySelectorAll('#sucursalOptionsList input[type="checkbox"]:checked');
+            const master = document.getElementById('checkSelectAll');
+            if (master) master.checked = all.length === checked.length;
+        }
+
+        function filtrarOpcionesSucursal(query) {
+            const q = query.toLowerCase().trim();
+            document.querySelectorAll('#sucursalOptionsList .excel-option').forEach(opt => {
+                const label = opt.querySelector('label').textContent.toLowerCase();
+                opt.style.display = (!q || label.includes(q)) ? '' : 'none';
+            });
+        }
+
+        function actualizarLabelSucursal() {
+            const all     = document.querySelectorAll('#sucursalOptionsList input[type="checkbox"]');
+            const checked = document.querySelectorAll('#sucursalOptionsList input[type="checkbox"]:checked');
+            const label   = document.getElementById('sucursalFilterLabel');
+            if (!label) return;
+            if (all.length === 0 || all.length === checked.length) {
+                label.textContent = 'Todas las sucursales';
+            } else if (checked.length === 0) {
+                label.textContent = 'Ninguna seleccionada';
+            } else if (checked.length === 1) {
+                label.textContent = checked[0].value;
+            } else {
+                label.textContent = `${checked.length} sucursales seleccionadas`;
+            }
+        }
+
+        // Cerrar dropdown al hacer clic fuera
+        document.addEventListener('click', e => {
+            const wrapper = document.getElementById('sucursalFilterWrapper');
+            if (wrapper && !wrapper.contains(e.target)) {
+                cerrarDropdown();
+            }
+        });
+
         // ===== MOSTRAR CIERRES (con o sin filtros) =====
         function mostrarCierres(cierres) {
-            const tablaHTML = simplitData.length > 0
-                ? generarTablaConSimplit(cierres)
-                : generarTablaSinSimplit(cierres);
-
-            document.getElementById('tablaResultados').innerHTML = tablaHTML;
-            actualizarEstadisticas(cierres);
+            try {
+                const tablaHTML = simplitData.length > 0
+                    ? generarTablaConSimplit(cierres)
+                    : generarTablaSinSimplit(cierres);
+                document.getElementById('tablaResultados').innerHTML = tablaHTML;
+                actualizarEstadisticas(cierres);
+            } catch(e) {
+                console.error('Error al generar tabla:', e);
+                document.getElementById('tablaResultados').innerHTML =
+                    `<div style="padding:20px;background:#FFEBEE;border-radius:10px;color:#C62828;font-weight:600;">
+                        ⚠️ Error al mostrar registros: ${e.message}
+                        <br><br><button class="btn" onclick="invalidarCacheYRecargar()">🔄 Reintentar</button>
+                    </div>`;
+            }
         }
 
         // ===== GENERAR TABLAS =====
@@ -1582,7 +1986,7 @@
             const grupos = agruparCierres(cierres);
             let html = '<table><thead><tr>';
             html += '<th>Tienda</th><th>Fecha</th><th>Crédito</th><th>Débito</th><th>Pago Móvil</th>';
-            html += '<th>Total Bs</th><th>Total $</th><th>Foto</th><th>Editar</th>';
+            html += '<th>Total Bs</th><th>Total $</th><th>Foto</th><th>Editar</th><th>Eliminar</th>';
             html += '</tr></thead><tbody>';
 
             let idx = 0;
@@ -1618,9 +2022,10 @@
                     html += `<td><strong style="color:#2e7d32;">${totalUsd !== null ? '$ ' + totalUsd.toFixed(2) : '<span style="color:#aaa;font-size:0.85em;">sin tasa</span>'}</strong></td>`;
                     html += `<td><button onclick="event.stopPropagation(); abrirModal('${cierre.imagen}')" style="background:linear-gradient(135deg,#006B7D 0%,#004A5A 100%);color:white;border:none;padding:8px 16px;border-radius:8px;cursor:pointer;font-weight:600;">Ver 📷</button></td>`;
                     html += `<td><button class="btn-edit" onclick="event.stopPropagation(); abrirEditModal('${cierre._docId}','${kioskoNombre.replace(/'/g,"\\'")}','${fecha}',${parseFloat(cierre.credito||0)},${parseFloat(cierre.debito||0)},${parseFloat(cierre.pagoMovil||0)},${efBs},${efUsd},${tasa})">✏️ Editar</button></td>`;
+                    html += `<td><button class="btn-delete-row" onclick="event.stopPropagation(); eliminarCierreIndividual('${cierre._docId}','${kioskoNombre.replace(/'/g,"\\'")}','${fecha}')">🗑️ Eliminar</button></td>`;
                     html += '</tr>';
                     // Panel expandible
-                    html += `<tr class="detail-row"><td colspan="9"><div class="detail-panel" id="${panelId}">`;
+                    html += `<tr class="detail-row"><td colspan="10"><div class="detail-panel" id="${panelId}">`;
                     html += `<div class="detail-chip bs-chip"><span class="chip-icon">💵</span><div><div class="chip-label">Efectivo Bs</div><div class="chip-value">Bs ${efBs.toFixed(2)}</div></div></div>`;
                     if (efUsd > 0) {
                         const convStr = tasa > 0 ? ` ($ ${efUsd.toFixed(2)} × ${tasa.toFixed(2)} = Bs ${usdEnBs.toFixed(2)})` : ' (sin tasa BCV)';
@@ -1644,7 +2049,7 @@
             const grupos = agruparCierres(cierres);
             let html = '<table><thead><tr>';
             html += '<th>Tienda</th><th>Fecha</th><th>Crédito</th><th>Débito</th><th>Pago Móvil</th>';
-            html += '<th>Total Cierre</th><th>Total $</th><th>Total Simplit</th><th>Diferencia</th><th>Estado</th><th>Foto</th><th>Editar</th>';
+            html += '<th>Total Cierre</th><th>Total $</th><th>Total Simplit</th><th>Diferencia</th><th>Estado</th><th>Foto</th><th>Editar</th><th>Eliminar</th>';
             html += '</tr></thead><tbody>';
 
             let idx = 0;
@@ -1736,9 +2141,10 @@
                     html += estadoHtml;
                     html += `<td><button onclick="event.stopPropagation(); abrirModal('${cierre.imagen}')" style="background:linear-gradient(135deg,#006B7D 0%,#004A5A 100%);color:white;border:none;padding:8px 16px;border-radius:8px;cursor:pointer;font-weight:600;">Ver 📷</button></td>`;
                     html += `<td><button class="btn-edit" onclick="event.stopPropagation(); abrirEditModal('${cierre._docId}','${kioskoNombre.replace(/'/g,"\\'")}','${fecha}',${parseFloat(cierre.credito||0)},${parseFloat(cierre.debito||0)},${parseFloat(cierre.pagoMovil||0)},${efBs},${efUsd},${tasa})">✏️ Editar</button></td>`;
+                    html += `<td><button class="btn-delete-row" onclick="event.stopPropagation(); eliminarCierreIndividual('${cierre._docId}','${kioskoNombre.replace(/'/g,"\\'")}','${fecha}')">🗑️ Eliminar</button></td>`;
                     html += '</tr>';
                     // Panel expandible
-                    html += `<tr class="detail-row"><td colspan="12"><div class="detail-panel" id="${panelId}">`;
+                    html += `<tr class="detail-row"><td colspan="13"><div class="detail-panel" id="${panelId}">`;
                     html += `<div class="detail-chip bs-chip"><span class="chip-icon">💵</span><div><div class="chip-label">Efectivo Bs</div><div class="chip-value">Bs ${efBs.toFixed(2)}</div></div></div>`;
                     if (efUsd > 0) {
                         const convStr = tasa > 0 ? ` ($ ${efUsd.toFixed(2)} × ${tasa.toFixed(2)} = Bs ${usdEnBs.toFixed(2)})` : ' (sin tasa BCV)';
@@ -1840,26 +2246,21 @@
         // ===== FUNCIONES DE FILTRADO =====
         function aplicarFiltros() {
             // Obtener valores de los filtros
-            const filterTienda = document.getElementById('filterTienda').value.toLowerCase().trim();
             const filterFechaDesde = document.getElementById('filterFechaDesde').value;
             const filterFechaHasta = document.getElementById('filterFechaHasta').value;
             const filterMontoMin = parseFloat(document.getElementById('filterMontoMin').value) || 0;
             const filterMontoMax = parseFloat(document.getElementById('filterMontoMax').value) || Infinity;
             const filterEstado = document.getElementById('filterEstado').value;
 
-            console.log('🔍 Aplicando filtros:', {
-                tienda: filterTienda,
-                fechaDesde: filterFechaDesde,
-                fechaHasta: filterFechaHasta,
-                montoMin: filterMontoMin,
-                montoMax: filterMontoMax,
-                estado: filterEstado
-            });
+            // Sucursales seleccionadas via dropdown Excel
+            const checkboxes = document.querySelectorAll('#sucursalOptionsList input[type="checkbox"]:checked');
+            const sucursalesSeleccionadas = new Set(Array.from(checkboxes).map(cb => cb.value));
 
             // Aplicar filtros
             let cierresFiltrados = cierresGlobal.filter(cierre => {
-                // Filtro por tienda
-                if (filterTienda && !(cierre.kiosko || cierre.tienda || "").toLowerCase().includes(filterTienda)) {
+                // Filtro por sucursal (dropdown Excel)
+                const nombreTienda = (cierre.kiosko || cierre.tienda || '').trim();
+                if (sucursalesSeleccionadas.size > 0 && !sucursalesSeleccionadas.has(nombreTienda)) {
                     return false;
                 }
 
@@ -1954,12 +2355,17 @@
 
         function limpiarFiltros() {
             // Limpiar campos
-            document.getElementById('filterTienda').value = '';
             document.getElementById('filterFechaDesde').value = '';
             document.getElementById('filterFechaHasta').value = '';
             document.getElementById('filterMontoMin').value = '';
             document.getElementById('filterMontoMax').value = '';
             document.getElementById('filterEstado').value = 'todos';
+
+            // Resetear dropdown de sucursales (marcar todas)
+            document.querySelectorAll('#sucursalOptionsList input[type="checkbox"]').forEach(cb => cb.checked = true);
+            const selectAll = document.getElementById('checkSelectAll');
+            if (selectAll) selectAll.checked = true;
+            actualizarLabelSucursal();
 
             // Ocultar info de resultados
             document.getElementById('filterResultsInfo').style.display = 'none';
@@ -1972,7 +2378,7 @@
 
         // Aplicar filtros al presionar Enter en los campos de texto
         document.addEventListener('DOMContentLoaded', () => {
-            const filterInputs = ['filterTienda', 'filterFechaDesde', 'filterFechaHasta', 'filterMontoMin', 'filterMontoMax'];
+            const filterInputs = ['filterFechaDesde', 'filterFechaHasta', 'filterMontoMin', 'filterMontoMax'];
             filterInputs.forEach(id => {
                 const element = document.getElementById(id);
                 if (element) {
@@ -2207,7 +2613,124 @@
         });
 
 
+        // ===== ELIMINAR CIERRE INDIVIDUAL =====
+        async function eliminarCierreIndividual(docId, tienda, fecha) {
+            if (!docId) { mostrarAlerta('⚠️ No se pudo identificar el registro', 'warning'); return; }
+            const confirmacion = confirm(`¿Eliminar el cierre de "${tienda}" del ${fecha}?\n\nEsta acción NO se puede deshacer.`);
+            if (!confirmacion) return;
+            try {
+                await db.collection('cierres').doc(docId).delete();
+                // Quitar del array en memoria
+                cierresGlobal = cierresGlobal.filter(c => c._docId !== docId);
+                sessionStorage.removeItem(_cacheKey);
+                sessionStorage.removeItem(_cacheFechaKey);
+                mostrarAlerta(`✅ Cierre de "${tienda}" (${fecha}) eliminado correctamente`, 'success');
+                mostrarCierres(cierresGlobal);
+            } catch(e) {
+                console.error('Error al eliminar cierre:', e);
+                mostrarAlerta('❌ Error al eliminar: ' + e.message, 'warning');
+            }
+        }
+
+        // ===== MODAL ELIMINAR POR FECHA =====
+        function abrirEliminarPorFecha() {
+            document.getElementById('deleteFechaDesde').value = '';
+            document.getElementById('deleteFechaHasta').value = '';
+            document.getElementById('ddmPreview').textContent = 'Selecciona un rango de fechas para ver cuántos registros se eliminarán.';
+            document.getElementById('ddmConfirmBtn').disabled = true;
+            document.getElementById('deleteDateModal').classList.add('active');
+
+            // Listeners para preview en tiempo real
+            document.getElementById('deleteFechaDesde').oninput = actualizarPreviewEliminar;
+            document.getElementById('deleteFechaHasta').oninput = actualizarPreviewEliminar;
+        }
+
+        function cerrarEliminarPorFecha() {
+            document.getElementById('deleteDateModal').classList.remove('active');
+        }
+
+        function actualizarPreviewEliminar() {
+            const desde = document.getElementById('deleteFechaDesde').value;
+            const hasta = document.getElementById('deleteFechaHasta').value;
+            const btn = document.getElementById('ddmConfirmBtn');
+            const preview = document.getElementById('ddmPreview');
+
+            if (!desde && !hasta) {
+                preview.textContent = 'Selecciona al menos una fecha.';
+                btn.disabled = true;
+                return;
+            }
+
+            const afectados = cierresGlobal.filter(c => {
+                const f = (c.fecha || '').trim();
+                if (!f) return false;
+                if (desde && hasta) return f >= desde && f <= hasta;
+                if (desde) return f >= desde;
+                if (hasta) return f <= hasta;
+                return false;
+            });
+
+            if (afectados.length === 0) {
+                preview.textContent = '⚠️ No hay cierres en ese rango de fechas.';
+                btn.disabled = true;
+            } else {
+                preview.textContent = `🗑️ Se eliminarán ${afectados.length} cierre(s) entre ${desde || '—'} y ${hasta || '—'}.`;
+                btn.disabled = false;
+            }
+        }
+
+        async function confirmarEliminarPorFecha() {
+            const desde = document.getElementById('deleteFechaDesde').value;
+            const hasta = document.getElementById('deleteFechaHasta').value;
+
+            const afectados = cierresGlobal.filter(c => {
+                const f = (c.fecha || '').trim();
+                if (!f) return false;
+                if (desde && hasta) return f >= desde && f <= hasta;
+                if (desde) return f >= desde;
+                if (hasta) return f <= hasta;
+                return false;
+            });
+
+            if (afectados.length === 0) { mostrarAlerta('⚠️ No hay cierres en ese rango', 'warning'); return; }
+
+            const ok = confirm(`¿CONFIRMAR eliminación de ${afectados.length} cierre(s) del ${desde || '—'} al ${hasta || '—'}?\n\nEsta acción NO se puede deshacer.`);
+            if (!ok) return;
+
+            const btn = document.getElementById('ddmConfirmBtn');
+            btn.disabled = true;
+            btn.textContent = '⏳ Eliminando...';
+
+            try {
+                // Eliminar en lotes de 500 (límite Firestore)
+                const BATCH_SIZE = 500;
+                for (let i = 0; i < afectados.length; i += BATCH_SIZE) {
+                    const lote = db.batch();
+                    afectados.slice(i, i + BATCH_SIZE).forEach(c => {
+                        if (c._docId) lote.delete(db.collection('cierres').doc(c._docId));
+                    });
+                    await lote.commit();
+                }
+
+                // Actualizar memoria
+                const idsEliminados = new Set(afectados.map(c => c._docId));
+                cierresGlobal = cierresGlobal.filter(c => !idsEliminados.has(c._docId));
+                sessionStorage.removeItem(_cacheKey);
+                sessionStorage.removeItem(_cacheFechaKey);
+
+                cerrarEliminarPorFecha();
+                mostrarAlerta(`✅ ${afectados.length} cierre(s) eliminados correctamente`, 'success');
+                mostrarCierres(cierresGlobal);
+            } catch(e) {
+                console.error('Error al eliminar por fecha:', e);
+                mostrarAlerta('❌ Error al eliminar: ' + e.message, 'warning');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = '🗑️ Eliminar';
+            }
+        }
+
+
     </script>
-</body>
 
 </html>
