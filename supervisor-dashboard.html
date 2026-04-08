@@ -1701,25 +1701,34 @@
             alert.textContent = mensaje;
         }
 
-        // ===== CARGAR CIERRES DESDE FIREBASE (con caché + límite 60 días) =====
+        // ===== CARGAR CIERRES DESDE FIREBASE =====
         async function cargarCierresDesdeFirebase(forzar = false) {
             // Nota: la caché no guarda imágenes, por lo que siempre se recarga desde Firebase
             // para que el botón "Ver 📷" funcione correctamente.
 
-            // 2. Pedir solo los últimos 60 días → reduce lecturas drásticamente
             mostrarLoading('Cargando cierres...', 'Obteniendo registros desde Firebase');
             try {
-                const hace60dias = new Date();
-                hace60dias.setDate(hace60dias.getDate() - 60);
-                const fechaLimite = hace60dias.toISOString().split('T')[0];
-
+                // Se carga sin filtro de fecha para evitar fallos cuando las fechas
+                // están guardadas en formato dd/mm/yyyy (comparación lexicográfica incorrecta).
+                // El orden se aplica en memoria después de cargar.
                 const snapshot = await db.collection('cierres')
-                    .where('fecha', '>=', fechaLimite)
-                    .orderBy('fecha', 'desc')
+                    .limit(2000)
                     .get();
 
                 cierresGlobal = [];
                 snapshot.forEach(doc => { cierresGlobal.push({ ...doc.data(), _docId: doc.id }); });
+
+                // Ordenar por fecha descendente en memoria (funciona con dd/mm/yyyy y yyyy-mm-dd)
+                cierresGlobal.sort((a, b) => {
+                    const parseFecha = f => {
+                        if (!f) return 0;
+                        // Detectar formato dd/mm/yyyy → convertir a yyyy-mm-dd para comparar
+                        const ddmmyyyy = f.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+                        if (ddmmyyyy) return `${ddmmyyyy[3]}-${ddmmyyyy[2]}-${ddmmyyyy[1]}`;
+                        return f;
+                    };
+                    return parseFecha(b.fecha) > parseFecha(a.fecha) ? 1 : -1;
+                });
 
                 // Cargar aprobaciones
                 await cargarAprobaciones();
