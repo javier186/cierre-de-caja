@@ -884,6 +884,87 @@
             .detail-panel { grid-template-columns: 1fr; }
         }
 
+        /* ===== FILA SUBTOTAL DOBLE CIERRE ===== */
+        tr.subtotal-row td {
+            background: linear-gradient(135deg, #e8f5e9 0%, #f1f8e9 100%) !important;
+            border-top: 2.5px solid #43a047 !important;
+            border-bottom: 2.5px solid #43a047 !important;
+            font-weight: 700;
+            font-size: 0.93em;
+            color: #1b5e20;
+        }
+        .subtotal-label {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.85em;
+            background: #43a047;
+            color: #fff;
+            border-radius: 10px;
+            padding: 3px 10px;
+            font-weight: 700;
+            letter-spacing: 0.3px;
+        }
+
+        /* ===== PANEL AUSENCIAS ===== */
+        .ausencias-section { background: #fff8e1; border: 2px solid #ffe082; }
+        .ausencias-panel {
+            margin-top: 14px;
+        }
+        .ausencias-controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            align-items: flex-end;
+            margin-bottom: 14px;
+        }
+        .ausencias-controls .filter-group { min-width: 180px; }
+        .ausencias-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 8px;
+            min-height: 36px;
+        }
+        .ausencia-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: #fff;
+            border: 2px solid #ef9a9a;
+            border-radius: 20px;
+            padding: 7px 16px;
+            font-size: 0.9em;
+            font-weight: 600;
+            color: #b71c1c;
+        }
+        .ausencia-tag .au-icon { font-size: 1.1em; }
+        .ausencias-ok {
+            color: #2e7d32;
+            font-weight: 700;
+            font-size: 0.95em;
+            padding: 8px 0;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .ausencias-empty {
+            color: #888;
+            font-style: italic;
+            font-size: 0.9em;
+            padding: 8px 0;
+        }
+        .ausencias-summary {
+            background: #fff;
+            border: 1.5px solid #ffe082;
+            border-radius: 10px;
+            padding: 10px 16px;
+            margin-bottom: 10px;
+            font-size: 0.92em;
+            color: #5c3d00;
+            font-weight: 600;
+        }
+
         /* ===== ESTADO APROBADO ===== */
         .status-approved {
             background: #E8F5E9;
@@ -1378,6 +1459,21 @@
                 </div>
             </div>
 
+
+            <!-- Alertas de Ausencias -->
+            <div class="section ausencias-section">
+                <div class="section-title">🔔 Alerta de Registros Faltantes</div>
+                <div class="ausencias-panel">
+                    <div class="ausencias-controls">
+                        <div class="filter-group">
+                            <label for="ausenciaFecha">📅 Selecciona una fecha</label>
+                            <input type="date" id="ausenciaFecha">
+                        </div>
+                        <button class="btn btn-orange" onclick="verificarAusencias()" style="margin-bottom:0;">🔍 Verificar</button>
+                    </div>
+                    <div id="ausenciasResultado"></div>
+                </div>
+            </div>
 
             <!-- Acciones -->
             <div class="section">
@@ -2047,6 +2143,25 @@
                     html += `</div></td></tr>`;
                 });
 
+                // Fila subtotal para grupos con 2 cierres
+                if (esDoble) {
+                    const sumTotalReal = grupo.reduce((acc, c) => acc + calcularTotalReal(c), 0);
+                    const sumCredito   = grupo.reduce((acc, c) => acc + parseFloat(c.credito   || 0), 0);
+                    const sumDebito    = grupo.reduce((acc, c) => acc + parseFloat(c.debito    || 0), 0);
+                    const sumPagoMovil = grupo.reduce((acc, c) => acc + parseFloat(c.pagoMovil || 0), 0);
+                    const tasaRep = parseFloat(grupo[0].tasaBCV || 0);
+                    const totalUsdSum = tasaRep > 0 ? (sumTotalReal / tasaRep) : null;
+                    html += `<tr class="subtotal-row">`;
+                    html += `<td><span class="subtotal-label">∑ Total Ambos Cierres</span></td>`;
+                    html += `<td>${fecha}</td>`;
+                    html += `<td>Bs ${sumCredito.toFixed(2)}</td>`;
+                    html += `<td>Bs ${sumDebito.toFixed(2)}</td>`;
+                    html += `<td>Bs ${sumPagoMovil.toFixed(2)}</td>`;
+                    html += `<td><strong>Bs ${sumTotalReal.toFixed(2)}</strong></td>`;
+                    html += `<td><strong style="color:#2e7d32;">${totalUsdSum !== null ? '$ ' + totalUsdSum.toFixed(2) : '—'}</strong></td>`;
+                    html += `<td colspan="3"></td>`;
+                    html += `</tr>`;
+                }
 
             });
 
@@ -2166,6 +2281,29 @@
                     html += `</div></td></tr>`;
                 });
 
+                // Fila subtotal para grupos con 2 cierres
+                if (esDoble) {
+                    const sumTotalReal = grupo.reduce((acc, c) => acc + calcularTotalReal(c), 0);
+                    const sumCredito   = grupo.reduce((acc, c) => acc + parseFloat(c.credito   || 0), 0);
+                    const sumDebito    = grupo.reduce((acc, c) => acc + parseFloat(c.debito    || 0), 0);
+                    const sumPagoMovil = grupo.reduce((acc, c) => acc + parseFloat(c.pagoMovil || 0), 0);
+                    const tasaRep = parseFloat(grupo[0].tasaBCV || 0);
+                    const totalUsdSum = tasaRep > 0 ? (sumTotalReal / tasaRep) : null;
+                    const difSum = Math.round((sumTotalReal - totalSimplit) * 100) / 100;
+                    const colorSum = difSum >= 0 ? '#2E7D32' : '#C62828';
+                    html += `<tr class="subtotal-row">`;
+                    html += `<td><span class="subtotal-label">∑ Total Ambos Cierres</span></td>`;
+                    html += `<td>${fecha}</td>`;
+                    html += `<td>Bs ${sumCredito.toFixed(2)}</td>`;
+                    html += `<td>Bs ${sumDebito.toFixed(2)}</td>`;
+                    html += `<td>Bs ${sumPagoMovil.toFixed(2)}</td>`;
+                    html += `<td><strong>Bs ${sumTotalReal.toFixed(2)}</strong></td>`;
+                    html += `<td><strong style="color:#2e7d32;">${totalUsdSum !== null ? '$ ' + totalUsdSum.toFixed(2) : '—'}</strong></td>`;
+                    html += `<td><strong>Bs ${totalSimplit.toFixed(2)}</strong></td>`;
+                    html += `<td style="color:${colorSum}"><strong>${difSum >= 0 ? '+' : ''}Bs ${difSum.toFixed(2)}</strong></td>`;
+                    html += `<td colspan="4"></td>`;
+                    html += `</tr>`;
+                }
 
             });
 
@@ -2739,6 +2877,67 @@
             }
         }
 
+
+        // ===== VERIFICAR AUSENCIAS =====
+        function verificarAusencias() {
+            const fechaInput = document.getElementById('ausenciaFecha').value;
+            const resultadoDiv = document.getElementById('ausenciasResultado');
+
+            if (!fechaInput) {
+                resultadoDiv.innerHTML = '<div class="ausencias-empty">⚠️ Selecciona una fecha para verificar.</div>';
+                return;
+            }
+
+            if (cierresGlobal.length === 0) {
+                resultadoDiv.innerHTML = '<div class="ausencias-empty">⚠️ No hay datos cargados. Presiona Actualizar primero.</div>';
+                return;
+            }
+
+            // Todos los kioskos conocidos (los que alguna vez registraron)
+            const todosLosKioskos = [...new Set(
+                cierresGlobal.map(c => (c.kiosko || c.tienda || '').trim()).filter(Boolean)
+            )].sort();
+
+            // Kioskos que SÍ registraron en la fecha elegida
+            const registraronEseDia = new Set(
+                cierresGlobal
+                    .filter(c => {
+                        const f = (c.fecha || '').trim();
+                        // Normalizar: si la fecha está en dd/mm/yyyy, convertir a yyyy-mm-dd para comparar
+                        const ddmmyyyy = f.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+                        const fNorm = ddmmyyyy ? `${ddmmyyyy[3]}-${ddmmyyyy[2]}-${ddmmyyyy[1]}` : f;
+                        return fNorm === fechaInput;
+                    })
+                    .map(c => (c.kiosko || c.tienda || '').trim())
+            );
+
+            const ausentes = todosLosKioskos.filter(k => !registraronEseDia.has(k));
+            const presentes = todosLosKioskos.filter(k => registraronEseDia.has(k));
+
+            // Formatear fecha para mostrar
+            const [yyyy, mm, dd] = fechaInput.split('-');
+            const fechaMostrar = `${dd}/${mm}/${yyyy}`;
+
+            let html = `<div class="ausencias-summary">
+                📅 <strong>${fechaMostrar}</strong> — 
+                ✅ ${presentes.length} registraron &nbsp;|&nbsp; 
+                ⚠️ ${ausentes.length} sin registro &nbsp;|&nbsp; 
+                🏪 ${todosLosKioskos.length} kioskos en total
+            </div>`;
+
+            if (ausentes.length === 0) {
+                html += `<div class="ausencias-ok">✅ ¡Todos los kioskos registraron su cierre ese día!</div>`;
+            } else {
+                html += `<div style="font-weight:700; color:#b71c1c; margin-bottom:8px; font-size:0.95em;">⚠️ ${ausentes.length} kiosko(s) sin registro el ${fechaMostrar}:</div>`;
+                html += `<div class="ausencias-list">`;
+                ausentes.forEach(k => {
+                    html += `<div class="ausencia-tag"><span class="au-icon">🏪</span>${k}</div>`;
+                });
+                html += `</div>`;
+            }
+
+            resultadoDiv.innerHTML = html;
+        }
 
     </script>
 
